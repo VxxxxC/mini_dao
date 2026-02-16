@@ -38,9 +38,7 @@
 	</div>
 </div>
 <div class="text-5xl text-cyan-600">This is Home Page</div>
-<button class="rounded-xl border-2 border-white bg-gray-700 p-2 text-white">
-	<appkit-button></appkit-button>
-</button>
+<appkit-button></appkit-button>
 
 <div class="mt-4 text-lg">Connected Address: {address}</div>
 <div class="mt-2 text-lg">Connection Status: {status}</div>
