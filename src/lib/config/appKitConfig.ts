@@ -17,7 +17,7 @@ if (browser) {
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
 		networks: [mainnet, sepolia],
-		projectId: projectId
+		projectId: projectId as string
 	});
 }
 
