@@ -3,11 +3,7 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { mainnet, sepolia } from '@reown/appkit/networks';
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const projectId = process.env.APPKIT_PROJECT_ID;
+import { appKitProjectId as projectId } from '$lib/config/dotenv';
 
 let appKit: ReturnType<typeof createAppKit> | undefined = undefined;
 
@@ -21,7 +17,7 @@ if (browser) {
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
 		networks: [mainnet, sepolia],
-		projectId: projectId as string
+		projectId: projectId
 	});
 }
 
