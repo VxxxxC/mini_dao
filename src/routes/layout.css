@@ -4,3 +4,14 @@
 /* ... */
 @source "../../node_modules/flowbite-svelte/dist";
 @source "../../node_modules/flowbite-svelte-icons/dist";
+
+@theme{
+  --color-web3-bg: #0f172a;
+  --color-web3-surface: #1e293b;
+  --color-web3-primary: #06b6d4;
+  --color-web3-success: #10b981;
+  --color-web3-danger: #ef4444;
+  --color-web3-vote-bg: #334155;
+  --color-web3-vote-yes: #10b981;
+  --color-web3-bote-no: #ef4444;
+}
