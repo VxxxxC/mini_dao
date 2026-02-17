@@ -1,18 +1,21 @@
 <script lang="ts">
 	import './layout.css';
+	import WalletConnectButton from '$lib/components/WalletConnectButton.svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import { DarkMode, Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
-	import { getBalance, watchConnection } from '@wagmi/core';
+	import { getBalance } from '@wagmi/core';
 	import { type GetBalanceReturnType } from '@wagmi/core';
 	import { sepolia } from '@wagmi/core/chains';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { formatEther } from 'viem';
+	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+
+	let address: string = $derived(walletStatus.address);
+	let status: string = $derived(walletStatus.status);
 
 	let activeUrl = $derived(page.url.pathname);
 
-	let address: string = $derived('');
-	let status: string = $derived('');
 	let balance: string = $derived('');
 
 	async function fetchBalance() {
@@ -26,42 +29,49 @@
 		}
 	}
 
-	// NOTE: wagmi EventListener for wallet connection
-	watchConnection(wagmiConfig, {
-		onChange(account) {
-			address = account.address ?? 'Not connected';
-			status = account.status;
-		}
-	});
-
 	let { children } = $props();
 </script>
 
-<div class="border-b border-b-black bg-stone-300 dark:bg-stone-700">
-	<div class="mx-2 flex min-h-20 flex-row items-center justify-between">
-		<Navbar fluid={true}>
-			<NavUl {activeUrl}>
-				<NavLi href="/">Home</NavLi>
-				<NavLi href="/connectedPage">Connected</NavLi>
-			</NavUl>
-		</Navbar>
+<div class="border-b-2 border-b-stone-300 bg-stone-100 px-5 py-1 dark:bg-stone-700">
+	<div class="flex grid min-h-14 grid-cols-3 items-center justify-center gap-x-3">
+		<!-- NOTE: LEFT -->
+		<div class="flex flex-col items-start justify-center">
+			<!-- <div class="min-h-5"><appkit-network-button></appkit-network-button></div> -->
+			<DarkMode size="sm" class="rounded-xl bg-stone-300" />
+		</div>
 
-		<div class="flex items-center gap-x-5">
-			<div class="flex flex-col items-end">
-				<appkit-button></appkit-button>
-				{#if status === 'connected'}
-					<div class="mt-2 text-lg">
-						{#await fetchBalance()}
-							<p>Loading balance...</p>
-						{:then}
-							<p>Balance: {balance}</p>
-						{:catch error}
-							<p>Error fetching balance: {error.message}</p>
-						{/await}
-					</div>
-				{/if}
+		<!-- NOTE: CENTER -->
+		<div>
+			<Navbar fluid={false} breakpoint="lg">
+				<NavUl {activeUrl}>
+					<NavLi href="/">Home</NavLi>
+					<NavLi href="/connectedPage">Connected</NavLi>
+				</NavUl>
+			</Navbar>
+		</div>
+
+		<!-- NOTE: RIGHT -->
+		<div class="flex flex-row items-center justify-end-safe gap-x-2">
+			{#if status === 'connected'}
+				<div>
+					{#await fetchBalance()}
+						<p>Loading balance...</p>
+					{:then}
+						<div
+							class="flex h-8 flex-row items-center justify-center gap-x-5 rounded-xl bg-stone-300 p-2 font-mono text-sm"
+						>
+							<p>Balance:</p>
+							<p>{balance}</p>
+						</div>
+					{:catch error}
+						<p>Error fetching balance: {error.message}</p>
+					{/await}
+				</div>
+			{/if}
+
+			<div>
+				<WalletConnectButton />
 			</div>
-			<DarkMode />
 		</div>
 	</div>
 </div>
