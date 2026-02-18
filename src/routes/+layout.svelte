@@ -1,9 +1,9 @@
 <script lang="ts">
 	import './layout.css';
 	import WalletConnectButton from '$lib/components/WalletConnectButton.svelte';
+	import Navbar from '$lib/components/Navbar.svelte';
 	import favicon from '$lib/assets/favicon.svg';
-	import { page } from '$app/state';
-	import { DarkMode, Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
+	import { DarkMode } from 'flowbite-svelte';
 	import { getBalance } from '@wagmi/core';
 	import { type GetBalanceReturnType } from '@wagmi/core';
 	import { sepolia } from '@wagmi/core/chains';
@@ -13,8 +13,6 @@
 
 	let address: string = $derived(walletStatus.address);
 	let status: string = $derived(walletStatus.status);
-
-	let activeUrl = $derived(page.url.pathname);
 
 	let balance: string = $derived('');
 
@@ -41,14 +39,7 @@
 		</div>
 
 		<!-- NOTE: CENTER -->
-		<div>
-			<Navbar fluid={false} breakpoint="lg">
-				<NavUl {activeUrl}>
-					<NavLi href="/">Home</NavLi>
-					<NavLi href="/connectedPage">Connected</NavLi>
-				</NavUl>
-			</Navbar>
-		</div>
+		<Navbar />
 
 		<!-- NOTE: RIGHT -->
 		<div class="flex flex-row items-center justify-end-safe gap-x-2">
