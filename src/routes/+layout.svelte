@@ -13,7 +13,6 @@
 
 	let address: string = $derived(walletStatus.address);
 	let status: string = $derived(walletStatus.status);
-
 	let balance: string = $derived('');
 
 	async function fetchBalance() {
@@ -30,7 +29,7 @@
 	let { children } = $props();
 </script>
 
-<div class="border-b-2 border-b-stone-300 bg-stone-100 px-5 py-1 dark:bg-stone-700">
+<div class="border-b-2 border-b-stone-300 px-5 py-1">
 	<div class="flex grid min-h-14 grid-cols-3 items-center justify-center gap-x-3">
 		<!-- NOTE: LEFT -->
 		<div class="flex flex-col items-start justify-center">

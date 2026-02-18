@@ -6,7 +6,8 @@
 @source "../../node_modules/flowbite-svelte-icons/dist";
 
 @theme{
-  --color-web3-bg: #0f172a;
+  --color-web3-bg: #fff;
+  --color-web3-bg-dark: #0f172a;
   --color-web3-surface: #1e293b;
   --color-web3-primary: #06b6d4;
   --color-web3-success: #10b981;
@@ -14,8 +15,11 @@
   --color-web3-vote-bg: #334155;
   --color-web3-vote-yes: #10b981;
   --color-web3-bote-no: #ef4444;
+  --color-web3-navbar-active-text: #8b2bf9;
+  --color-web3-navbar-active-bg: #f9f4ff;
 }
 
 html {
+  @apply bg-web3-bg dark:bg-web3-bg-dark;
   font-family: -apple-system, Helvetica Neue, sans-serif;
 }
