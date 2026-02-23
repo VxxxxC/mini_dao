@@ -6,6 +6,9 @@
 
 <div>
 	<Card
+		size="md"
+		shadow="sm"
+		horizontal={true}
 		class="mx-2 grid grid-cols-4 items-start p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
 	>
 		<div class="col-span-1">
