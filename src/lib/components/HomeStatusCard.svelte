@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { Card } from 'flowbite-svelte';
-	import type { Component } from 'svelte';
 
-	let props = $props();
+	let { icon: IconProp, iconClass } = $props();
 </script>
 
 <div>
-	<Card class="mx-2 grid grid-cols-4 items-center gap-x-2">
+	<Card
+		class="mx-2 grid grid-cols-4 items-start p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
+	>
 		<div class="col-span-1">
-			<!-- WARN: Below is going to deprecated , need to find another solution -->
-			<svelte:component this={props.icon} size={props.iconSize} class={props.iconClass} />
+			<IconProp class={iconClass} />
 		</div>
-		<div class="col-span-2 flex flex-col items-start justify-center">
-			<div class="font-normal text-gray-600">upper</div>
+		<div class="col-span-2 flex flex-col items-start justify-between py-2">
+			<div class="text-sm font-normal text-gray-500">Pass Proposal</div>
 
-			<div class="font-bold">lower</div>
+			<div class="text-lg font-bold text-gray-900">999</div>
 		</div>
-		<div class="col-span-1">footer</div>
+		<div class="col-span-1"></div>
 	</Card>
 </div>

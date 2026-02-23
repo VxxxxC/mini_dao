@@ -9,10 +9,12 @@
 <div class="my-2 flex flex-col items-center">
 	<div class="grid h-dvh grid-rows-3 gap-y-2">
 		<!-- NOTE: UPPER SECTION -->
-		<div>
-			<div class="flex flex-col items-center">
-				<p>Community Governance Platform</p>
-				<p>Participate in DAO decisions and shape the decentralized future</p>
+		<div class="flex flex-col items-center gap-y-5">
+			<div class="flex flex-col items-center gap-y-5">
+				<p class="text-3xl font-black">Community Governance Platform</p>
+				<p class="text-sm font-normal text-gray-500">
+					Participate in DAO decisions and shape the decentralized future
+				</p>
 			</div>
 
 			<div>
