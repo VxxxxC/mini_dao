@@ -54,16 +54,18 @@
 	<div>
 		<Navbar fluid={false}>
 			<NavUl {activeUrl}>
-				{#each nav as { name, href } (href)}
-					<NavLi
-						class="text-md mx-1 rounded-lg font-medium"
-						activeClass="bg-web3-navbar-active-bg text-web3-navbar-active-text"
-						nonActiveClass="hover:bg-gray-50 text-gray-600"
-						{href}
-					>
-						{name}
-					</NavLi>
-				{/each}
+				<div class={`grid grid-cols-${nav.length} gap-x-2`}>
+					{#each nav as { name, href } (href)}
+						<NavLi
+							class="text-md mx-1 rounded-lg text-center font-medium"
+							activeClass="bg-web3-navbar-active-bg text-web3-navbar-active-text"
+							nonActiveClass="hover:bg-gray-50 text-gray-600"
+							{href}
+						>
+							{name}
+						</NavLi>
+					{/each}
+				</div>
 			</NavUl>
 		</Navbar>
 	</div>
