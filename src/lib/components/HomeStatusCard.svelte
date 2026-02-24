@@ -1,19 +1,8 @@
-<script module lang="ts">
-	export interface StatusCardInfo {
-		icon: Component;
-		iconClass: string;
-		cardInfo: {
-			title: string;
-			des: string;
-		};
-	}
-</script>
-
 <script lang="ts">
+	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import { Card } from 'flowbite-svelte';
-	import type { Component } from 'svelte';
 
-	let props: StatusCardInfo[] = $props();
+	let props: StatusCardInfoType[] = $props();
 </script>
 
 <div>
