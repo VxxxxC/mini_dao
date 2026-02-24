@@ -1,22 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import HomeStatusCard from '$lib/components/HomeStatusCard.svelte';
+	import HomeProposalCard from '$lib/components/HomeProposalCard.svelte';
 	import { Card } from 'flowbite-svelte';
 	import { CheckCircleOutline } from 'flowbite-svelte-icons';
-	import type { StatusCardInfo } from '$lib/components/HomeStatusCard.svelte';
+	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
+	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
+	import { statusCardInfo, proposalCardInfo } from '$lib/mock_data';
 
 	let activeUrl = $derived(page.url.pathname);
 
-	const statusCardInfo: StatusCardInfo = {
-		icon: CheckCircleOutline,
-		iconClass: 'm-2 p-3 h-12 w-12 rounded-xl bg-cyan-50 text-cyan-300',
-		cardInfo: {
-			title: 'Pass Proposals',
-			des: '1'
-		}
-	};
-
-	const statusCardInfoProps: StatusCardInfo[] = [statusCardInfo];
+	const statusCardInfoProps: StatusCardInfoType[] = [statusCardInfo];
+	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
 </script>
 
 <div class="my-2 min-h-screen min-w-screen">
@@ -34,14 +29,17 @@
 		</div>
 
 		<!-- NOTE: CENTER SECTION -->
-		<div class="flex items-center justify-center">
-			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center p-8">
+		<div class="w-full">
+			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center gap-y-5 p-4">
 				<div class="flex w-full flex-row justify-between">
 					<div>
 						<p class="text-xl font-bold">LEFT upper</p>
 						<p class="text-lg font-normal">LEFT lower</p>
 					</div>
 					<div class="text-lg font-medium">RIGHT</div>
+				</div>
+				<div class="w-full">
+					<HomeProposalCard {...proposalCardInfoProps} />
 				</div>
 			</Card>
 		</div>
