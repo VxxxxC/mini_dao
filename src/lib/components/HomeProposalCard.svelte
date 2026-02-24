@@ -23,7 +23,7 @@
 				<div class="flex flex-col justify-between">
 					<div>{prop.title}</div>
 					<div>{prop.des}</div>
-					<!-- FIX: need to fix below date time format -->
+					<!-- FIX: need to fix below date time format-->
 					<div>{new Intl.DateTimeFormat('en-US', options).format(prop.expire)}</div>
 				</div>
 				<div class="flex flex-col justify-between">
