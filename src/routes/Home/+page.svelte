@@ -28,13 +28,21 @@
 				Participate in DAO decisions and shape the decentralized future
 			</p>
 
-			<HomeStatusCard {...statusCardInfoProps} />
+			<div class={`w-[calc(70vw / ${statusCardInfoProps.length})] max-w-[70vw]`}>
+				<HomeStatusCard {...statusCardInfoProps} />
+			</div>
 		</div>
 
 		<!-- NOTE: CENTER SECTION -->
-		<div class="flex min-w-[70vw] items-center justify-center">
-			<Card size="xl" shadow="xs" horizontal={true} class=" p-8">
-				<p>Center Container</p>
+		<div class="flex items-center justify-center">
+			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center p-8">
+				<div class="flex w-full flex-row justify-between">
+					<div>
+						<p class="text-xl font-bold">LEFT upper</p>
+						<p class="text-lg font-normal">LEFT lower</p>
+					</div>
+					<div class="text-lg font-medium">RIGHT</div>
+				</div>
 			</Card>
 		</div>
 
