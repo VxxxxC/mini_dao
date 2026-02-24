@@ -1,6 +1,6 @@
 import type { SvelteDate } from 'svelte/reactivity';
 
-export interface ProposalCardInfo {
+export interface ProposalCardInfoType {
 	title: string;
 	des: string;
 	proposer: string;
@@ -11,4 +11,7 @@ export interface ProposalCardInfo {
 	voteNo: number;
 }
 
-export type HomeProposalCardInfo = Omit<ProposalCardInfo, 'proposer' | 'voteYes' | 'voteNo'>;
+export type HomeProposalCardInfoType = Omit<
+	ProposalCardInfoType,
+	'proposer' | 'voteYes' | 'voteNo'
+>;

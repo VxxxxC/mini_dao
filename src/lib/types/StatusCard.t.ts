@@ -1,6 +1,6 @@
 import type { Component } from 'svelte';
 
-export interface StatusCardInfo {
+export interface StatusCardInfoType {
 	icon: Component;
 	iconClass: string;
 	cardInfo: {
