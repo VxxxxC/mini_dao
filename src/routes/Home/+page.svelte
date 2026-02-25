@@ -3,10 +3,10 @@
 	import HomeStatusCard from '$lib/components/HomeStatusCard.svelte';
 	import HomeProposalCard from '$lib/components/HomeProposalCard.svelte';
 	import { Card } from 'flowbite-svelte';
-	import { CheckCircleOutline } from 'flowbite-svelte-icons';
 	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { statusCardInfo, proposalCardInfo } from '$lib/mock_data';
+	import { ArrowRightOutline } from 'flowbite-svelte-icons';
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -33,10 +33,18 @@
 			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center gap-y-5 p-4">
 				<div class="flex w-full flex-row justify-between">
 					<div>
-						<p class="text-xl font-bold">LEFT upper</p>
-						<p class="text-lg font-normal">LEFT lower</p>
+						<p class="text-xl font-bold">Active Proposals</p>
+						<p class="text-sm font-normal text-gray-600">View and participate in voting</p>
 					</div>
-					<div class="text-lg font-medium">RIGHT</div>
+					<div class="flex flex-col items-center">
+						<a
+							href="/proposals"
+							class="text-md flex flex-row items-center gap-x-1 rounded-lg px-3 py-1 font-medium text-web3-navbar-active-text hover:bg-web3-navbar-active-bg"
+						>
+							<p>View All</p>
+							<ArrowRightOutline size="sm" strokeWidth={2} />
+						</a>
+					</div>
 				</div>
 				<div class="w-full">
 					<HomeProposalCard {...proposalCardInfoProps} />
