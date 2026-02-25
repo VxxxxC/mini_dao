@@ -25,8 +25,8 @@
 	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
 </script>
 
-<div class="my-2 min-h-screen min-w-screen">
-	<div class="grid h-full w-full grid-rows-3 justify-center gap-y-2">
+<div class="relative top-40 my-2 min-h-screen min-w-screen">
+	<div class="grid h-full w-full justify-center gap-y-5">
 		<!-- NOTE: UPPER SECTION -->
 		<div class="flex flex-col items-center gap-y-5">
 			<p class="text-3xl font-black">Community Governance Platform</p>
