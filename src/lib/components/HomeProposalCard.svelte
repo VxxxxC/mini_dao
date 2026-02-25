@@ -28,7 +28,7 @@
 					<div>{new Intl.DateTimeFormat('en-US', options).format(prop.expire)}</div>
 				</div>
 				<div class="flex flex-col justify-between">
-					<ProposalStatus status={prop.status} />
+					<ProposalStatus status={prop.status} showIcon={false} />
 					<div>{prop.totalVotes}</div>
 				</div>
 			</div>
