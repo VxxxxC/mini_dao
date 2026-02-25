@@ -5,12 +5,23 @@
 	import { Card } from 'flowbite-svelte';
 	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import { statusCardInfo, proposalCardInfo } from '$lib/mock_data';
+	import { proposalCardInfo } from '$lib/mock_data';
 	import { ArrowRightOutline } from 'flowbite-svelte-icons';
+	import {
+		communityMemebers,
+		activeProposal,
+		passedProposal,
+		totalVotes
+	} from '$lib/stores/StatusCard';
 
 	let activeUrl = $derived(page.url.pathname);
 
-	const statusCardInfoProps: StatusCardInfoType[] = [statusCardInfo];
+	const statusCardInfoProps: StatusCardInfoType[] = [
+		communityMemebers,
+		activeProposal,
+		passedProposal,
+		totalVotes
+	];
 	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
 </script>
 
@@ -23,14 +34,14 @@
 				Participate in DAO decisions and shape the decentralized future
 			</p>
 
-			<div class={`w-[calc(70vw / ${statusCardInfoProps.length})] max-w-[70vw]`}>
+			<div class="min-w-[70vw]">
 				<HomeStatusCard {...statusCardInfoProps} />
 			</div>
 		</div>
 
 		<!-- NOTE: CENTER SECTION -->
 		<div class="w-full">
-			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center gap-y-5 p-4">
+			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center gap-y-5 p-8">
 				<div class="flex w-full flex-row justify-between">
 					<div>
 						<p class="text-xl font-bold">Active Proposals</p>
