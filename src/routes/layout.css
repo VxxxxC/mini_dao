@@ -16,7 +16,9 @@
   --color-web3-vote-yes: #10b981;
   --color-web3-bote-no: #ef4444;
   --color-web3-navbar-active-text: #8b2bf9;
-  --color-web3-navbar-active-bg: #f9f4ff;
+ --color-web3-navbar-active-bg: #f9f4ff;
+ --color-secondary: oklch(55.1% 0.027 264.364);
+ --color-subtle: oklch(44.6% 0.03 256.802);
 }
 
 html {
