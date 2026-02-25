@@ -18,7 +18,7 @@
 			size="xl"
 			shadow="sm"
 			horizontal={false}
-			class="hover:border-purple-00 h-full w-full items-start justify-between p-2 transition duration-200 ease-in-out"
+			class="h-full w-full items-start justify-between p-2 transition duration-200 ease-in-out hover:border-purple-400"
 		>
 			<div class="flex w-full flex-row justify-between">
 				<div class="flex flex-col items-start justify-between gap-y-5">
