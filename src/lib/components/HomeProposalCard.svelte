@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Card } from 'flowbite-svelte';
+	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
 
 	let props: HomeProposalCardInfoType[] = $props();
@@ -17,7 +18,7 @@
 			size="xl"
 			shadow="sm"
 			horizontal={false}
-			class="h-full w-full items-start justify-between p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
+			class="hover:border-purple-00 h-full w-full items-start justify-between p-2 transition duration-200 ease-in-out"
 		>
 			<div class="flex w-full flex-row justify-between">
 				<div class="flex flex-col justify-between">
@@ -27,7 +28,7 @@
 					<div>{new Intl.DateTimeFormat('en-US', options).format(prop.expire)}</div>
 				</div>
 				<div class="flex flex-col justify-between">
-					<div>{prop.status}</div>
+					<ProposalStatus status={prop.status} />
 					<div>{prop.totalVotes}</div>
 				</div>
 			</div>

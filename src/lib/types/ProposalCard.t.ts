@@ -4,7 +4,7 @@ export interface ProposalCardInfoType {
 	title: string;
 	des: string;
 	proposer: string;
-	status: string;
+	status: ProposalStatus;
 	expire: SvelteDate;
 	totalVotes: number;
 	voteYes: number;
@@ -15,3 +15,9 @@ export type HomeProposalCardInfoType = Omit<
 	ProposalCardInfoType,
 	'proposer' | 'voteYes' | 'voteNo'
 >;
+
+export enum ProposalStatus {
+	Active = 'Active',
+	Passed = 'Passed',
+	Rejected = 'Rejected'
+}
