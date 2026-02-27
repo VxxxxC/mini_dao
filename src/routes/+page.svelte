@@ -2,6 +2,4 @@
 	import Home from './home/+page.svelte';
 </script>
 
-<div>
-	<Home />
-</div>
+<Home />

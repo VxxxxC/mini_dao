@@ -11,7 +11,7 @@
 			size="md"
 			shadow="sm"
 			horizontal={true}
-			class="mx-2 flex w-56 flex-row flex-wrap items-start gap-x-4 p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
+			class="mx-5 flex w-48 flex-row items-start gap-x-4 py-1 text-nowrap transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
 		>
 			<div>
 				{#if prop.icon}

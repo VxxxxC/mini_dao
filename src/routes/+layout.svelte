@@ -12,6 +12,6 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 <!-- PERF: Root Layout -->
-<div class="relative top-32 mx-5">
+<div class="relative top-32 mx-5 md:mx-28">
 	{@render children?.()}
 </div>
