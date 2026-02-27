@@ -25,8 +25,8 @@
 	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
 </script>
 
-<div class="relative top-40 my-2 min-h-screen min-w-screen">
-	<div class="grid h-full w-full justify-center gap-y-5">
+<div class="relative top-32 my-2">
+	<div class="grid justify-center gap-y-5">
 		<!-- NOTE: UPPER SECTION -->
 		<div class="flex flex-col items-center gap-y-5">
 			<p class="text-3xl font-black">Community Governance Platform</p>
@@ -34,14 +34,14 @@
 				Participate in DAO decisions and shape the decentralized future
 			</p>
 
-			<div class="min-w-[70vw]">
+			<div class="min-w-full">
 				<HomeStatusCard {...statusCardInfoProps} />
 			</div>
 		</div>
 
 		<!-- NOTE: CENTER SECTION -->
 		<div class="w-full">
-			<Card size="xl" shadow="xs" horizontal={false} class="min-w-[70vw] items-center gap-y-5 p-8">
+			<Card size="xl" shadow="xs" horizontal={false} class="min-w-full items-center gap-y-5 p-8">
 				<div class="flex w-full flex-row justify-between">
 					<div>
 						<p class="text-xl font-bold">Active Proposals</p>

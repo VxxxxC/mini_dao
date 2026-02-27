@@ -43,21 +43,21 @@
 </script>
 
 <!-- PERF: Normal -->
-<div class="hidden min-h-14 grid-cols-3 items-center justify-center gap-x-3 md:grid">
+<div class="hidden min-h-14 grid-cols-5 items-center justify-center gap-x-3 md:grid">
 	<!-- NOTE: LEFT -->
-	<div class="flex flex-col items-start justify-center">
+	<div class="col-span-1 flex flex-col items-start justify-center">
 		<!-- <div class="min-h-5"><appkit-network-button></appkit-network-button></div> -->
 		<DarkMode size="sm" class="rounded-xl bg-stone-300" />
 	</div>
 
 	<!-- NOTE: CENTER -->
-	<div>
+	<div class="col-span-3 flex flex-row justify-center">
 		<Navbar fluid={false}>
 			<NavUl {activeUrl}>
-				<div class={`grid grid-cols-${nav.length} gap-x-2`}>
+				<div class={`flex flex-row justify-evenly gap-x-2`}>
 					{#each nav as { name, href } (href)}
 						<NavLi
-							class="text-md mx-1 rounded-lg text-center font-medium"
+							class="text-md mx-1 w-32 rounded-lg text-center font-medium"
 							activeClass="bg-web3-navbar-active-bg text-web3-navbar-active-text"
 							nonActiveClass="hover:bg-gray-50 text-gray-600"
 							{href}
@@ -71,7 +71,7 @@
 	</div>
 
 	<!-- NOTE: RIGHT -->
-	<div class="flex flex-row items-center justify-end-safe gap-x-2">
+	<div class="col-span-1 flex flex-row items-center justify-end-safe gap-x-2">
 		{#if status === 'connected'}
 			<div>
 				{#await fetchBalance()}

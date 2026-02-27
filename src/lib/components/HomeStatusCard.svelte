@@ -5,13 +5,13 @@
 	let props: StatusCardInfoType[] = $props();
 </script>
 
-<div class="grid grid-cols-1 items-start justify-center gap-4 md:grid-cols-2 lg:grid-cols-4">
+<div class="grid grid-cols-1 place-items-center gap-4 md:grid-cols-2 lg:grid-cols-4">
 	{#each props as prop, index}
 		<Card
 			size="md"
 			shadow="sm"
 			horizontal={true}
-			class="mx-2 flex flex-row flex-wrap items-start gap-x-4 p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
+			class="mx-2 flex w-56 flex-row flex-wrap items-start gap-x-4 p-2 transition duration-300 ease-in hover:border-indigo-300 hover:shadow-xl/30 hover:shadow-indigo-600/40"
 		>
 			<div>
 				{#if prop.icon}
