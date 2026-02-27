@@ -46,9 +46,11 @@
 		"vitest-browser-svelte": "^2.0.2"
 	},
 	"dependencies": {
+		"@flowbite-svelte-plugins/chart": "^0.2.4",
 		"@reown/appkit": "^1.8.17",
 		"@reown/appkit-adapter-wagmi": "^1.8.17",
 		"@wagmi/core": "^3.3.2",
+		"apexcharts": "^5.6.0",
 		"flowbite": "^4.0.1",
 		"flowbite-svelte": "^1.31.0",
 		"flowbite-svelte-icons": "^3.1.0",
