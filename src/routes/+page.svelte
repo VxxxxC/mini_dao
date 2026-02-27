@@ -2,6 +2,6 @@
 	import Home from './home/+page.svelte';
 </script>
 
-<div class="mx-5">
+<div>
 	<Home />
 </div>

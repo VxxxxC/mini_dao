@@ -25,7 +25,7 @@
 	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
 </script>
 
-<div class="relative top-32 my-2">
+<div>
 	<div class="grid justify-center gap-y-5">
 		<!-- NOTE: UPPER SECTION -->
 		<div class="flex flex-col items-center gap-y-5">
