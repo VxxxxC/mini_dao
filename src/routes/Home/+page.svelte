@@ -5,7 +5,7 @@
 	import { Card } from 'flowbite-svelte';
 	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import { proposalCardInfo } from '$lib/mock_data';
+	import { firstProposalCardInfo, secondProposalCardInfo } from '$lib/mock_data';
 	import { ArrowRightOutline } from 'flowbite-svelte-icons';
 	import {
 		communityMemebers,
@@ -22,7 +22,10 @@
 		passedProposal,
 		totalVotes
 	];
-	const proposalCardInfoProps: HomeProposalCardInfoType[] = [proposalCardInfo];
+	const proposalCardInfoProps: HomeProposalCardInfoType[] = [
+		firstProposalCardInfo,
+		secondProposalCardInfo
+	];
 </script>
 
 <div class="grid justify-center gap-y-5">

@@ -1,9 +1,12 @@
 <script lang="ts">
 	import ProposalCard from '$lib/components/ProposalCard.svelte';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import { proposalCardInfo } from '$lib/mock_data';
+	import { firstProposalCardInfo, secondProposalCardInfo } from '$lib/mock_data';
 
-	const proposalCardInfoProps: ProposalCardInfoType[] = [proposalCardInfo];
+	const proposalCardInfoProps: ProposalCardInfoType[] = [
+		firstProposalCardInfo,
+		secondProposalCardInfo
+	];
 </script>
 
 <div class="grid space-y-5">

@@ -12,8 +12,8 @@
 	};
 </script>
 
-<div>
-	{#each props as prop, index}
+<div class="flew flex-col items-center space-y-5">
+	{#each props as prop, index (index)}
 		<Card
 			size="xl"
 			shadow="sm"
