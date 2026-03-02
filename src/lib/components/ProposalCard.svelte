@@ -3,8 +3,11 @@
 	import { Card } from 'flowbite-svelte';
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
+	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 
 	let props: ProposalCardInfoType[] = $props();
+
+	let connectStatus: string = $derived(walletStatus.status);
 
 	const options = {
 		year: 'numeric',
@@ -19,7 +22,7 @@
 			size="xl"
 			shadow="sm"
 			horizontal={false}
-			class="h-full w-full items-start justify-between p-8 transition duration-200 ease-in-out hover:border-purple-400"
+			class="h-full w-full items-start justify-between space-y-5 p-8 transition duration-200 ease-in-out hover:border-purple-400"
 		>
 			<div class="flex w-full flex-col items-center">
 				<div class="flex w-full flex-row items-center justify-between">
@@ -46,16 +49,25 @@
 					<div class="text-xs font-normal text-secondary">{prop.totalVotes} votes</div>
 				</div>
 			</div>
-			<div class="flex h-12 w-full flex-row justify-between space-x-2">
+			<div class="flex w-full flex-row items-center justify-between space-x-2">
 				<button
-					class="w-full rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100"
-					>Vote Yes</button
+					class={[
+						'h-12 w-full rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
+						connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+					]}>Vote Yes</button
 				>
 				<button
-					class="w-full rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
-					>Vote No</button
+					class={[
+						'h-12 w-full rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
+						connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+					]}>Vote No</button
 				>
 			</div>
+			{#if connectStatus !== 'connected'}
+				<p class="flex w-full flex-row justify-center text-sm font-normal text-secondary">
+					Please connect your wallet to vote
+				</p>
+			{/if}
 		</Card>
 	{/each}
 </div>
