@@ -9,7 +9,7 @@
 	];
 </script>
 
-<div class="grid space-y-5">
+<div class="grid w-full space-y-5">
 	<div class="flex flex-col items-start space-y-5">
 		<p class="text-3xl font-bold text-gray-900">Proposals</p>
 		<p class="text-sm font-normal text-gray-500">
