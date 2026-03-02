@@ -97,6 +97,7 @@
 
 <!-- PERF: Mobile -->
 <div class="relative z-0 my-2 flex justify-between lg:hidden">
+	<!-- BUG: There are issue of wallet modal open, but dropdown menu is still overlay -->
 	<DarkMode size="sm" class="rounded-xl bg-stone-300" />
 	<Button size="sm" color="alternative">
 		<BarsOutline />
