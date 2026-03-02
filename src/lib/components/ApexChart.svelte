@@ -40,7 +40,7 @@
 		},
 
 		stroke: {
-			width: 1,
+			width: 0.5,
 			colors: ['#fff']
 		},
 
