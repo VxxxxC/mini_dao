@@ -17,7 +17,11 @@ if (browser) {
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
 		networks: [mainnet, sepolia],
-		projectId: projectId as string
+		projectId: projectId as string,
+
+		themeVariables: {
+			'--apkt-z-index': 9999
+		}
 	});
 }
 

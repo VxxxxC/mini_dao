@@ -43,15 +43,15 @@
 </script>
 
 <!-- PERF: Normal -->
-<div class="hidden min-h-14 grid-cols-5 items-center justify-center gap-x-3 md:grid">
+<div class="relative hidden min-h-14 w-full flex-row items-center justify-between gap-x-3 lg:flex">
 	<!-- NOTE: LEFT -->
-	<div class="col-span-1 flex flex-col items-start justify-center">
+	<div class="flex flex-col items-start justify-center">
 		<!-- <div class="min-h-5"><appkit-network-button></appkit-network-button></div> -->
 		<DarkMode size="sm" class="rounded-xl bg-stone-300" />
 	</div>
 
 	<!-- NOTE: CENTER -->
-	<div class="col-span-3 flex flex-row justify-center">
+	<div class="flex flex-row justify-center">
 		<Navbar fluid={false}>
 			<NavUl {activeUrl}>
 				<div class={`flex flex-row justify-evenly gap-x-2`}>
@@ -71,7 +71,7 @@
 	</div>
 
 	<!-- NOTE: RIGHT -->
-	<div class="col-span-1 flex flex-row items-center justify-end-safe gap-x-2">
+	<div class="flex flex-row items-center justify-end-safe gap-x-2">
 		{#if status === 'connected'}
 			<div>
 				{#await fetchBalance()}
@@ -96,20 +96,22 @@
 </div>
 
 <!-- PERF: Mobile -->
-<div class="my-2 flex justify-between md:hidden">
+<div class="relative z-0 my-2 flex justify-between lg:hidden">
 	<DarkMode size="sm" class="rounded-xl bg-stone-300" />
-	<Button color="alternative">
+	<Button size="sm" color="alternative">
 		<BarsOutline />
-		<Dropdown {activeUrl} placement="bottom" class="w-full">
-			{#each nav as { name, href } (href)}
-				<DropdownItem
-					class="text-md mx-1 rounded-lg font-medium"
-					activeClass="bg-web3-navbar-active-bg text-web3-navbar-active-text"
-					{href}
-				>
-					{name}
-				</DropdownItem>
-			{/each}
+		<Dropdown {activeUrl} placement="bottom" class="flex min-h-1/4 w-full flex-col justify-between">
+			<div>
+				{#each nav as { name, href } (href)}
+					<DropdownItem
+						class="text-md mx-1 flex h-12 flex-row items-center justify-center rounded-lg font-medium"
+						activeClass="flex flex-row justify-center items-center h-12 bg-web3-navbar-active-bg text-web3-navbar-active-text"
+						{href}
+					>
+						<p>{name}</p>
+					</DropdownItem>
+				{/each}
+			</div>
 			<div class="my-2 flex flex-row items-center justify-center gap-x-2">
 				{#if status === 'connected'}
 					<div>
