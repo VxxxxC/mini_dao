@@ -2,15 +2,12 @@
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
-	import { CreateProposalValidation } from '$lib/utils/validations';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let popupModal: boolean = $state(false);
 
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
-
-	let createValidated: boolean = $derived(false);
 
 	function submitProposal(event: Event) {
 		event.preventDefault();
@@ -106,7 +103,10 @@
 								disabled={submitButtonUnable() !== true}
 								type="button"
 								onclick={() => (popupModal = true)}
-								class="h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+								class={[
+									'h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 transition duration-500 ease-in-out hover:border-red-300 hover:bg-pink-50',
+									submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
+								]}
 							>
 								Cancel</button
 							>
@@ -114,7 +114,7 @@
 								type="submit"
 								disabled={submitButtonUnable() !== true}
 								class={[
-									'h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white hover:from-indigo-600 hover:to-purple-600',
+									'h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white transition duration-500 ease-in-out hover:from-indigo-600 hover:to-purple-600',
 									submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
 								]}>Submit Proposal</button
 							>
