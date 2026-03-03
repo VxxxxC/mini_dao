@@ -2,6 +2,7 @@
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
+	import { CreateProposalValidation } from '$lib/utils/validations';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let popupModal: boolean = $state(false);
@@ -9,13 +10,21 @@
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
 
+	let createValidated: boolean = $derived(false);
+
 	function submitProposal(event: Event) {
 		event.preventDefault();
+	}
 
-		console.log({
-			title: proposalTitle,
-			description: proposalDescription
-		});
+	function submitButtonUnable(): boolean {
+		if (connectStatus == 'connected') {
+			if (proposalTitle.trim().length >= 5 && proposalDescription.trim().length >= 20) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	function cancelSubmit() {
@@ -74,6 +83,9 @@
 								placeholder="Enter proposal description"
 								bind:value={proposalDescription}
 							/>
+							<p class="text-xs font-medium text-web3-danger">
+								* Recommended minimum 20 words with clear proposal details
+							</p>
 						</div>
 
 						<div
@@ -91,6 +103,7 @@
 						</div>
 						<div class="flex flex-row items-center space-x-5">
 							<button
+								disabled={submitButtonUnable() !== true}
 								type="button"
 								onclick={() => (popupModal = true)}
 								class="h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
@@ -99,10 +112,10 @@
 							>
 							<button
 								type="submit"
-								disabled={connectStatus !== 'connected'}
+								disabled={submitButtonUnable() !== true}
 								class={[
 									'h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white hover:from-indigo-600 hover:to-purple-600',
-									connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30 ' : ''
+									submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
 								]}>Submit Proposal</button
 							>
 						</div>
