@@ -67,6 +67,11 @@
 								bind:value={proposalTitle}
 								required
 							/>
+							{#if proposalTitle.trim().length < 5}
+								<p class="text-xs font-medium text-web3-danger">
+									* Recommended minimum 5 words with proposal title
+								</p>
+							{/if}
 						</div>
 						<div class="flex flex-col space-y-1">
 							<Label for="description" class="text-sm font-medium text-gray-700"
@@ -79,10 +84,12 @@
 								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 sm:text-sm"
 								placeholder="Enter proposal description"
 								bind:value={proposalDescription}
-							/>
-							<p class="text-xs font-medium text-web3-danger">
-								* Recommended minimum 20 words with clear proposal details
-							</p>
+							></textarea>
+							{#if proposalDescription.trim().length < 20}
+								<p class="text-xs font-medium text-web3-danger">
+									* Recommended minimum 20 words with proposal details
+								</p>
+							{/if}
 						</div>
 
 						<div
