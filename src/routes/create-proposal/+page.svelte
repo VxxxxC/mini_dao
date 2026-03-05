@@ -14,8 +14,32 @@
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
 
-	function submitProposal(event: Event) {
+	// NOTE: POST request , send proposal
+	async function submitProposal(event: Event) {
 		event.preventDefault();
+
+		const response = await fetch('/api/upload_proposal', {
+			method: 'POST',
+			body: JSON.stringify({ proposalTitle, proposalDescription }),
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+
+		const result = await response.json();
+		console.log({ result });
+	}
+
+	// NOTE: GET request, get proposals list
+	async function getProposalList() {
+		const response = await fetch('/api/upload_proposal', {
+			method: 'GET',
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+		const result = await response.json();
+		console.log({ result });
 	}
 
 	function submitButtonUnable(): boolean {
@@ -60,7 +84,7 @@
 
 			<div>
 				<Card size="xl" shadow="md" horizontal={false} class="h-full w-full space-y-5 p-8">
-					<form onsubmit={submitProposal} class="flex flex-col space-y-5">
+					<form onsubmit={getProposalList} class="flex flex-col space-y-5">
 						<div class="flex flex-col space-y-1">
 							<Label for="title" class="text-sm font-medium text-gray-700">Proposal Title</Label>
 							<input
