@@ -1,7 +1,12 @@
-<script lang="ts">
+<script module lang="ts">
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
+
+	export type proposalSumbitType = {
+		title: string;
+		description: string;
+	};
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let popupModal: boolean = $state(false);

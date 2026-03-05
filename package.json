@@ -46,6 +46,7 @@
 		"vitest-browser-svelte": "^2.0.2"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1002.0",
 		"@flowbite-svelte-plugins/chart": "^0.2.4",
 		"@reown/appkit": "^1.8.17",
 		"@reown/appkit-adapter-wagmi": "^1.8.17",
