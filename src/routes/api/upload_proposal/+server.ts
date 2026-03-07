@@ -20,6 +20,24 @@ export const POST: RequestHandler = async ({ request }: { request: Request }) =>
 			ContentType: 'application/json'
 		});
 
+		// IMPORTANT: Below code is extract IPFS CID from response header after upload data to filebase
+		command.middlewareStack.add(
+			(next) => async (args) => {
+				// Check if request is incoming as middleware works both ways
+				const response = await next(args);
+				if (!response.response.statusCode) return response;
+
+				// Get cid from headers
+				const cid = response.response.headers['x-amz-meta-cid'];
+				console.log(cid);
+				return response;
+			},
+			{
+				step: 'build',
+				name: 'addCidToOutput'
+			}
+		);
+
 		const response = await s3.send(command);
 
 		return json({ response: response, success: true, fileName });

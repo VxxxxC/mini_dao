@@ -32,7 +32,7 @@
 
 	// NOTE: GET request, get proposals list
 	async function getProposalList() {
-		const response = await fetch('/api/upload_proposal', {
+		const response = await fetch('/api/get_proposals_list', {
 			method: 'GET',
 			headers: {
 				'content-type': 'application/json'
@@ -84,7 +84,7 @@
 
 			<div>
 				<Card size="xl" shadow="md" horizontal={false} class="h-full w-full space-y-5 p-8">
-					<form onsubmit={getProposalList} class="flex flex-col space-y-5">
+					<form onsubmit={submitProposal} class="flex flex-col space-y-5">
 						<div class="flex flex-col space-y-1">
 							<Label for="title" class="text-sm font-medium text-gray-700">Proposal Title</Label>
 							<input
