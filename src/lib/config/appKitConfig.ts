@@ -7,6 +7,7 @@ import { appKitProjectId as projectId } from '$lib/config/dotenv';
 
 let appKit: ReturnType<typeof createAppKit> | undefined = undefined;
 
+// NOTE: wagmi config initialized here with reown Appkit
 const wagmiAdapter = new WagmiAdapter({
 	networks: [mainnet, sepolia],
 	projectId: projectId as string
