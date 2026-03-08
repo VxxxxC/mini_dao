@@ -2,25 +2,27 @@
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
-
-	export type proposalSumbitType = {
-		title: string;
-		description: string;
-	};
+	import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
 
 	let connectStatus: string = $derived(walletStatus.status);
+	let walletAddress: string = $derived(walletStatus.address);
+
 	let popupModal: boolean = $state(false);
 
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
 
-	// NOTE: POST request , send proposal
+	// NOTE: send POST request to upload_proposal/+server.ts , and return API response
 	async function submitProposal(event: Event) {
 		event.preventDefault();
 
 		const response = await fetch('/api/upload_proposal', {
 			method: 'POST',
-			body: JSON.stringify({ proposalTitle, proposalDescription }),
+			body: JSON.stringify({
+				proposalTitle,
+				proposalDescription,
+				proposerAddress: walletAddress
+			} as CreateProposalRequest),
 			headers: {
 				'content-type': 'application/json'
 			}

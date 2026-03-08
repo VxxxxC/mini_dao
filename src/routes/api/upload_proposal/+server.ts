@@ -4,14 +4,29 @@ import { json } from '@sveltejs/kit';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { FILEBASE_BUCKET_NAME } from '$env/static/private';
 import { s3 } from '$lib/config/filebase_s3_client';
+import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
+import { publicClient } from '$lib/config/viem/client';
+import { parseEther } from 'viem/utils';
+
+const minimumGasfee = parseEther('0.001'); // Set minimum gas fee to 0.001 ETH
 
 export const POST: RequestHandler = async ({ request }: { request: Request }) => {
 	try {
-		const data = await request.json(); // NOTE: from frontend proposal data
+		// NOTE: from frontend proposal data
+		const data: CreateProposalRequest = await request.json();
+
+		const balance = await publicClient.getBalance({
+			address: `0x${data.proposerAddress.slice(2)}`
+		});
+		console.log('Proposer Balance:', balance);
+
+		if (balance < minimumGasfee) {
+			return json({ success: false, error: 'Insufficient balance' }, { status: 400 });
+		}
 
 		const bodyString = JSON.stringify(data);
 
-		const fileName = `proposal-${Date.now()}.json`;
+		const fileName = `[Proposal]-${data.proposalTitle}`;
 
 		const command = new PutObjectCommand({
 			Bucket: FILEBASE_BUCKET_NAME,
