@@ -24,6 +24,7 @@
 		}
 
 		const timestamp = new Date(Date.now()).toString(); // format timestamp for better readability and consistency in signature verification
+
 		const messageToSign = `Create proposal [${proposalTitle}] at ${timestamp}`;
 
 		// NOTE: sign message with wallet
