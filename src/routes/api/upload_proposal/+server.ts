@@ -15,6 +15,8 @@ export const POST: RequestHandler = async ({ request }: { request: Request }) =>
 		// NOTE: from frontend proposal data
 		const data: CreateProposalRequest = await request.json();
 
+		console.log({data})
+
 		const balance = await publicClient.getBalance({
 			address: `0x${data.proposerAddress.slice(2)}`
 		});

@@ -3,6 +3,8 @@
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
+	import { signMessage } from '@wagmi/core';
+	import { wagmiConfig } from '$lib/config/appKitConfig';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let walletAddress: string = $derived(walletStatus.address);
@@ -16,20 +18,41 @@
 	async function submitProposal(event: Event) {
 		event.preventDefault();
 
-		const response = await fetch('/api/upload_proposal', {
-			method: 'POST',
-			body: JSON.stringify({
-				proposalTitle,
-				proposalDescription,
-				proposerAddress: walletAddress
-			} as CreateProposalRequest),
-			headers: {
-				'content-type': 'application/json'
-			}
+		if (!walletStatus.address && walletStatus.status !== 'connected') {
+			alert('Please connect your wallet to submit a proposal.');
+			return;
+		}
+
+		const timestamp = new Date(Date.now()).toString(); // format timestamp for better readability and consistency in signature verification
+		const messageToSign = `Create proposal [${proposalTitle}] at ${timestamp}`;
+
+		// NOTE: sign message with wallet
+		const signature = await signMessage(wagmiConfig, {
+			message: messageToSign
 		});
 
-		const result = await response.json();
-		console.log({ result });
+		try {
+			const response = await fetch('/api/upload_proposal', {
+				method: 'POST',
+				body: JSON.stringify({
+					proposalTitle,
+					proposalDescription,
+					proposerAddress: walletAddress,
+					messageToSign,
+					signature,
+					timestamp
+				} as CreateProposalRequest),
+				headers: {
+					'content-type': 'application/json'
+				}
+			});
+
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.error);
+			console.log({ result });
+		} catch (error) {
+			console.error('Error submitting proposal:', error);
+		}
 	}
 
 	// NOTE: GET request, get proposals list
@@ -46,11 +69,8 @@
 
 	function submitButtonUnable(): boolean {
 		if (connectStatus == 'connected') {
-			if (proposalTitle.trim().length >= 5 && proposalDescription.trim().length >= 20) {
-				return true;
-			} else {
-				return false;
-			}
+			if (proposalTitle.trim().length >= 5 && proposalDescription.trim().length >= 20) return true;
+			else return false;
 		}
 		return false;
 	}
