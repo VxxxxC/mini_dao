@@ -10,21 +10,25 @@ import {HelperConfig} from './HelperConfig.s.sol';
 
 contract DeployDao is Script {
 	function run() external {
-		// PERFORMANCE: deployDao() should run at here for normal deployment, but now comment out for testing purpose
-		// address deployer = msg.sender;
+		// TEST: deployDao() should run at here for normal deployment, but now comment out for testing purpose
 		// deployDao();
 	}
 
-	function deployDao() internal {
+	function deployDao() public {
 		HelperConfig helperConfig = new HelperConfig();
 
-		(address deployer, uint256 minDelay, address[] memory proposers, address[] memory executors) = helperConfig.getConfig();
+		(
+			address deployer,
+			uint256 minDelay,
+			address[] memory proposers,
+			address[] memory executors
+		) = helperConfig.getConfig();
 
 		vm.startBroadcast(deployer);
 
 		// NOTE: Deploy token -> timelock -> governance
 
-		MiniDaoToken token = new MiniDaoToken(deployer);
+		MiniDaoToken token = new MiniDaoToken();
 		console.log('token deployed to:', address(token));
 
 		TimeLock timelock = new TimeLock(minDelay, proposers, executors, deployer);

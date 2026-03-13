@@ -9,15 +9,15 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
-contract MiniDaoToken is ERC20, Ownable, ERC20Permit, ERC20Votes {
+contract MiniDaoToken is ERC20, ERC20Permit, ERC20Votes {
 
     uint256 public constant INITIAL_SUPPLY = 1000000 * 10 ** 18;
 
-    constructor(address initialOwner) ERC20("Mini Dao", "MDAO") Ownable(initialOwner) ERC20Permit("MiniDaoToken") {
-        mint(msg.sender, INITIAL_SUPPLY);
+    constructor() ERC20("Mini Dao", "MDAO") ERC20Permit("MiniDaoToken") {
+        // mint(msg.sender, INITIAL_SUPPLY);
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
 
