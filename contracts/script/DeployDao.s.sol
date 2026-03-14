@@ -10,8 +10,7 @@ import {HelperConfig} from './HelperConfig.s.sol';
 
 contract DeployDao is Script {
 	function run() external {
-		// TEST: deployDao() should run at here for normal deployment, but now comment out for testing purpose
-		// deployDao();
+		deployDao();
 	}
 
 	function deployDao() public {
@@ -32,10 +31,20 @@ contract DeployDao is Script {
 		console.log('token deployed to:', address(token));
 
 		TimeLock timelock = new TimeLock(minDelay, proposers, executors, deployer);
-		console.log('timelock deployed to:', address(timelock));
+		console.log('timelock deployed to:', address(timelock)); 
+
 
 		Governance governance = new Governance(token, timelock);
 		console.log('governance deployed to:', address(governance));
+		
+		// Grant roles to the governance contract
+        timelock.grantRole(timelock.PROPOSER_ROLE(), address(governance));
+        timelock.grantRole(timelock.CANCELLER_ROLE(), address(governance));
+
+        timelock.grantRole(timelock.EXECUTOR_ROLE(), address(0));
+
+        // Revoke the timelock ownership from the deployer
+        timelock.revokeRole(timelock.DEFAULT_ADMIN_ROLE(), deployer);
 
 		vm.stopBroadcast();
 	}
