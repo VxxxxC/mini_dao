@@ -4,15 +4,15 @@ pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
 import {MiniDaoToken} from "../src/MiniDaoToken.sol";
-import {Governance} from "../src/Governance.sol";
-import {TimeLock} from "../src/TimeLock.sol";
-import {VoteBox} from "../src/VoteBox.sol";
+import {MiniDaoGovernance} from "../src/MiniDaoGovernance.sol";
+import {MiniDaoTimeLock} from "../src/MiniDaoTimeLock.sol";
+import {MiniDaoVoteBox} from "../src/MiniDaoVoteBox.sol";
 
 contract MiniDaoTest is Test {
     MiniDaoToken token;
-    TimeLock timelock;
-    Governance governance;
-    VoteBox voteBox;
+    MiniDaoTimeLock timelock;
+    MiniDaoGovernance governance;
+    MiniDaoVoteBox voteBox;
     uint256 s_minDelay = 1 hours;
     address[] s_proposers = new address[](0);
     address[] s_executors = new address[](0);
@@ -33,8 +33,8 @@ contract MiniDaoTest is Test {
         vm.startPrank(USER);
         token.delegate(USER);
 
-        timelock = new TimeLock(s_minDelay, s_proposers, s_executors, USER);
-        governance = new Governance(token, timelock);
+        timelock = new MiniDaoTimeLock(s_minDelay, s_proposers, s_executors, USER);
+        governance = new MiniDaoGovernance(token, timelock);
 
         // 2. Grant roles to the governance contract
         timelock.grantRole(timelock.PROPOSER_ROLE(), address(governance));
@@ -47,7 +47,7 @@ contract MiniDaoTest is Test {
         timelock.revokeRole(timelock.DEFAULT_ADMIN_ROLE(), USER);
         vm.stopPrank();
 
-        voteBox = new VoteBox();
+        voteBox = new MiniDaoVoteBox();
         voteBox.transferOwnership(address(timelock));
     }
 

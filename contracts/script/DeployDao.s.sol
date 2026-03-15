@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 
 import {Script, console} from 'forge-std/Script.sol';
 import {MiniDaoToken} from '../src/MiniDaoToken.sol';
-import {Governance} from '../src/Governance.sol';
-import {TimeLock} from '../src/TimeLock.sol';
+import {MiniDaoGovernance} from '../src/MiniDaoGovernance.sol';
+import {MiniDaoTimeLock} from '../src/MiniDaoTimeLock.sol';
 import {HelperConfig} from './HelperConfig.s.sol';
 
 contract DeployDao is Script {
@@ -30,11 +30,11 @@ contract DeployDao is Script {
 		MiniDaoToken token = new MiniDaoToken();
 		console.log('token deployed to:', address(token));
 
-		TimeLock timelock = new TimeLock(minDelay, proposers, executors, deployer);
+		MiniDaoTimeLock timelock = new MiniDaoTimeLock(minDelay, proposers, executors, deployer);
 		console.log('timelock deployed to:', address(timelock)); 
 
 
-		Governance governance = new Governance(token, timelock);
+		MiniDaoGovernance governance = new MiniDaoGovernance(token, timelock);
 		console.log('governance deployed to:', address(governance));
 		
 		// Grant roles to the governance contract
