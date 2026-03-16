@@ -7,6 +7,7 @@ import {MiniDaoToken} from "../src/MiniDaoToken.sol";
 import {MiniDaoGovernance} from "../src/MiniDaoGovernance.sol";
 import {MiniDaoTimeLock} from "../src/MiniDaoTimeLock.sol";
 import {MiniDaoVoteBox} from "../src/MiniDaoVoteBox.sol";
+import {MiniDaoFaucet} from "../src/MiniDaoFaucet.sol";
 
 contract MiniDaoTest is Test {
     MiniDaoToken token;
@@ -17,6 +18,7 @@ contract MiniDaoTest is Test {
     address[] s_proposers = new address[](0);
     address[] s_executors = new address[](0);
 
+    address public DEPLOYER = makeAddr("DEPLOYER");
     address public USER = makeAddr("USER");
     uint256 public constant INITIAL_SUPPLY = 100 ether;
 
@@ -26,14 +28,25 @@ contract MiniDaoTest is Test {
 
     // NOTE: setUp() will initialize and deploy the contracts
     function setUp() public {
-        // 1. Deploy token, timelock and governance contracts
-        token = new MiniDaoToken();
-        token.mint(USER, INITIAL_SUPPLY);
 
+        // 1. Deploy token, timelock and governance contracts
+        timelock = new MiniDaoTimeLock(s_minDelay, s_proposers, s_executors, USER);
+
+        token = new MiniDaoToken(DEPLOYER, address(timelock));
+
+        MiniDaoFaucet faucet = new MiniDaoFaucet(address(token));
+
+        vm.startPrank(DEPLOYER);
+        uint256 deployerBalance = token.balanceOf(DEPLOYER);
+        token.transfer(address(faucet), deployerBalance);
+        console.log('Faucet funded with tokens:', deployerBalance);
+        vm.stopPrank();
+        
         vm.startPrank(USER);
+        
+        faucet.claim(USER);
         token.delegate(USER);
 
-        timelock = new MiniDaoTimeLock(s_minDelay, s_proposers, s_executors, USER);
         governance = new MiniDaoGovernance(token, timelock);
 
         // 2. Grant roles to the governance contract
@@ -49,6 +62,7 @@ contract MiniDaoTest is Test {
 
         voteBox = new MiniDaoVoteBox();
         voteBox.transferOwnership(address(timelock));
+        vm.stopPrank();
     }
 
     function testCannotUpdateVoteBoxWithoutGovernance() public {

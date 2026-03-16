@@ -10,15 +10,22 @@ import {ERC20Votes} from '@openzeppelin/contracts/token/ERC20/extensions/ERC20Vo
 import {Nonces} from '@openzeppelin/contracts/utils/Nonces.sol';
 
 contract MiniDaoToken is ERC20, ERC20Permit, ERC20Votes {
-	uint256 public constant INITIAL_SUPPLY = 1000000 * 10 ** 18;
+	error InvalidAddress();
+	uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10 ** 18; // Total supply MiniDaoToken is 1 billion tokens, with 18 decimals
 
-	constructor() ERC20('Mini Dao', 'MDAO') ERC20Permit('MiniDaoToken') {
-		// mint(msg.sender, INITIAL_SUPPLY);
+	constructor(address initialDistributor, address treasury) ERC20('Mini Dao', 'MDAO') ERC20Permit('MiniDaoToken') {
+
+		if (treasury == address(0) || initialDistributor == address(0)) {
+			revert InvalidAddress();
+		}
+
+        uint256 initialCirculation = (TOTAL_SUPPLY * 30) / 100;
+        _mint(initialDistributor, initialCirculation);
+
+        uint256 treasuryAllocation = TOTAL_SUPPLY - initialCirculation;
+        _mint(treasury, treasuryAllocation);
 	}
 
-	function mint(address to, uint256 amount) public {
-		_mint(to, amount);
-	}
 
 	// WARN: The following functions are overrides required by Solidity.
 	function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Votes) {
