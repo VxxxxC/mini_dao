@@ -17,18 +17,18 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
         // IMPORTANT: Check if the signature is expired (older than 5 minutes)
         if (Date.now() - Date.parse(data.timestamp) > FIVE_MINUTES_TIMEOUT) {
             return json(
-                { success: false, error: 'Signature expired, Please sign again!' },
+                { success: false, error: '❌ Signature expired, Please sign again!' },
                 { status: 400 }
             );
         }
-        console.log('Signature within validity period...');
+        console.log('✅ Signature within validity period');
 
         // IMPORTANT: Verify the signature to ensure the request is authentic
         const expectedMessage = `Create proposal [${data.proposalTitle}] at ${data.timestamp}`;
         if (data.messageToSign !== expectedMessage) {
-            return json({ success: false, error: 'Signed message mismatch!' }, { status: 400 });
+            return json({ success: false, error: '❌ Signed message mismatch!' }, { status: 400 });
         }
-        console.log('\nMessage to sign matches expected format...');
+        console.log('✅ Message to sign matches expected format');
 
         const isValidSignature = verifyMessage({
             address: `0x${data.proposerAddress.slice(2)}`,
@@ -36,18 +36,18 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
             signature: `0x${data.signature.slice(2)}`
         });
         if (!isValidSignature) {
-            return json({ success: false, error: 'Invalid signature!' }, { status: 400 });
+            return json({ success: false, error: '❌ Invalid signature!' }, { status: 400 });
         }
-        console.log('\nSignature is valid...');
+        console.log('✅ Signature is valid');
 
         // Check if the proposer has enough balance to cover gas fees
         const balance = await publicClient.getBalance({
             address: `0x${data.proposerAddress.slice(2)}`
         });
         if (balance < minimumGasfee) {
-            return json({ success: false, error: 'Insufficient balance' }, { status: 400 });
+            return json({ success: false, error: '❌ Insufficient balance' }, { status: 400 });
         }
-        console.log('\nProposer has sufficient balance for gas fees...');
+        console.log('✅ Proposer has sufficient balance for gas fees');
 
         const proposalDataForIPFS: ProposalToIPFS = {
             proposalTitle: data.proposalTitle,
@@ -90,14 +90,15 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
             }
         );
 
-        console.log('\nVerification OK ! uploading file to Filebase S3...');
+        console.log('\n✅ Verification OK ! uploading file to Filebase S3...');
 
         const response = await s3.send(command);
 
-        console.log('\nUpload completed!!');
+        console.log('\n✅ Upload completed!!');
 
         return { response, ipfsCid };
+        
     } catch (error) {
-        console.error('Filebase Upload Error:', error);
+        console.error('❌ Filebase Upload Error:', error);
     }
 }
