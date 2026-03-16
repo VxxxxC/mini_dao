@@ -12,7 +12,9 @@ export const POST: RequestHandler = async ({ request }: { request: Request }) =>
 		const data: CreateProposalRequest = await request.json();
 
 		const upload_to_ipfs_result = await uploadToIPFS(data);
-		console.log( upload_to_ipfs_result );
+		const { response , ipfsCid } = upload_to_ipfs_result;
+
+		
 
 		return json({ success: true }, { status: 200 });
 	} catch (error) {
