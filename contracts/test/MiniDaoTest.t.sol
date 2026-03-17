@@ -14,6 +14,7 @@ contract MiniDaoTest is Test {
     MiniDaoTimeLock timelock;
     MiniDaoGovernance governance;
     MiniDaoVoteBox voteBox;
+    MiniDaoFaucet faucet;
     uint256 s_minDelay = 1 hours;
     address[] s_proposers = new address[](0);
     address[] s_executors = new address[](0);
@@ -34,17 +35,17 @@ contract MiniDaoTest is Test {
 
         token = new MiniDaoToken(DEPLOYER, address(timelock));
 
-        MiniDaoFaucet faucet = new MiniDaoFaucet(address(token));
+        faucet = new MiniDaoFaucet(address(token));
 
         vm.startPrank(DEPLOYER);
         uint256 deployerBalance = token.balanceOf(DEPLOYER);
         token.transfer(address(faucet), deployerBalance);
-        console.log('Faucet funded with tokens:', deployerBalance);
         vm.stopPrank();
         
         vm.startPrank(USER);
         
         faucet.claim(USER);
+
         token.delegate(USER);
 
         governance = new MiniDaoGovernance(token, timelock);
@@ -63,6 +64,14 @@ contract MiniDaoTest is Test {
         voteBox = new MiniDaoVoteBox();
         voteBox.transferOwnership(address(timelock));
         vm.stopPrank();
+    }
+
+    function testDeployerTransferedTokenToFaucet() public view {
+        uint256 deployerBalance = token.balanceOf(DEPLOYER);
+        uint256 faucetBalance = token.balanceOf(address(faucet));
+        uint256 expectedFaucetBalance = (token.TOTAL_SUPPLY() * 30) / 100 - MiniDaoFaucet(address(faucet)).FAUCET_AMOUNT(); // TEST: Because 'USER' claimed, so also need to minus the claimed amount
+        assertEq(deployerBalance, 0);
+        assertEq(faucetBalance, expectedFaucetBalance);
     }
 
     function testCannotUpdateVoteBoxWithoutGovernance() public {
