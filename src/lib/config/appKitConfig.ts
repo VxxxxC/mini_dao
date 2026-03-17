@@ -1,6 +1,6 @@
 import { createAppKit } from '@reown/appkit';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { localhost, mainnet, sepolia } from '@reown/appkit/networks';
+import { mainnet, sepolia, anvil } from '@reown/appkit/networks';
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { appKitProjectId as projectId } from '$lib/config/dotenv';
@@ -9,7 +9,7 @@ let appKit: ReturnType<typeof createAppKit> | undefined = undefined;
 
 // NOTE: wagmi config initialized here with reown Appkit
 const wagmiAdapter = new WagmiAdapter({
-	networks: [mainnet, sepolia, localhost],
+	networks: [anvil], // WARN: switch back to mainnet or sepolia for production
 	projectId: projectId as string
 });
 
@@ -17,7 +17,7 @@ if (browser) {
 	// Initialize AppKit only in browser environment
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
-		networks: [mainnet, sepolia, localhost],
+		networks: [anvil], // WARN: switch back to mainnet or sepolia for production
 		projectId: projectId as string,
 
 		themeVariables: {

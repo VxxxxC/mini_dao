@@ -7,7 +7,7 @@ export const walletStatus = $state({
 });
 
 // NOTE: wagmi EventListener for wallet connection
-const walletListener = watchConnection(wagmiConfig, {
+watchConnection(wagmiConfig, {
 	onChange(account) {
 		walletStatus.address = account.address ?? 'Not connected';
 		walletStatus.status = account.status;
