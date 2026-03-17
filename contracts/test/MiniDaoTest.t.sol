@@ -44,7 +44,7 @@ contract MiniDaoTest is Test {
         
         vm.startPrank(USER);
         
-        faucet.claim(USER);
+        faucet.claim();
 
         token.delegate(USER);
 

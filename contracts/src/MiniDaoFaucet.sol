@@ -17,7 +17,7 @@ contract MiniDaoFaucet {
 		token = IERC20(_tokenAddress);
 	}
 
-	function claim(address _claimer) public {
+	function claim() external {
 
 		if (hasClaimedFaucet[msg.sender]) {
 			revert AlreadyClaimed();
@@ -34,5 +34,9 @@ contract MiniDaoFaucet {
         if (!success) {
             revert TransferFailed();
         }
+	}
+
+	function hasClaimed(address user) external view returns (bool) {
+		return hasClaimedFaucet[user];
 	}
 }
