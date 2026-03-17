@@ -2,7 +2,6 @@
 	import {
 		DarkMode,
 		Navbar,
-		NavHamburger,
 		NavLi,
 		NavUl,
 		Button,
@@ -17,7 +16,7 @@
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { formatEther } from 'viem';
 	import WalletConnectButton from '$lib/components/WalletConnectButton.svelte';
-	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+	import { walletStatus } from '$lib/components/WalletStore.svelte';
 
 	let activeUrl = $derived(page.url.pathname);
 	let address: string = $derived(walletStatus.address);
@@ -38,11 +37,12 @@
 	const nav = [
 		{ name: 'Home', href: '/' },
 		{ name: 'Proposals', href: '/proposals' },
-		{ name: 'Create', href: '/create-proposal' }
+		{ name: 'Create', href: '/create-proposal' },
+		{ name: "Faucet", href: '/faucet' }
 	];
 </script>
 
-<!-- PERF: Normal -->
+<!-- PERFORMANCE: Normal -->
 <div class="relative hidden min-h-14 w-full flex-row items-center justify-between gap-x-3 lg:flex">
 	<!-- NOTE: LEFT -->
 	<div class="flex flex-col items-start justify-center">
@@ -95,7 +95,7 @@
 	</div>
 </div>
 
-<!-- PERF: Mobile -->
+<!-- PERFORMANCE: Mobile -->
 <div class="relative z-0 my-2 flex justify-between lg:hidden">
 	<!-- BUG: There are issue of wallet modal open, but dropdown menu is still overlay -->
 	<DarkMode size="sm" class="rounded-xl bg-stone-300" />
