@@ -15,6 +15,9 @@ contract MiniDaoTest is Test {
     MiniDaoGovernance governance;
     MiniDaoVoteBox voteBox;
     MiniDaoFaucet faucet;
+
+	error MiniDaoTest__FailedToTransferToFaucet();
+
     uint256 s_minDelay = 1 hours;
     address[] s_proposers = new address[](0);
     address[] s_executors = new address[](0);
@@ -29,7 +32,6 @@ contract MiniDaoTest is Test {
 
     // NOTE: setUp() will initialize and deploy the contracts
     function setUp() public {
-
         // 1. Deploy token, timelock and governance contracts
         timelock = new MiniDaoTimeLock(s_minDelay, s_proposers, s_executors, USER);
 
@@ -39,11 +41,14 @@ contract MiniDaoTest is Test {
 
         vm.startPrank(DEPLOYER);
         uint256 deployerBalance = token.balanceOf(DEPLOYER);
-        token.transfer(address(faucet), deployerBalance);
+        bool success = token.transfer(address(faucet), deployerBalance);
+        if (!success) {
+            revert MiniDaoTest__FailedToTransferToFaucet();
+        }
         vm.stopPrank();
-        
+
         vm.startPrank(USER);
-        
+
         faucet.claim();
 
         token.delegate(USER);
@@ -53,7 +58,6 @@ contract MiniDaoTest is Test {
         // 2. Grant roles to the governance contract
         timelock.grantRole(timelock.PROPOSER_ROLE(), address(governance));
         timelock.grantRole(timelock.CANCELLER_ROLE(), address(governance));
-
 
         timelock.grantRole(timelock.EXECUTOR_ROLE(), address(0)); // TEST: for testing purpose only, allow anyone to execute the proposal
 
@@ -69,23 +73,23 @@ contract MiniDaoTest is Test {
     function testDeployerTransferedTokenToFaucet() public view {
         uint256 deployerBalance = token.balanceOf(DEPLOYER);
         uint256 faucetBalance = token.balanceOf(address(faucet));
-        uint256 expectedFaucetBalance = (token.TOTAL_SUPPLY() * 30) / 100 - MiniDaoFaucet(address(faucet)).FAUCET_AMOUNT(); // TEST: Because 'USER' claimed, so also need to minus the claimed amount
+        uint256 expectedFaucetBalance =
+            (token.TOTAL_SUPPLY() * 30) / 100 - MiniDaoFaucet(address(faucet)).FAUCET_AMOUNT(); // TEST: Because 'USER' claimed, so also need to minus the claimed amount
         assertEq(deployerBalance, 0);
         assertEq(faucetBalance, expectedFaucetBalance);
     }
 
     function testCannotUpdateVoteBoxWithoutGovernance() public {
         vm.expectRevert();
-        voteBox.storeVote(1);
+        voteBox.storeVote();
     }
 
     function testUpdateVoteBoxWithGovernanceProposal() public {
         vm.startPrank(USER);
 
         // 1. Create proposal to update the VoteBox
-        uint256 valueToStore = 999;
-        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote(uint256)", valueToStore);
-        string memory description = "Store vote 1 in VoteBox";
+        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote()");
+        string memory description = "Create Proposal and store vote_count + 1";
 
         values.push(0);
         calldatas.push(encodedFunctionCall);
@@ -122,8 +126,6 @@ contract MiniDaoTest is Test {
         vm.stopPrank();
 
         // 6. Check if the VoteBox is updated
-        assertEq(voteBox.getVote(), valueToStore);
-        console.log("Expected value : ", valueToStore);
-        console.log("VoteBox : ", voteBox.getVote());
+        assertEq(voteBox.getVote(), 1);
     }
 }
