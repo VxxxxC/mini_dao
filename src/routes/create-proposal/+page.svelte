@@ -13,6 +13,7 @@
 
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
+	
 
 	// NOTE: send POST request to upload_proposal/+server.ts , and return API response
 	async function submitProposal(event: Event) {

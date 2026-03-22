@@ -5,8 +5,8 @@ import MiniDaoVoteBox from "$lib/contracts_abi/MiniDaoVoteBox.json";
 import MiniDaoToken from "$lib/contracts_abi/MiniDaoToken.json";
 import MiniDaoGovernance from "$lib/contracts_abi/MiniDaoGovernance.json"
 
-let VOTEBOX_ADDRESS;
-let GOVERNANCE_ADDRESS;
+let VOTEBOX_ADDRESS = "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1";
+let GOVERNANCE_ADDRESS = "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1";
 
 async function createOnChainProposal(ipfsCid: string, proposerAddress: string) {
     try {
@@ -14,7 +14,6 @@ async function createOnChainProposal(ipfsCid: string, proposerAddress: string) {
         const encodedFunctionCall = encodeFunctionData({
             abi: MiniDaoVoteBox.abi,
             functionName: "storeVote",
-            args: []
         })
         console.log("encodedFunctionCall: ", encodedFunctionCall);
 
