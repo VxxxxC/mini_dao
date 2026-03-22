@@ -11,6 +11,8 @@ import {MiniDaoTimeLock} from '../src/MiniDaoTimeLock.sol';
 import {HelperConfig} from './HelperConfig.s.sol';
 
 contract DeployDao is Script {
+	error DeployDao__FailedToTransferToFaucet();
+
 	function run() external {
 		deployDao();
 	}
@@ -44,7 +46,10 @@ contract DeployDao is Script {
 
 		// IMPORTANT: transfer all the DAO token from deploy to the faucet for users to claim
 		uint256 deployerBalance = token.balanceOf(deployer);
-        token.transfer(address(faucet), deployerBalance);
+        bool success = token.transfer(address(faucet), deployerBalance);
+		if(!success){
+			revert DeployDao__FailedToTransferToFaucet();
+		}
         console.log('Faucet funded with tokens:', deployerBalance);
 
 		MiniDaoGovernance governance = new MiniDaoGovernance(token, timelock);
