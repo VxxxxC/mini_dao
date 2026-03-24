@@ -1,41 +1,60 @@
 # Mini DAO
 
-A full-stack Web3 governance platform. Community members claim governance tokens, delegate voting power, create proposals, vote, and execute approved actions on-chain through a timelock.
+A full-stack Web3 governance platform where community members claim governance tokens, delegate voting power, create proposals, vote, and execute approved actions on-chain through a time-locked controller.
 
 ---
 
-## Project Structure
+## 📁 Directory Structure
 
 ```
-contracts/          Foundry — Solidity smart contracts, scripts, tests
-src/                SvelteKit — frontend UI, wallet integration, API routes
+mini_dao/
+├── contracts/              # Solidity smart contracts (Foundry)
+│   ├── src/                # Contract source files
+│   ├── test/               # Foundry test suite
+│   ├── script/             # Deployment & helper scripts
+│   └── makefile            # Build, deploy, and ABI-copy shortcuts
+├── src/                    # SvelteKit frontend
+│   ├── lib/
+│   │   ├── components/     # Svelte UI components
+│   │   ├── config/         # Viem, AppKit, env config
+│   │   ├── contracts_abi/  # Compiled ABI JSON (synced from contracts/out/)
+│   │   ├── stores/         # Svelte reactive stores
+│   │   └── types/          # TypeScript type definitions
+│   └── routes/             # SvelteKit pages and API endpoints
+└── static/                 # Public static assets
 ```
-
-### Contracts
-
-| Contract | Description |
-|---|---|
-| `MiniDaoToken` | ERC20 governance token (MDAO, 1B supply). 30% → faucet, 70% → treasury (timelock). |
-| `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
-| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 5-token quorum. |
-| `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
-| `MiniDaoVoteBox` | Governance-controlled vote store. Owned by the timelock. |
-
-Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
-
-### Frontend Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | SvelteKit v2 + TypeScript strict |
-| UI | Tailwind CSS v4 + Flowbite-Svelte |
-| Web3 | Wagmi v3 + Viem v2 + Reown AppKit |
-| Storage | Filebase SDK (IPFS) |
-| Deploy | Vercel adapter |
 
 ---
 
-## Architecture
+## 🛠 Tech Stack
+
+**Smart Contracts**
+- **Solidity ^0.8.24** — Contract language
+- **Foundry** — Build, test, and deploy toolchain
+- **OpenZeppelin Contracts ^5.x** — Governor, TimelockController, ERC20Votes, ERC20Permit
+
+**Frontend**
+- **SvelteKit v2 + Svelte 5** — Full-stack web framework
+- **TypeScript** (strict) — Static typing
+- **Tailwind CSS v4 + Flowbite-Svelte** — UI styling and components
+- **Wagmi v3 + Viem v2** — EVM contract reads/writes
+- **Reown AppKit** — Wallet connection (WalletConnect)
+- **Filebase SDK / AWS S3** — Off-chain proposal storage on IPFS
+
+---
+
+## ✨ Features
+
+- Token-based governance: propose, vote, queue, and execute on-chain actions
+- One-time faucet — any address can claim 100 MDAO tokens to participate
+- Time-locked execution — all approved proposals wait a minimum delay before running
+- Off-chain proposal metadata stored on IPFS; authenticity verified by wallet signature
+- Fully decentralised post-deploy — deployer's admin role is revoked at setup
+- ERC20Permit support — gasless token approvals via EIP-712 signatures
+
+---
+
+## 🔄 Architecture & Governance Flow
 
 ```mermaid
 graph TD
@@ -75,10 +94,6 @@ graph TD
     FAU -->|distributes| TOK
 ```
 
----
-
-## Governance Flow
-
 ```mermaid
 sequenceDiagram
     actor User
@@ -103,85 +118,41 @@ sequenceDiagram
     Note over Timelock: minDelay — 2 days
 
     User->>Gov: execute(proposalId)
-    Timelock->>VoteBox: storeVote(value)
+    Timelock->>VoteBox: storeVote()
 ```
+
+### Contracts
+
+| Contract | Role |
+|---|---|
+| `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — 30% → faucet, 70% → treasury (timelock). |
+| `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
+| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 5-token quorum. |
+| `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
+| `MiniDaoVoteBox` | Governance-controlled vote store. Owned by the timelock. |
+
+Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 
 ---
 
-## Local Development
+## ⚖️ Pros & Cons / Known Issues
 
-**Prerequisites**: [Bun](https://bun.sh/) · [Foundry](https://book.getfoundry.sh/getting-started/installation)
+**Pros**
+- ✅ Decentralised by design — deployer revokes `DEFAULT_ADMIN_ROLE` post-deploy; all mutations flow through Governor → Timelock
+- ✅ Audited base — OpenZeppelin `Governor`, `TimelockController`, `ERC20Votes`, `ERC20Permit`; minimal custom logic
+- ✅ Gas-efficient errors — custom errors (`AlreadyClaimed`, `TransferFailed`, `FaucetEmpty`); no `require` strings
+- ✅ Signature-verified uploads — off-chain proposals verify wallet signature + 5-min expiry before any IPFS write
+- ✅ Network isolation — `HelperConfig.s.sol` separates Anvil / Sepolia params; no hardcoded addresses in scripts
 
-```sh
-# 1. Start local EVM node
-anvil
-
-# 2. Deploy contracts
-cd contracts
-forge script script/DeployDao.s.sol --rpc-url http://localhost:8545 --private-key <ANVIL_KEY> --broadcast
-
-# 3. Install & run frontend
-bun install
-bun run dev
-```
-
-**`.env`** (project root):
-
-```env
-VITE_APPKIT_PROJECT_ID=<your_reown_project_id>
-VITE_SEPOLIA_RPC_URL=<your_sepolia_rpc_url>
-```
-
----
-
-## Contract Development
-
-```sh
-cd contracts
-forge build        # compile
-forge test -vvv    # run tests
-forge fmt          # format
-forge snapshot     # gas snapshot
-```
-
-See [contracts/README.md](contracts/README.md) for full reference.
-
----
-
-## Building for Production
-
-```sh
-bun run build
-bun run preview
-```
-
-> Update `appKitConfig.ts` and `src/lib/config/viem/client.ts` from Anvil to your target network before deploying.
-
----
-
-## Code Audit
-
-### Pros
-
-- **Decentralized by design** — deployer revokes `DEFAULT_ADMIN_ROLE` post-deploy; all mutations flow through Governor → Timelock.
-- **OpenZeppelin base** — uses audited `Governor`, `TimelockController`, `ERC20Votes`, `ERC20Permit`; minimal custom logic.
-- **Custom errors** — gas-efficient reverts (`AlreadyClaimed`, `TransferFailed`, `FaucetEmpty`); no `require` strings.
-- **Signature verification** — off-chain proposals verify wallet signature + 5-min expiry server-side before any IPFS write.
-- **E2E test coverage** — `MiniDaoTest.t.sol` covers the full cycle: deploy → claim → delegate → propose → vote → queue → execute.
-- **Network isolation** — `HelperConfig.s.sol` separates Anvil / Sepolia params; no hardcoded addresses in scripts.
-- **Type-safe frontend** — strict TypeScript, `.t.ts` type files, ABI JSON with module resolution.
-
-### Cons
-
-- **Hardcoded quorum** — `QUORUM_VOTES = 5 tokens` is static; `GovernorVotesQuorumFraction` would scale with supply.
-- **Mock data** — proposal pages use `src/lib/mock_data.ts`; live IPFS API calls not yet wired up.
-- **Trivial governance target** — `VoteBox` demonstrates the flow but has no real-world impact.
-- **No on-chain/off-chain linkage** — IPFS proposals are not cryptographically tied to an on-chain `proposalId`.
-- **Dual hardcoded network** — both `appKitConfig.ts` and `viem/client.ts` must be changed for production separately.
+**Cons / Known Issues**
+- ⚠️ `QUORUM_VOTES` hardcoded to 5 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
+- ⚠️ Proposal pages use mock data (`src/lib/mock_data.ts`) — live IPFS API calls not yet wired up
+- ⚠️ `proposal()` convenience wrapper encodes `storeVote(uint256)` — selector mismatch with `VoteBox.storeVote()` (no args)
+- ⚠️ Both `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
 
 ### Tagged Findings
 
-> ⚠️ **Critical** — items marked `BUG` or `FIX` affect live user experience and must be resolved before production.
+> ⚠️ Items marked `BUG` or `FIX` must be resolved before production.
 
 #### 🔴 `BUG`
 | File | Line | Description |
@@ -191,7 +162,7 @@ bun run preview
 #### 🟠 `FIX`
 | File | Line | Description |
 |---|---|---|
-| [HomeProposalCard.svelte](src/lib/components/HomeProposalCard.svelte#L27) | 27 | Date/time formatting broken — replace with `Intl.DateTimeFormat` or `toLocaleDateString` |
+| [HomeProposalCard.svelte](src/lib/components/HomeProposalCard.svelte#L27) | 27 | Date/time formatting broken — replace with `Intl.DateTimeFormat` |
 | [ProposalCard.svelte](src/lib/components/ProposalCard.svelte#L43) | 43 | Same date/time formatting issue |
 
 #### 🟡 `WARN`
@@ -208,4 +179,78 @@ bun run preview
 | [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L17) | 17 | Signature expiry check — rejects requests older than 5 minutes |
 | [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L26) | 26 | Signature verification via `verifyMessage` |
 | [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L73) | 73 | IPFS CID extracted from Filebase response header |
+
+---
+
+## 🚀 Local Setup
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) — JavaScript runtime and package manager
+- [Foundry](https://getfoundry.sh/) — `curl -L https://foundry.paradigm.xyz | bash`
+
+### Installation
+
+```bash
+# Clone
+git clone https://github.com/your-username/mini_dao.git
+cd mini_dao
+
+# Install frontend dependencies
+bun install
+```
+
+### Environment Variables
+
+Create a `.env` file at the project root:
+
+```env
+VITE_APPKIT_PROJECT_ID=<your_reown_project_id>
+VITE_SEPOLIA_RPC_URL=<your_sepolia_rpc_url>
+VITE_SEPOLIA_API_RPC_URL=<your_sepolia_api_rpc_url>
+```
+
+| Variable | Where to get it |
+|---|---|
+| `VITE_APPKIT_PROJECT_ID` | [cloud.reown.com](https://cloud.reown.com) |
+| `VITE_SEPOLIA_RPC_URL` | [Alchemy](https://alchemy.com) or [Infura](https://infura.io) |
+
+### Run Locally (Anvil)
+
+```bash
+# Terminal 1 — start local EVM node
+anvil
+
+# Terminal 2 — deploy contracts and copy ABIs
+cd contracts
+make deploy-anvil-contract
+make build         # copies ABIs to src/lib/contracts_abi/
+
+# Terminal 3 — start the frontend
+cd ..
+bun dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+### Contract Development
+
+```bash
+cd contracts
+forge build        # compile
+forge test -vv     # run tests
+forge fmt          # format
+forge snapshot     # gas snapshot
+```
+
+See [contracts/README.md](contracts/README.md) for full Foundry reference.
+
+### Build for Production
+
+```bash
+bun run build:pro
+bun run preview
+```
+
+> Before deploying, update `src/lib/config/appKitConfig.ts` and `src/lib/config/viem/client.ts` to your target network (Sepolia or mainnet).
 

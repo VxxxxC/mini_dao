@@ -1,3 +1,9 @@
+# Github
+.git
+.github
+.gitignore
+
+# node_modules
 node_modules
 
 # Output
@@ -21,3 +27,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# VScode
+.vscode
