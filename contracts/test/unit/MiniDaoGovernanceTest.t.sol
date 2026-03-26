@@ -460,10 +460,10 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		governance.execute(targets, values, calldatas, descriptionHash);
 	}
 
-	// --- Convenience Wrapper Bug ---
+	// --- Convenience Wrapper ---
 
-	function testProposalHelperEncodesWrongSelector() public {
-		// BUG: governance.proposal() encodes storeVote(uint256) but VoteBox.storeVote() takes no args
+	function testProposalHelperExecutesSuccessfully() public {
+		// governance.proposal() must encode storeVote() (no args) to match VoteBox.storeVote()
 		uint256 pId = governance.proposal(address(voteBox));
 
 		_passVotingDelay();
@@ -476,16 +476,15 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		bytes[]   memory calldatas = new bytes[](1);
 		targets[0]   = address(voteBox);
 		values[0]    = 0;
-		calldatas[0] = abi.encodeWithSignature("storeVote(uint256)"); // BUG selector
+		calldatas[0] = abi.encodeWithSignature("storeVote()"); // correct selector
 
 		bytes32 descriptionHash = keccak256(abi.encodePacked("Create New MiniDao Proposal"));
 
 		governance.queue(targets, values, calldatas, descriptionHash);
 		_passTimelockDelay();
 
-		// Must revert - storeVote(uint256) does not exist on VoteBox
-		vm.expectRevert();
 		governance.execute(targets, values, calldatas, descriptionHash);
+		assertEq(voteBox.getVote(), 1, "proposal helper must call storeVote() successfully");
 	}
 
 	// --- Multiple Proposals ---

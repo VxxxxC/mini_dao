@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {MiniDaoTestBase}          from "../base/MiniDaoTestBase.t.sol";
 import {ReentrantFaucetAttack,
-        ReentrantTimelockTarget,
+        MockCallbackToken,
         TimelockNoopTarget}        from "../mocks/Mocks.sol";
 import {MiniDaoFaucet}            from "../../src/MiniDaoFaucet.sol";
 import {MiniDaoTimeLock}          from "../../src/MiniDaoTimeLock.sol";
@@ -17,35 +17,47 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 	// --- Re-entrancy Attacks ---
 
 	function testSecurity_Reentrancy_FaucetClaimCannotBeReentered() public {
-		// SECURITY: MiniDaoFaucet sets hasClaimedFaucet BEFORE transferring tokens
-		// (checks-effects-interactions). A second claim() during any re-entry will
-		// hit the AlreadyClaimed guard and revert.
+		// SECURITY: MiniDaoFaucet uses checks-effects-interactions (CEI): it sets
+		// hasClaimedFaucet[msg.sender] = true BEFORE calling token.transfer().
+		// This test uses MockCallbackToken, which triggers onTokenReceived() on the
+		// recipient during transfer (simulating an ERC777/ERC1363-style hook), to
+		// prove that a re-entrant second claim() from the same address is blocked.
 
-		ReentrantFaucetAttack attacker = new ReentrantFaucetAttack(address(faucet));
+		MockCallbackToken callbackToken = new MockCallbackToken();
+		MiniDaoFaucet reentrantFaucet   = new MiniDaoFaucet(address(callbackToken));
 
-		vm.prank(address(attacker));
-		faucet.claim(); // first claim succeeds (attacker is a fresh address)
+		// Fund the faucet with enough tokens for multiple claims
+		callbackToken.transfer(address(reentrantFaucet), faucet.FAUCET_AMOUNT() * 10);
 
-		// Second direct claim must revert
-		vm.prank(address(attacker));
-		vm.expectRevert(MiniDaoFaucet.AlreadyClaimed.selector);
-		faucet.claim();
+		ReentrantFaucetAttack attacker = new ReentrantFaucetAttack(address(reentrantFaucet));
+
+		// attack() → faucet.claim():
+		//   1. hasClaimedFaucet[attacker] = true   (Effect — CEI)
+		//   2. callbackToken.transfer(attacker, …) (Interaction)
+		//      └─ triggers attacker.onTokenReceived()
+		//            └─ faucet.claim() re-enters → reverts AlreadyClaimed (caught by try/catch in token)
+		// Outer claim succeeds; re-entrant claim is blocked.
+		attacker.attack();
+
+		assertTrue(reentrantFaucet.hasClaimed(address(attacker)), "attacker claimed exactly once");
+		assertEq(
+			callbackToken.balanceOf(address(attacker)),
+			reentrantFaucet.FAUCET_AMOUNT(),
+			"SECURITY: CEI prevents double-claim; attacker received only one FAUCET_AMOUNT"
+		);
 	}
 
-	function testSecurity_Reentrancy_TimelockCannotBeReenteredDuringExecute() public {
-		// SECURITY: TimelockController tracks operation state. Attempting to re-schedule
-		// or re-execute while an operation is already in-flight reverts because the
-		// caller (DEPLOYER) no longer has DEFAULT_ADMIN_ROLE after _deployAll().
-
-		ReentrantTimelockTarget malicious = new ReentrantTimelockTarget();
-		malicious.setTimelock(address(timelock));
+	function testSecurity_AccessControl_DeployerCannotScheduleAfterAdminRoleRevoked() public {
+		// SECURITY: After _deployAll(), DEPLOYER's DEFAULT_ADMIN_ROLE is revoked.
+		// Any direct call to timelock.schedule() by DEPLOYER must revert, confirming
+		// that the governance bypass path is fully closed.
 
 		vm.prank(DEPLOYER);
 		vm.expectRevert(); // DEPLOYER lost admin role - schedule reverts
 		timelock.schedule(
-			address(malicious),
+			address(voteBox),
 			0,
-			abi.encodeWithSignature("trigger()"),
+			abi.encodeWithSignature("storeVote()"),
 			bytes32(0),
 			bytes32(uint256(77)),
 			MIN_DELAY
@@ -303,9 +315,9 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 		);
 	}
 
-	function testSecurity_ProposalSelectorMismatch_HelperFunctionReverts() public {
-		// BUG: governance.proposal() encodes storeVote(uint256) but VoteBox.storeVote() takes no args
-		// SECURITY: Expose the selector mismatch - execution must revert.
+	function testSecurity_ProposalHelper_CorrectSelectorExecutesSuccessfully() public {
+		// governance.proposal() now correctly encodes storeVote() (no args) to match VoteBox.
+		// A proposal created via the helper must queue and execute without reverting.
 
 		uint256 pId = governance.proposal(address(voteBox));
 
@@ -319,15 +331,14 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 		bytes[]   memory calldatas = new bytes[](1);
 		targets[0]   = address(voteBox);
 		values[0]    = 0;
-		calldatas[0] = abi.encodeWithSignature("storeVote(uint256)"); // BUG: wrong selector
+		calldatas[0] = abi.encodeWithSignature("storeVote()"); // correct selector
 
 		bytes32 descriptionHash = keccak256(abi.encodePacked("Create New MiniDao Proposal"));
 
 		governance.queue(targets, values, calldatas, descriptionHash);
 		_passTimelockDelay();
 
-		// Must revert - storeVote(uint256) does not exist on VoteBox
-		vm.expectRevert();
 		governance.execute(targets, values, calldatas, descriptionHash);
+		assertEq(voteBox.getVote(), 1, "storeVote() must be called successfully via proposal helper");
 	}
 }

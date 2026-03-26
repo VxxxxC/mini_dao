@@ -47,7 +47,7 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
         bytes[] memory calldatas = new bytes[](1);
         string memory description = "Create New MiniDao Proposal";
 
-        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote(uint256)");
+        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote()");
 
         targets[0] = target;
         values[0] = 0;
