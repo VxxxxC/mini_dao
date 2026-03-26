@@ -13,7 +13,7 @@
 	let isLoadingStatus: boolean = $derived(false);
 
 	const CHAIN_ID = 31337; // Anvil Local Network
-	const FAUCET_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508';
+	const FAUCET_ADDRESS = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';
 
 	$effect(() => {
 		if (status === 'connected') {
