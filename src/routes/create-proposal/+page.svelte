@@ -61,8 +61,14 @@
 
 			const cid = result.cid;
 			const proposalToOnchain = await createOnChainProposal(cid, walletAddress);
-			console.log({ proposalToOnchain });
-
+			if(proposalToOnchain?.status !== "success"){
+				throw new Error('On-chain proposal creation failed');
+			}else{
+				alert(`Proposal submitted successfully! Tx Hash: ${proposalToOnchain.transactionHash}`);
+				// Reset form after successful submission
+				proposalTitle = '';
+				proposalDescription = '';
+			}
 		} catch (error) {
 			console.error('Error submitting proposal:', error);
 		}
@@ -96,7 +102,7 @@
 
 			// 4. confirm the transaction
 			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: createProposalTx });
-			console.log('Transaction receipt: ', receipt);
+			return receipt;
 		} catch (error) {
 			console.error('❌ Error in createOnChainProposal:', error);
 		}
