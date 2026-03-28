@@ -23,14 +23,14 @@
 			<div class="flex w-full flex-row justify-between">
 				<div class="flex flex-col items-start justify-between gap-y-5">
 					<div class="text-lg font-bold">{prop.title}</div>
-					<div class="text-md text-subtl font-normal">{prop.des}</div>
+					<div class="text-md text-subtl font-normal">{prop.description}</div>
 					<!-- FIX: need to fix below date time format-->
 					<div class="text-xs font-normal text-secondary">
 						Ends: {new Intl.DateTimeFormat('en-US', options).format(prop.expire)}
 					</div>
 				</div>
 				<div class="flex flex-col items-center justify-between">
-					<ProposalStatus status={prop.status} showIcon={false} />
+					<ProposalStatus status={prop.state} showIcon={false} />
 					<div class="text-xs font-normal text-secondary">{prop.totalVotes} votes</div>
 				</div>
 			</div>

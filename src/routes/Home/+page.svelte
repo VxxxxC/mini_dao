@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import HomeStatusCard from '$lib/components/HomeStatusCard.svelte';
 	import HomeProposalCard from '$lib/components/HomeProposalCard.svelte';
@@ -12,6 +13,7 @@
 		passedProposal,
 		totalVotes
 	} from '$lib/stores/StatusCard';
+	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -21,8 +23,11 @@
 		passedProposal,
 		totalVotes
 	];
-	const proposalCardInfoProps: HomeProposalCardInfoType[] = [
-	];
+	let proposals: HomeProposalCardInfoType[] = $state<HomeProposalCardInfoType[]>();
+
+	onMount(async () => {
+		proposals = await fetchProposals();
+	});
 </script>
 
 <div class="grid justify-center gap-y-5">
@@ -57,7 +62,7 @@
 				</div>
 			</div>
 			<div class="w-full">
-				<HomeProposalCard {...proposalCardInfoProps} />
+				<HomeProposalCard {...proposals} />
 			</div>
 		</Card>
 	</div>
