@@ -5,7 +5,6 @@
 	import { Card } from 'flowbite-svelte';
 	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import { firstProposalCardInfo, secondProposalCardInfo } from '$lib/mock_data';
 	import { ArrowRightOutline } from 'flowbite-svelte-icons';
 	import {
 		communityMemebers,
@@ -23,8 +22,6 @@
 		totalVotes
 	];
 	const proposalCardInfoProps: HomeProposalCardInfoType[] = [
-		firstProposalCardInfo,
-		secondProposalCardInfo
 	];
 </script>
 

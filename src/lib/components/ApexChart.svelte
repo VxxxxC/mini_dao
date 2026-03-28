@@ -15,12 +15,12 @@
 	let voteYes: voteChartType = {
 		name: 'Yes',
 		color: 'green',
-		data: [prop.voteYes]
+		data: [prop.voteYes ?? 0]
 	};
 	let voteNo: voteChartType = {
 		name: 'No',
 		color: 'red',
-		data: [prop.voteNo]
+		data: [prop.voteNo ?? 0]
 	};
 
 	const chartOptions: ApexOptions = {

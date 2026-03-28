@@ -27,11 +27,11 @@
 			<div class="flex w-full flex-col items-center">
 				<div class="flex w-full flex-row items-center justify-between">
 					<div class="text-lg font-bold">{prop.title}</div>
-					<ProposalStatus status={prop.status} />
+					<ProposalStatus status={prop.state} />
 				</div>
 
 				<div class="space-y-5 self-start">
-					<div class="text-md text-subtl font-light">{prop.des}</div>
+					<div class="text-md text-subtle font-light">{prop.description}</div>
 					<div class="flex flex-row items-center space-x-2">
 						<p class="text-xs text-secondary">Proposer:</p>
 						<p class="text-sm font-light text-subtle">
@@ -46,7 +46,7 @@
 						Ends: {new Intl.DateTimeFormat('en-US', options).format(prop.expire)}
 					</div>
 
-					<div class="text-xs font-normal text-secondary">{prop.totalVotes} votes</div>
+					<div class="text-xs font-normal text-secondary">{prop.totalVotes ?? 0} votes</div>
 				</div>
 			</div>
 			<div class="flex w-full flex-row items-center justify-between space-x-2">

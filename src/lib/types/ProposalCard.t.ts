@@ -7,7 +7,7 @@ export interface ProposalCardInfoType {
 	proposer: `0x${string}`;
 	state: ProposalStatus;
 	ipfsCid: string;
-	expire: SvelteDate;
+	expire: number;
 	totalVotes?: number;
 	voteYes?: number;
 	voteNo?: number;
