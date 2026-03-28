@@ -50,6 +50,29 @@
 				return null;
 		}
 	}
+
+	function getStatusText(status: ProposalStatus): string {
+		switch (status) {
+			case ProposalStatus.Pending:
+				return 'Pending';
+			case ProposalStatus.Active:
+				return 'Active';
+			case ProposalStatus.Canceled:
+				return 'Canceled';
+			case ProposalStatus.Defeated:
+				return 'Defeated';
+			case ProposalStatus.Succeeded:
+				return 'Succeeded';
+			case ProposalStatus.Queued:
+				return 'Queued';
+			case ProposalStatus.Expired:
+				return 'Expired';
+			case ProposalStatus.Executed:
+				return 'Executed';
+			default:
+				return 'Unknown';
+		}
+	}
 </script>
 
 <div
@@ -59,5 +82,5 @@
 		{@const IconComponent = getStatusIcon(status)}
 		<IconComponent size="md" strokeWidth={2} />
 	{/if}
-	<p class="text-sm font-medium">{status}</p>
+	<p class="text-sm font-medium">{getStatusText(status)}</p>
 </div>
