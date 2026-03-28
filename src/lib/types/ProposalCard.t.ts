@@ -2,13 +2,15 @@ import type { SvelteDate } from 'svelte/reactivity';
 
 export interface ProposalCardInfoType {
 	title: string;
-	des: string;
-	proposer: string;
-	status: ProposalStatus;
+	description: string;
+	proposerId?: `0x${string}`;
+	proposer: `0x${string}`;
+	state: ProposalStatus;
+	ipfsCid: string;
 	expire: SvelteDate;
-	totalVotes: number;
-	voteYes: number;
-	voteNo: number;
+	totalVotes?: number;
+	voteYes?: number;
+	voteNo?: number;
 }
 
 export type HomeProposalCardInfoType = Omit<
@@ -17,7 +19,12 @@ export type HomeProposalCardInfoType = Omit<
 >;
 
 export enum ProposalStatus {
-	Active = 'Active',
-	Passed = 'Passed',
-	Rejected = 'Rejected'
+	"Pending",
+	"Active",
+	"Canceled",
+	"Defeated",
+	"Succeeded",
+	"Queued",
+	"Expired",
+	"Executed"
 }
