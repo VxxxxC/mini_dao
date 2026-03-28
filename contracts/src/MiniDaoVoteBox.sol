@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.24;
 
+import {console} from "forge-std/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MiniDaoVoteBox is Ownable {
@@ -17,7 +18,8 @@ contract MiniDaoVoteBox is Ownable {
     }
 
     function storeVote() external onlyOwner {
-        vote_count ++;
+        vote_count = vote_count + 1;
+        console.log("Vote casted, current vote count: ", vote_count);
         emit VoteCasted(vote_count);
     }
 }

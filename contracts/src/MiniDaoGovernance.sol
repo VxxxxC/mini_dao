@@ -41,13 +41,13 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
 
     // COL: public override functions
 
-    function proposal(address target) public returns(uint256) {
+    function propose(address target) public returns(uint256) {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
         string memory description = "Create New MiniDao Proposal";
 
-        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote(uint256)");
+        bytes memory encodedFunctionCall = abi.encodeWithSignature("storeVote()");
 
         targets[0] = target;
         values[0] = 0;
