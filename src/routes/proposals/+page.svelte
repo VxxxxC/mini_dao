@@ -5,9 +5,9 @@
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import {fetchProposals} from '$lib/components/FetchProposals.svelte';
+	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 
-	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>();
+	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
 
 	onMount(async () => {
 		proposals = await fetchProposals();

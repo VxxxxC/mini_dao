@@ -60,10 +60,10 @@
 			if (!serverResponse.ok) throw new Error(result.error);
 
 			const cid = result.cid;
-			const proposalToOnchain = await createOnChainProposal(cid, walletAddress);
-			if(proposalToOnchain?.status !== "success"){
+			const proposalToOnchain = await createOnChainProposal(cid);
+			if (proposalToOnchain?.status !== 'success') {
 				throw new Error('On-chain proposal creation failed');
-			}else{
+			} else {
 				alert(`Proposal submitted successfully! Tx Hash: ${proposalToOnchain.transactionHash}`);
 				// Reset form after successful submission
 				proposalTitle = '';
@@ -74,12 +74,12 @@
 		}
 	}
 
-	async function createOnChainProposal(ipfsCid: string, proposerAddress: string) {
+	async function createOnChainProposal(ipfsCid: string) {
 		try {
 			// 1. Prepare the execution function and pass to timelock to handle, it will run by timelock if after proposal pass by vote
 			const encodedFunctionCall = encodeFunctionData({
 				abi: MiniDaoVoteBox.abi,
-				functionName: 'storeVote',
+				functionName: 'storeVote'
 			});
 
 			// 2. prepare the proposal data to pass to governance contract
@@ -95,7 +95,6 @@
 				functionName: 'propose',
 				args: [target, values, calldatas, description]
 			});
-			console.log('createProposal transaction: ', proposalId);
 
 			// 4. confirm the transaction
 			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: proposalId });
@@ -103,18 +102,6 @@
 		} catch (error) {
 			console.error('❌ Error in createOnChainProposal:', error);
 		}
-	}
-
-	// NOTE: GET request, get proposals list
-	async function getProposalList() {
-		const response = await fetch('/api/get_proposals_list', {
-			method: 'GET',
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
-		const result = await response.json();
-		console.log({ result });
 	}
 
 	function submitButtonUnable(): boolean {
