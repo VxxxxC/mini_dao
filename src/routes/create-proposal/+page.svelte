@@ -89,17 +89,15 @@
 			const description = ipfsCid;
 
 			// 3. create proposal by calling governance contract
-			const proposalId = await writeContract(wagmiConfig, {
+			const Tx = await writeContract(wagmiConfig, {
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'propose',
 				args: [target, values, calldatas, description]
 			});
 
-			console.log({ proposalId });
-
 			// 4. confirm the transaction
-			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: proposalId });
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
 			return receipt;
 		} catch (error) {
 			console.error('❌ Error in createOnChainProposal:', error);

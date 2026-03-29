@@ -3,7 +3,7 @@ import type { SvelteDate } from 'svelte/reactivity';
 export interface ProposalCardInfoType {
 	title: string;
 	description: string;
-	proposerId?: `0x${string}`;
+	proposalId: bigint;
 	proposer: `0x${string}`;
 	state: ProposalStatus;
 	ipfsCid: string;

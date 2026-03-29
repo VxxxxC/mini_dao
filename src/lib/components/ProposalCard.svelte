@@ -88,6 +88,7 @@
 			</div>
 			<div class="flex w-full flex-row items-center justify-between space-x-2">
 				<button
+				onclick={() => handleVote(prop.proposalId, 1)}
 					disabled={connectStatus !== 'connected'}
 					class={[
 						'h-12 w-full rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
@@ -95,6 +96,7 @@
 					]}>Vote Yes</button
 				>
 				<button
+				onclick={() => handleVote(prop.proposalId, 0)}
 					disabled={connectStatus !== 'connected'}
 					class={[
 						'h-12 w-full rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',

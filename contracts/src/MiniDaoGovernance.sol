@@ -2,6 +2,7 @@
 // Compatible with OpenZeppelin Contracts ^5.6.0
 pragma solidity ^0.8.27;
 
+import { console } from "forge-std/console.sol";
 import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {GovernorCountingSimple} from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
@@ -10,8 +11,8 @@ import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/Gover
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl {
-    // WARN: Minimum number of 5 tokens (votes) required for a proposal to pass, it is better use `QuorumFraction` instead of hardcode a fix number of tokens
-    uint256 public constant QUORUM_VOTES = 5 * 10 ** 18; // 5 tokens
+    // WARN: Minimum number of 3 votes required for a proposal to pass, it is better use `QuorumFraction` instead of hardcode a fix number of votes
+    uint256 public constant QUORUM_VOTES = 3 * 10 ** 18; // 3 votes
 
     constructor(IVotes _token, TimelockController _timelock)
         Governor("Mini Governor")
@@ -41,7 +42,7 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
 
     // COL: public override functions
 
-    function propose(address target) public returns(uint256) {
+    function propose(address target) public returns(uint256 proposalId) {
         address[] memory targets = new address[](1);
         uint256[] memory values = new uint256[](1);
         bytes[] memory calldatas = new bytes[](1);
@@ -53,10 +54,22 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
         values[0] = 0;
         calldatas[0] = encodedFunctionCall;
 
-        uint256 proposalId = super.propose(targets, values, calldatas, description);
-
-        return proposalId;
+        proposalId = super.propose(targets, values, calldatas, description);
     }
+    
+    function _getVotes(address account,
+            uint256 blockNumber,
+            bytes memory params) internal view override(Governor, GovernorVotes) returns (uint256) {
+                // Get the actual token voted by the user
+        uint256 actualTokenVotes = super._getVotes(account, blockNumber, params);
+
+        // if greater than or equal to 10 tokens, return 1 vote, else return 0 votes (no voting power)
+        if (actualTokenVotes >= 10 * 10 ** 18) {
+            return 1;
+        } else {
+            return 0; // not enough 10 tokens, no voting power
+        }
+            }
 
     // NOTE: The following functions are overrides required by Solidity.
 
