@@ -23,6 +23,8 @@
 	</div>
 
 	<div>
-		<ProposalCard {...proposals} />
+	{#each proposals as proposal, index (index)}
+		<ProposalCard {...proposal} />
+	{/each}
 	</div>
 </div>

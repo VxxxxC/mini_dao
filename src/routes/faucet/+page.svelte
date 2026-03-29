@@ -45,16 +45,14 @@
 		try {
 			isClaiming = true;
 
-			const hash = await writeContract(wagmiConfig, {
+			const Tx = await writeContract(wagmiConfig, {
 				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'claim',
 				chainId: ChainId.ANVIL,
 			});
 
-			console.log('Transaction sent:', hash);
-
-			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
 
 			if (receipt.status === 'success') {
 				hasClaimed = true;

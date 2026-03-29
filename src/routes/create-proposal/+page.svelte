@@ -8,7 +8,6 @@
 	import { encodeFunctionData } from 'viem';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
-	import MiniDaoToken from '$lib/contracts_abi/MiniDaoToken.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 	import { Address } from '$lib/config/contractAddress';
 
