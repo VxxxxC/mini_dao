@@ -9,13 +9,14 @@ export interface ProposalCardInfoType {
 	ipfsCid: string;
 	expire: number;
 	totalVotes?: number;
-	voteYes?: number;
-	voteNo?: number;
-}
+	voteFor?: number;
+	voteAgainst?: number;
+	voteAbstain?: number;
+} // 0 = Against, 1 = For, 2 = Abstain
 
 export type HomeProposalCardInfoType = Omit<
 	ProposalCardInfoType,
-	'proposer' | 'voteYes' | 'voteNo'
+	'proposer' | 'voteFor' | 'voteAgainst' | 'voteAbstain'
 >;
 
 export enum ProposalStatus {
