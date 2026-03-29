@@ -10,6 +10,7 @@
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
 	import MiniDaoToken from '$lib/contracts_abi/MiniDaoToken.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+	import { Address } from '$lib/config/contractAddress';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let walletAddress: string = $derived(walletStatus.address);
@@ -18,9 +19,6 @@
 
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
-
-	const VOTEBOX_ADDRESS = '0x610178dA211FEF7D417bC0e6FeD39F05609AD788';
-	const GOVERNANCE_ADDRESS = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9';
 
 	// NOTE: send POST request to upload_proposal/+server.ts , and return API response
 	async function submitProposal(event: Event) {
@@ -60,7 +58,9 @@
 			if (!serverResponse.ok) throw new Error(result.error);
 
 			const cid = result.cid;
+
 			const proposalToOnchain = await createOnChainProposal(cid);
+			
 			if (proposalToOnchain?.status !== 'success') {
 				throw new Error('On-chain proposal creation failed');
 			} else {
@@ -83,18 +83,20 @@
 			});
 
 			// 2. prepare the proposal data to pass to governance contract
-			const target = [VOTEBOX_ADDRESS];
+			const target = [Address.VOTEBOX];
 			const values = [0];
 			const calldatas = [encodedFunctionCall];
 			const description = ipfsCid;
 
 			// 3. create proposal by calling governance contract
 			const proposalId = await writeContract(wagmiConfig, {
-				address: GOVERNANCE_ADDRESS,
+				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'propose',
 				args: [target, values, calldatas, description]
 			});
+
+			console.log({ proposalId });
 
 			// 4. confirm the transaction
 			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: proposalId });

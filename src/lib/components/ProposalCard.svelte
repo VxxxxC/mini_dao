@@ -4,9 +4,13 @@
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+	import { Address } from '$lib/config/contractAddress';
+	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+	import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
+	import { wagmiConfig } from '$lib/config/appKitConfig';
 
 	let props: ProposalCardInfoType[] = $props();
-
+	
 	let connectStatus: string = $derived(walletStatus.status);
 
 	const options = {
@@ -14,6 +18,39 @@
 		month: 'long',
 		day: 'numeric'
 	};
+
+	async function handleVote(proposalId: bigint, support: number) {
+    try {
+      console.log(`準備為提案 ${proposalId} 投下選項: ${support}`);
+
+      // 1. 喚起 MetaMask 簽名並發送交易
+      const hash = await writeContract(wagmiConfig, {
+        address: Address.GOVERNANCE,
+        abi: MiniDaoGovernance.abi,
+        functionName: 'castVote',
+        args: [proposalId, support]
+      });
+
+      console.log("投票交易已發送，Tx Hash:", hash);
+
+      // 2. 等待區塊鏈打包確認
+      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+
+      if (receipt.status === 'success') {
+        alert("🎉 投票成功！你的聲音已記錄在區塊鏈上。");
+        // 💡 呢度可以 Trigger 一個 event 去叫外層重新 fetchProposals() 刷新狀態
+      }
+    } catch (error) {
+      console.error("投票失敗:", error);
+      // 常見 Error: "Governor: vote already cast" (已經投過票) 或者 "Governor: vote not currently active" (未開始/已完結)
+      if (error instanceof Error && error.message.includes("already cast")) {
+        alert("你已經為此提案投過票了！");
+      } else {
+        alert("投票失敗，請確保你在投票期內，並擁有已激活的選票 (Voting Power)。");
+      }
+    } 
+  }
+
 </script>
 
 <div class="flex flex-col items-center space-y-5">

@@ -3,9 +3,8 @@ import { getPublicClient, readContract } from '@wagmi/core';
 import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 import { wagmiConfig } from '$lib/config/appKitConfig';
 import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
+import { Address } from '$lib/config/contractAddress';
 
-
-const GOVERNOR_ADDRESS = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9';
 const governorAbi = MiniDaoGovernance.abi;
 
 const IPFS_GATEWAY =
@@ -40,9 +39,8 @@ export async function fetchProposals() {
 	try {
 		const publicClient = getPublicClient(wagmiConfig);
 
-		console.log('Finding Proposals Data...');
 		const logs = await publicClient?.getContractEvents({
-			address: GOVERNOR_ADDRESS,
+			address: Address.GOVERNANCE,
 			abi: governorAbi,
 			eventName: 'ProposalCreated',
 			fromBlock: 0n,
@@ -57,7 +55,7 @@ export async function fetchProposals() {
 
 				// 1. Query real-time state (On-chain)
 				const statePromise = readContract(wagmiConfig, {
-					address: GOVERNOR_ADDRESS,
+					address: Address.GOVERNANCE,
 					abi: governorAbi,
 					functionName: 'state',
 					args: [proposalId]
@@ -70,7 +68,7 @@ export async function fetchProposals() {
 				const [stateResult, ipfsData] = await Promise.all([statePromise, ipfsPromise]);
 
 				return {
-					proposalId: proposalId as `0x${string}`,
+					proposalId: proposalId as bigint,
 					proposer: ipfsData.proposer as `0x${string}`,
 					ipfsCid: ipfsCid as string,
 					state: stateResult as number,
