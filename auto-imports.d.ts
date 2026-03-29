@@ -6,5 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const Address: typeof import('$lib/config/contractAddress.ts').Address
+  const ChainId: typeof import('$lib/config/contractAddress.ts').ChainId
   const breakpoint: typeof import('$lib/components/Breakpoint.svelte').breakpoint
 }
