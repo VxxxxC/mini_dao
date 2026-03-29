@@ -10,13 +10,13 @@ A full-stack Web3 governance platform where community members claim governance t
 mini_dao/
 ├── contracts/              # Solidity smart contracts (Foundry)
 │   ├── src/                # Contract source files
-│   ├── test/               # Foundry test suite
-│   ├── script/             # Deployment & helper scripts
+│   ├── test/               # Foundry test suite (unit / integration / fuzz / invariant / security)
+│   ├── script/             # Deployment scripts (DeployDao.s.sol, HelperConfig.s.sol)
 │   └── makefile            # Build, deploy, and ABI-copy shortcuts
 ├── src/                    # SvelteKit frontend
 │   ├── lib/
 │   │   ├── components/     # Svelte UI components
-│   │   ├── config/         # Viem, AppKit, env config
+│   │   ├── config/         # Viem, AppKit, Filebase, env config
 │   │   ├── contracts_abi/  # Compiled ABI JSON (synced from contracts/out/)
 │   │   ├── stores/         # Svelte reactive stores
 │   │   └── types/          # TypeScript type definitions
@@ -48,9 +48,10 @@ mini_dao/
 - Token-based governance: propose, vote, queue, and execute on-chain actions
 - One-time faucet — any address can claim 100 MDAO tokens to participate
 - Time-locked execution — all approved proposals wait a minimum delay before running
-- Off-chain proposal metadata stored on IPFS; authenticity verified by wallet signature
-- Fully decentralised post-deploy — deployer's admin role is revoked at setup
+- Off-chain proposal metadata stored on IPFS; authenticity verified by wallet signature + 5-min expiry
+- Fully decentralised post-deploy — deployer's `DEFAULT_ADMIN_ROLE` is revoked at setup
 - ERC20Permit support — gasless token approvals via EIP-712 signatures
+- 134-test suite: unit, integration, fuzz, invariant, and security tests
 
 ---
 
@@ -125,7 +126,7 @@ sequenceDiagram
 
 | Contract | Role |
 |---|---|
-| `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — 30% → faucet, 70% → treasury (timelock). |
+| `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — distributed via faucet; remainder held by timelock. |
 | `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
 | `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 5-token quorum. |
 | `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
@@ -147,8 +148,9 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 **Cons / Known Issues**
 - ⚠️ `QUORUM_VOTES` hardcoded to 5 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
 - ⚠️ Proposal pages use mock data (`src/lib/mock_data.ts`) — live IPFS API calls not yet wired up
-- ⚠️ `proposal()` convenience wrapper encodes `storeVote(uint256)` — selector mismatch with `VoteBox.storeVote()` (no args)
-- ⚠️ Both `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
+- ⚠️ `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
+- ⚠️ Date/time formatting broken in `HomeProposalCard.svelte` and `ProposalCard.svelte` — replace with `Intl.DateTimeFormat`
+- ⚠️ Wallet modal overlay conflicts with hamburger dropdown in `Navbar.svelte` (z-index / event propagation)
 
 ### Tagged Findings
 
@@ -208,12 +210,17 @@ Create a `.env` file at the project root:
 VITE_APPKIT_PROJECT_ID=<your_reown_project_id>
 VITE_SEPOLIA_RPC_URL=<your_sepolia_rpc_url>
 VITE_SEPOLIA_API_RPC_URL=<your_sepolia_api_rpc_url>
+FILEBASE_ACCESS_KEY=<your_filebase_access_key>
+FILEBASE_SECRET_KEY=<your_filebase_secret_key>
+FILEBASE_BUCKET_NAME=<your_filebase_bucket_name>
 ```
 
 | Variable | Where to get it |
 |---|---|
 | `VITE_APPKIT_PROJECT_ID` | [cloud.reown.com](https://cloud.reown.com) |
 | `VITE_SEPOLIA_RPC_URL` | [Alchemy](https://alchemy.com) or [Infura](https://infura.io) |
+| `FILEBASE_ACCESS_KEY` / `FILEBASE_SECRET_KEY` | [console.filebase.com](https://console.filebase.com) |
+| `FILEBASE_BUCKET_NAME` | Your IPFS-enabled Filebase bucket name |
 
 ### Run Locally (Anvil)
 
@@ -224,7 +231,7 @@ anvil
 # Terminal 2 — deploy contracts and copy ABIs
 cd contracts
 make deploy-anvil-contract
-make build         # copies ABIs to src/lib/contracts_abi/
+make build         # compiles and copies ABIs to src/lib/contracts_abi/
 
 # Terminal 3 — start the frontend
 cd ..
@@ -238,12 +245,10 @@ Open [http://localhost:5173](http://localhost:5173).
 ```bash
 cd contracts
 forge build        # compile
-forge test -vv     # run tests
+forge test -vv     # run all 134 tests
 forge fmt          # format
 forge snapshot     # gas snapshot
 ```
-
-See [contracts/README.md](contracts/README.md) for full Foundry reference.
 
 ### Build for Production
 
@@ -253,4 +258,5 @@ bun run preview
 ```
 
 > Before deploying, update `src/lib/config/appKitConfig.ts` and `src/lib/config/viem/client.ts` to your target network (Sepolia or mainnet).
+
 

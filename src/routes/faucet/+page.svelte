@@ -4,6 +4,7 @@
 	import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import MiniDaoFaucet from '$lib/contracts_abi/MiniDaoFaucet.json';
+	import { Address, ChainId } from '$lib/config/contractAddress';
 
 	let activeUrl = $derived(page.url.pathname);
 	let address: string = $derived(walletStatus.address);
@@ -11,9 +12,6 @@
 	let hasClaimed: boolean = $derived(false);
 	let isClaiming: boolean = $derived(false);
 	let isLoadingStatus: boolean = $derived(false);
-
-	const CHAIN_ID = 31337; // Anvil Local Network
-	const FAUCET_ADDRESS = '0x9A676e781A523b5d0C0e43731313A708CB607508';
 
 	$effect(() => {
 		if (status === 'connected') {
@@ -27,7 +25,7 @@
 		try {
 			isLoadingStatus = true;
 			const result = await readContract(wagmiConfig, {
-				address: FAUCET_ADDRESS,
+				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'hasClaimed',
 				args: [address]
@@ -47,16 +45,14 @@
 		try {
 			isClaiming = true;
 
-			const hash = await writeContract(wagmiConfig, {
-				address: FAUCET_ADDRESS,
+			const Tx = await writeContract(wagmiConfig, {
+				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'claim',
-				chainId: CHAIN_ID
+				chainId: ChainId.ANVIL,
 			});
 
-			console.log('Transaction sent:', hash);
-
-			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
 
 			if (receipt.status === 'success') {
 				hasClaimed = true;

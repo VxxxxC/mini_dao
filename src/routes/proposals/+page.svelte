@@ -1,12 +1,17 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { getPublicClient, readContract } from '@wagmi/core';
 	import ProposalCard from '$lib/components/ProposalCard.svelte';
+	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
-	import { firstProposalCardInfo, secondProposalCardInfo } from '$lib/mock_data';
+	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 
-	const proposalCardInfoProps: ProposalCardInfoType[] = [
-		firstProposalCardInfo,
-		secondProposalCardInfo
-	];
+	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
+
+	onMount(async () => {
+		proposals = await fetchProposals();
+	});
 </script>
 
 <div class="grid w-full space-y-5">
@@ -18,6 +23,8 @@
 	</div>
 
 	<div>
-		<ProposalCard {...proposalCardInfoProps} />
+	{#each proposals as proposal, index (index)}
+		<ProposalCard {...proposal} />
+	{/each}
 	</div>
 </div>

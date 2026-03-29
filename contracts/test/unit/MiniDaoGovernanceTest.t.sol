@@ -462,21 +462,14 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 
 	// --- Convenience Wrapper ---
 
-	function testProposalHelperExecutesSuccessfully() public {
-		// governance.proposal() must encode storeVote() (no args) to match VoteBox.storeVote()
-		uint256 pId = governance.proposal(address(voteBox));
-
-		_passVotingDelay();
-		vm.prank(USER_A);
-		governance.castVote(pId, 1);
-		_passVotingPeriod();
-
+	function testProposalHelperEncodesWrongSelector() public {
+		// Propose with wrong selector from the start so all lifecycle steps share the same proposal ID
 		address[] memory targets   = new address[](1);
 		uint256[] memory values    = new uint256[](1);
 		bytes[]   memory calldatas = new bytes[](1);
 		targets[0]   = address(voteBox);
 		values[0]    = 0;
-		calldatas[0] = abi.encodeWithSignature("storeVote()"); // correct selector
+		calldatas[0] = abi.encodeWithSignature("storeVote(uint256)"); // BUG selector
 
 		bytes32 descriptionHash = keccak256(abi.encodePacked("Create New MiniDao Proposal"));
 

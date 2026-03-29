@@ -4,7 +4,12 @@
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
 	import { signMessage } from '@wagmi/core';
+	import { writeContract, waitForTransactionReceipt } from '@wagmi/core';
+	import { encodeFunctionData } from 'viem';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
+	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
+	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+	import { Address } from '$lib/config/contractAddress';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let walletAddress: string = $derived(walletStatus.address);
@@ -13,13 +18,12 @@
 
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
-	
 
 	// NOTE: send POST request to upload_proposal/+server.ts , and return API response
 	async function submitProposal(event: Event) {
 		event.preventDefault();
 
-		if (!walletStatus.address && walletStatus.status !== 'connected') {
+		if (!walletAddress && connectStatus !== 'connected') {
 			alert('Please connect your wallet to submit a proposal.');
 			return;
 		}
@@ -34,7 +38,7 @@
 		});
 
 		try {
-			const response = await fetch('/api/upload_proposal', {
+			const serverResponse = await fetch('/api/create_proposal', {
 				method: 'POST',
 				body: JSON.stringify({
 					proposalTitle,
@@ -49,24 +53,54 @@
 				}
 			});
 
-			const result = await response.json();
-			if (!response.ok) throw new Error(result.error);
-			console.log({ result });
+			const result = await serverResponse.json();
+			if (!serverResponse.ok) throw new Error(result.error);
+
+			const cid = result.cid;
+
+			const proposalToOnchain = await createOnChainProposal(cid);
+			
+			if (proposalToOnchain?.status !== 'success') {
+				throw new Error('On-chain proposal creation failed');
+			} else {
+				alert(`Proposal submitted successfully! Tx Hash: ${proposalToOnchain.transactionHash}`);
+				// Reset form after successful submission
+				proposalTitle = '';
+				proposalDescription = '';
+			}
 		} catch (error) {
 			console.error('Error submitting proposal:', error);
 		}
 	}
 
-	// NOTE: GET request, get proposals list
-	async function getProposalList() {
-		const response = await fetch('/api/get_proposals_list', {
-			method: 'GET',
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
-		const result = await response.json();
-		console.log({ result });
+	async function createOnChainProposal(ipfsCid: string) {
+		try {
+			// 1. Prepare the execution function and pass to timelock to handle, it will run by timelock if after proposal pass by vote
+			const encodedFunctionCall = encodeFunctionData({
+				abi: MiniDaoVoteBox.abi,
+				functionName: 'storeVote'
+			});
+
+			// 2. prepare the proposal data to pass to governance contract
+			const target = [Address.VOTEBOX];
+			const values = [0];
+			const calldatas = [encodedFunctionCall];
+			const description = ipfsCid;
+
+			// 3. create proposal by calling governance contract
+			const Tx = await writeContract(wagmiConfig, {
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'propose',
+				args: [target, values, calldatas, description]
+			});
+
+			// 4. confirm the transaction
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
+			return receipt;
+		} catch (error) {
+			console.error('❌ Error in createOnChainProposal:', error);
+		}
 	}
 
 	function submitButtonUnable(): boolean {
