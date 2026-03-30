@@ -10,8 +10,7 @@
 	import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 
-	let prop: ProposalCardInfoType = $props();
-
+	let {proposalData, onVoteSuccess} = $props<{proposalData: ProposalCardInfoType, onVoteSuccess: () => void}>();
 	let connectStatus: string = $derived(walletStatus.status);
 	let userAddress: string = $derived(walletStatus.address);
 
@@ -30,17 +29,19 @@
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'castVote',
-				args: [prop.proposalId, support]
+				args: [proposalData.proposalId, support]
 			});
 
 			console.log('投票交易已發送，Tx Hash:', hash);
 
 			// 2. 等待區塊鏈打包確認
 			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+			console.log('交易已確認，Receipt:', receipt);
 
 			if (receipt.status === 'success') {
 				alert('🎉 投票成功！你的聲音已記錄在區塊鏈上。');
 				// 💡 呢度可以 Trigger 一個 event 去叫外層重新 fetchProposals() 刷新狀態
+				onVoteSuccess();
 			}
 		} catch (error) {
 			console.error('投票失敗:', error);
@@ -52,7 +53,7 @@
 			}
 		} finally {
 			// 無論成功與否，都重新檢查用戶的投票狀態
-			checkUserVoteStatus();
+			await checkUserVoteStatus();
 		}
 	}
 
@@ -70,7 +71,7 @@
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'hasVoted',
-				args: [prop.proposalId, userAddress]
+				args: [proposalData.proposalId, userAddress]
 			});
 
 			userHasVoted = result as boolean;
@@ -95,27 +96,27 @@
 	>
 		<div class="flex w-full flex-col items-center">
 			<div class="flex w-full flex-row items-center justify-between">
-				<div class="text-lg font-bold">{prop.title}</div>
-				<ProposalStatus status={prop.state} />
+				<div class="text-lg font-bold">{proposalData.title}</div>
+				<ProposalStatus status={proposalData.state} />
 			</div>
 
 			<div class="space-y-5 self-start">
-				<div class="text-md font-light text-subtle">{prop.description}</div>
+				<div class="text-md font-light text-subtle">{proposalData.description}</div>
 				<div class="flex flex-row items-center space-x-2">
 					<p class="text-xs text-secondary">Proposer:</p>
 					<p class="text-sm font-light text-subtle">
-						{prop.proposer}
+						{proposalData.proposer}
 					</p>
 				</div>
 			</div>
-			<ApexChart {...prop} />
+			<ApexChart {...proposalData} />
 			<!-- FIX: need to fix below date time format-->
 			<div class="flex w-full flex-row items-center justify-between">
 				<div class="text-xs font-normal text-secondary">
-					Ends: {new Intl.DateTimeFormat('en-US', options).format(prop.expire)}
+					Ends: {new Intl.DateTimeFormat('en-US', options).format(proposalData.expire)}
 				</div>
 
-				<div class="text-xs font-normal text-secondary">{prop.totalVotes ?? 0} votes</div>
+				<div class="text-xs font-normal text-secondary">{proposalData.totalVotes ?? 0} votes</div>
 			</div>
 		</div>
 		{#if connectStatus !== 'connected'}
@@ -132,22 +133,32 @@
 						<p class="mt-1 text-sm text-green-600">感謝你參與 DAO 的治理決策。</p>
 					</div>
 				{:else}
+				<div class="w-full grid grid-cols-7 gap-x-2">
 					<button
-						onclick={() => handleVote(prop.proposalId, 1)}
+						onclick={() => handleVote(proposalData.proposalId, 1)}
 						disabled={connectStatus !== 'connected'}
 						class={[
-							'h-12 w-full rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
+							'min-h-12 col-span-3 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
 							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
-						]}>Vote Yes</button
+						]}>贊成</button
 					>
 					<button
-						onclick={() => handleVote(prop.proposalId, 0)}
+						onclick={() => handleVote(proposalData.proposalId, 2)}
 						disabled={connectStatus !== 'connected'}
 						class={[
-							'h-12 w-full rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
+							'min-h-12 col-span-1 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
 							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
-						]}>Vote No</button
+						]}>中立或棄權</button
 					>
+					<button
+						onclick={() => handleVote(proposalData.proposalId, 0)}
+						disabled={connectStatus !== 'connected'}
+						class={[
+							'min-h-12 col-span-3 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
+							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+						]}>反對</button
+					>
+					</div>
 				{/if}
 			</div>
 		{/if}

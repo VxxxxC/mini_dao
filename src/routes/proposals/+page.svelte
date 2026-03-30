@@ -24,7 +24,7 @@
 
 	<div>
 	{#each proposals as proposal, index (index)}
-		<ProposalCard {...proposal} />
+		<ProposalCard proposalData={proposal} onVoteSuccess={async () => await fetchProposals() } />
 	{/each}
 	</div>
 </div>
