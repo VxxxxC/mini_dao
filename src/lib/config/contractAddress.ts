@@ -1,9 +1,10 @@
 export type AddressType = `0x${string}`;
 
 export const Address : { [key: string]: AddressType } = {
-    VOTEBOX : '0x610178dA211FEF7D417bC0e6FeD39F05609AD788',
-    GOVERNANCE : '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
-    FAUCET : '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
+    TOKEN: '0xA15BB66138824a1c7167f5E85b957d04Dd34E468',
+    VOTEBOX : '0x82Dc47734901ee7d4f4232f398752cB9Dd5dACcC',
+    GOVERNANCE : '0xe1Aa25618fA0c7A1CFDab5d6B456af611873b629',
+    FAUCET : '0xb19b36b1456E65E3A6D514D3F715f204BD59f431'
 }
 
 export const ChainId : { [key: string]: number } = {
