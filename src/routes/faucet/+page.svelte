@@ -4,6 +4,7 @@
 	import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import MiniDaoFaucet from '$lib/contracts_abi/MiniDaoFaucet.json';
+	import MiniDaoToken from '$lib/contracts_abi/MiniDaoToken.json';
 	import { Address, ChainId } from '$lib/config/contractAddress';
 
 	let activeUrl = $derived(page.url.pathname);
@@ -45,21 +46,35 @@
 		try {
 			isClaiming = true;
 
-			const Tx = await writeContract(wagmiConfig, {
+			const claimTx = await writeContract(wagmiConfig, {
 				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'claim',
 				chainId: ChainId.ANVIL,
 			});
 
-			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
+			const claimReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: claimTx });
 
-			if (receipt.status === 'success') {
+			if (claimReceipt.status === 'success') {
 				hasClaimed = true;
-				alert(
+				console.log(
 					'Successfully claimed 100 MDAO! Please go to Delegate to activate your voting power!'
 				);
 			}
+
+			const delegateTx = await writeContract(wagmiConfig, {
+				address: Address.TOKEN,
+				abi: MiniDaoToken.abi,
+				functionName: 'delegate',
+				args: [address],
+				chainId: ChainId.ANVIL,
+			});
+
+			const delegateReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: delegateTx });
+			if (delegateReceipt.status === 'success') {
+				alert('Successfully delegated your voting power to yourself! You can now vote on proposals!');
+			}
+
 		} catch (error) {
 			console.error('Claim failed:', error);
 		} finally {
