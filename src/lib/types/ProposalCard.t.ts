@@ -9,10 +9,7 @@ export interface ProposalCardInfoType {
 	ipfsCid: string;
 	expire: number;
 	totalVotes?: number;
-	voteFor?: number;
-	voteAgainst?: number;
-	voteAbstain?: number;
-} // 0 = Against, 1 = For, 2 = Abstain
+}
 
 export type HomeProposalCardInfoType = Omit<
 	ProposalCardInfoType,
@@ -29,3 +26,10 @@ export enum ProposalStatus {
 	"Expired",
 	"Executed"
 }
+
+export type voteType = {
+		againstVotes: number;
+		forVotes: number;
+		abstainVotes: number;
+	};
+// 0 = Against, 1 = For, 2 = Abstain
