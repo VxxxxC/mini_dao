@@ -13,7 +13,7 @@ contract HelperConfig is Script {
     uint256 constant ETH_SEPOLIA_CHAIN_ID = 11155111;
     uint256 constant LOCAL_CHAIN_ID = 31337;
     address constant ETH_SEPOLIA_DEPLOYER_ADDRESS = 0x0406c906ad4214E97F80F706d4203e6d1cBF5E3E; // NOTE: my metamask account address
-    address constant ANVIL_DEPLOYER_ADDRESS = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    address constant ANVIL_DEPLOYER_ADDRESS = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720; // NOTE: Anvil account 9
 
 	uint256 s_minDelay = 2 days;
 	address[] s_proposers = new address[](0);
