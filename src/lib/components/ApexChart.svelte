@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { ApexOptions } from 'apexcharts';
 	import { Chart } from '@flowbite-svelte-plugins/chart';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
+	import type { voteType } from '$lib/types/ProposalCard.t';
 
-	const prop: ProposalCardInfoType = $props();
+	const { proposalInfo, voteWeight } = $props<{
+		proposalInfo: ProposalCardInfoType;
+		voteWeight: voteType;
+	}>();
 
 	type voteChartType = {
 		name: string;
@@ -12,21 +15,27 @@
 		data: number[];
 	};
 
-	let voteYes: voteChartType = {
+	// $derived ensures these recompute whenever the voteWeight prop changes
+	const voteYes = $derived<voteChartType>({
 		name: 'Yes',
 		color: 'green',
-		data: [prop.voteYes ?? 0]
-	};
-	let voteNo: voteChartType = {
+		data: [voteWeight.forVotes ?? 0]
+	});
+	const voteNo = $derived<voteChartType>({
 		name: 'No',
 		color: 'red',
-		data: [prop.voteNo ?? 0]
-	};
+		data: [voteWeight.againstVotes ?? 0]
+	});
+	const voteAbstain = $derived<voteChartType>({
+		name: 'Abstain',
+		color: 'gray',
+		data: [voteWeight.abstainVotes ?? 0]
+	});
 
-	const chartOptions: ApexOptions = {
-		series: [voteYes, voteNo],
+	const chartOptions = $derived<ApexOptions>({
+		series: [voteYes, voteNo, voteAbstain],
 
-		labels: [prop.title],
+		labels: [proposalInfo.title],
 
 		dataLabels: {
 			enabled: true,
@@ -80,7 +89,7 @@
 				barHeight: '30%'
 			}
 		}
-	};
+	});
 </script>
 
 <div class="w-full">

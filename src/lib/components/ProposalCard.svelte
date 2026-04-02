@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import ApexChart from '$lib/components/ApexChart.svelte';
 	import { Card } from 'flowbite-svelte';
-	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
-	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { Address } from '$lib/config/contractAddress';
-	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 	import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
+	import ApexChart from '$lib/components/ApexChart.svelte';
+	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
+	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+
+	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
+	import type { voteType } from '$lib/types/ProposalCard.t';
 
 	let {proposalData, onVoteSuccess} = $props<{proposalData: ProposalCardInfoType, onVoteSuccess: () => void}>();
 	let connectStatus: string = $derived(walletStatus.status);
@@ -20,39 +22,60 @@
 		day: 'numeric'
 	};
 
+	let currentVotes = $state<voteType>();
+
+	async function checkVotingWeight(proposalId: bigint) {
+		try{
+			const result = await readContract(wagmiConfig, {
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'proposalVotes',
+				args: [proposalId]
+			})
+
+			const { againstVotes, forVotes, abstainVotes } = result as {
+				againstVotes: number;
+				forVotes: number;
+				abstainVotes: number;
+			};
+
+			currentVotes = { againstVotes, forVotes, abstainVotes };
+		} catch (error) {
+			console.error('Failed to fetch vote weight:', error);
+		}
+	}
+
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
-			console.log(`準備為提案 ${proposalId} 投下選項: ${support}`);
+			console.log(`Casting vote for proposal ${proposalId} with support: ${support}`);
 
-			// 1. 喚起 MetaMask 簽名並發送交易
-			const hash = await writeContract(wagmiConfig, {
+			const voteTx = await writeContract(wagmiConfig, {
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'castVote',
-				args: [proposalData.proposalId, support]
+				args: [proposalId, support]
 			});
 
-			console.log('投票交易已發送，Tx Hash:', hash);
+			console.log('Vote transaction submitted. Tx Hash:', voteTx);
 
-			// 2. 等待區塊鏈打包確認
-			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-			console.log('交易已確認，Receipt:', receipt);
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: voteTx });
+			console.log('Transaction confirmed. Receipt:', receipt);
 
 			if (receipt.status === 'success') {
-				alert('🎉 投票成功！你的聲音已記錄在區塊鏈上。');
-				// 💡 呢度可以 Trigger 一個 event 去叫外層重新 fetchProposals() 刷新狀態
+				alert('🎉 Vote submitted! Your vote has been recorded on-chain.');
+
+				// NOTE: After voted success, re-fetch all the proposals status
 				onVoteSuccess();
 			}
 		} catch (error) {
-			console.error('投票失敗:', error);
-			// 常見 Error: "Governor: vote already cast" (已經投過票) 或者 "Governor: vote not currently active" (未開始/已完結)
+			console.error('Vote failed:', error);
+			// Common errors: "Governor: vote already cast" or "Governor: vote not currently active"
 			if (error instanceof Error && error.message.includes('already cast')) {
-				alert('你已經為此提案投過票了！');
+				alert('You have already voted on this proposal!');
 			} else {
-				alert('投票失敗，請確保你在投票期內，並擁有已激活的選票 (Voting Power)。');
+				alert('Vote failed. Please ensure the voting period is active and you have delegated voting power.');
 			}
 		} finally {
-			// 無論成功與否，都重新檢查用戶的投票狀態
 			await checkUserVoteStatus();
 		}
 	}
@@ -66,7 +89,6 @@
 		try {
 			isCheckingVote = true;
 
-			// 直接 Call OpenZeppelin 自帶嘅 hasVoted
 			const result = await readContract(wagmiConfig, {
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
@@ -76,7 +98,7 @@
 
 			userHasVoted = result as boolean;
 		} catch (error) {
-			console.error('檢查投票狀態失敗:', error);
+			console.error('Failed to check vote status:', error);
 		} finally {
 			isCheckingVote = false;
 		}
@@ -84,6 +106,7 @@
 
 	onMount(() => {
 		checkUserVoteStatus();
+		checkVotingWeight(proposalData.proposalId);
 	});
 </script>
 
@@ -109,7 +132,7 @@
 					</p>
 				</div>
 			</div>
-			<ApexChart {...proposalData} />
+			<ApexChart proposalInfo={proposalData} voteWeight={currentVotes} />
 			<!-- FIX: need to fix below date time format-->
 			<div class="flex w-full flex-row items-center justify-between">
 				<div class="text-xs font-normal text-secondary">
@@ -126,11 +149,11 @@
 		{:else}
 			<div class="flex w-full flex-row items-center justify-between space-x-2">
 				{#if isCheckingVote}
-					<p class="animate-pulse text-gray-500">檢查投票紀錄中...</p>
+					<p class="animate-pulse text-gray-500">Checking vote record...</p>
 				{:else if userHasVoted}
 					<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-						<p class="text-lg font-bold text-green-700">✅ 你已經為此提案投下神聖一票！</p>
-						<p class="mt-1 text-sm text-green-600">感謝你參與 DAO 的治理決策。</p>
+						<p class="text-lg font-bold text-green-700">✅ You have already voted on this proposal!</p>
+						<p class="mt-1 text-sm text-green-600">Thank you for participating in DAO governance.</p>
 					</div>
 				{:else}
 				<div class="w-full grid grid-cols-7 gap-x-2">
@@ -140,7 +163,7 @@
 						class={[
 							'min-h-12 col-span-3 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
 							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
-						]}>贊成</button
+						]}>For</button
 					>
 					<button
 						onclick={() => handleVote(proposalData.proposalId, 2)}
@@ -148,7 +171,7 @@
 						class={[
 							'min-h-12 col-span-1 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
 							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
-						]}>中立或棄權</button
+						]}>Abstain</button
 					>
 					<button
 						onclick={() => handleVote(proposalData.proposalId, 0)}
@@ -156,7 +179,7 @@
 						class={[
 							'min-h-12 col-span-3 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
 							connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
-						]}>反對</button
+						]}>Against</button
 					>
 					</div>
 				{/if}

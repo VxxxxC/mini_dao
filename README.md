@@ -128,7 +128,7 @@ sequenceDiagram
 |---|---|
 | `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — distributed via faucet; remainder held by timelock. |
 | `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
-| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 5-token quorum. |
+| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 3-token quorum. |
 | `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
 | `MiniDaoVoteBox` | Governance-controlled vote store. Owned by the timelock. |
 
@@ -146,7 +146,7 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 - ✅ Network isolation — `HelperConfig.s.sol` separates Anvil / Sepolia params; no hardcoded addresses in scripts
 
 **Cons / Known Issues**
-- ⚠️ `QUORUM_VOTES` hardcoded to 5 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
+- ⚠️ `QUORUM_VOTES` hardcoded to 3 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
 - ⚠️ Proposal pages use mock data (`src/lib/mock_data.ts`) — live IPFS API calls not yet wired up
 - ⚠️ `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
 - ⚠️ Date/time formatting broken in `HomeProposalCard.svelte` and `ProposalCard.svelte` — replace with `Intl.DateTimeFormat`
@@ -165,12 +165,12 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 | File | Line | Description |
 |---|---|---|
 | [HomeProposalCard.svelte](src/lib/components/HomeProposalCard.svelte#L27) | 27 | Date/time formatting broken — replace with `Intl.DateTimeFormat` |
-| [ProposalCard.svelte](src/lib/components/ProposalCard.svelte#L43) | 43 | Same date/time formatting issue |
+| [ProposalCard.svelte](src/lib/components/ProposalCard.svelte#L136) | 136 | Same date/time formatting issue |
 
 #### 🟡 `WARN`
 | File | Line | Description |
 |---|---|---|
-| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L22) | 22 | `QUORUM_VOTES` hardcoded — replace with `GovernorVotesQuorumFraction` |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L23) | 23 | `QUORUM_VOTES` hardcoded to 3 — replace with `GovernorVotesQuorumFraction` |
 | [MiniDaoVoteBox.sol](contracts/src/MiniDaoVoteBox.sol#L12) | 12 | Initial owner is `msg.sender`; transfer to timelock post-deploy |
 | [appKitConfig.ts](src/lib/config/appKitConfig.ts#L12) | 12, 20 | Network hardcoded to Anvil — switch before production |
 | [viem/client.ts](src/lib/config/viem/client.ts#L5) | 5 | Network hardcoded to Anvil — switch before production |
@@ -178,9 +178,9 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 #### 🔵 `IMPORTANT`
 | File | Line | Description |
 |---|---|---|
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L17) | 17 | Signature expiry check — rejects requests older than 5 minutes |
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L26) | 26 | Signature verification via `verifyMessage` |
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L73) | 73 | IPFS CID extracted from Filebase response header |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L16) | 16 | Signature expiry check — rejects requests older than 5 minutes |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L25) | 25 | Signature verification via `verifyMessage` |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L72) | 72 | IPFS CID extracted from Filebase response header |
 
 ---
 
