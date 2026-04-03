@@ -23,7 +23,7 @@
 	</div>
 
 	<div class="flex flex-col space-y-5">
-		{#each proposals as proposal, index (index)}
+		{#each proposals as proposal (proposal.proposalId)}
 			<ProposalCard proposalData={proposal} onVoteSuccess={async () => await fetchProposals()} />
 		{/each}
 	</div>
