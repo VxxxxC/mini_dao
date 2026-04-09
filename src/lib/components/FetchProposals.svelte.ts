@@ -1,9 +1,8 @@
 
-import { getPublicClient, readContract } from '@wagmi/core';
 import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
-import { wagmiConfig } from '$lib/config/appKitConfig';
 import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 import { Address } from '$lib/config/contractAddress';
+import { publicClient } from '$lib/config/viem/client';
 
 const governorAbi = MiniDaoGovernance.abi;
 
@@ -37,9 +36,7 @@ async function fetchIpfsData(cid: string) {
 
 export async function fetchProposals() {
 	try {
-		const publicClient = getPublicClient(wagmiConfig);
-
-		const logs = await publicClient?.getContractEvents({
+		const logs = await publicClient.getContractEvents({
 			address: Address.GOVERNANCE,
 			abi: governorAbi,
 			eventName: 'ProposalCreated',
@@ -48,13 +45,13 @@ export async function fetchProposals() {
 		});
 
 		const formattedProposals = await Promise.all(
-			logs!.map(async (log) => {
+			logs.map(async (log) => {
 				const args = log.args;
 				const proposalId = args.proposalId;
 				const ipfsCid = args.description;
 
 				// 1. Query real-time state (On-chain)
-				const statePromise = readContract(wagmiConfig, {
+				const statePromise = publicClient.readContract({
 					address: Address.GOVERNANCE,
 					abi: governorAbi,
 					functionName: 'state',

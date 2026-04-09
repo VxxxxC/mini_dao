@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { Card } from 'flowbite-svelte';
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
+	import { publicClient } from '$lib/config/viem/client';
 	import {
-		readContract,
 		writeContract,
 		waitForTransactionReceipt,
 		getTransactionCount
@@ -18,6 +17,7 @@
 	import type { voteType } from '$lib/types/ProposalCard.t';
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 
+	// COL: Props
 	let { proposalData, onVoteSuccess } = $props<{
 		proposalData: ProposalCardInfoType;
 		onVoteSuccess: () => void;
@@ -55,7 +55,7 @@
 	// NOTE: Checking the current vote weight for each proposal
 	async function checkVotingWeight(proposalId: bigint) {
 		try {
-			const result = await readContract(wagmiConfig, {
+			const result = await publicClient.readContract({
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'proposalVotes',
@@ -115,11 +115,11 @@
 		return parts.join(' ');
 	}
 
-	let countdownDisplay = $derived(formatCountdown(countdown));
+	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
 
 	async function checkStartVoteSnapshot(proposalId: bigint) {
 		try {
-			const result = await readContract(wagmiConfig, {
+			const result = await publicClient.readContract({
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'countdownStartVoting',
@@ -185,7 +185,7 @@
 		try {
 			isCheckingVote = true;
 
-			const result = await readContract(wagmiConfig, {
+			const result = await publicClient.readContract({
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'hasVoted',
