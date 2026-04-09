@@ -16,6 +16,7 @@
 
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import type { voteType } from '$lib/types/ProposalCard.t';
+	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 
 	let { proposalData, onVoteSuccess } = $props<{
 		proposalData: ProposalCardInfoType;
@@ -31,6 +32,7 @@
 			if (!isCancelled) {
 				await checkUserVoteStatus();
 				await checkVotingWeight(proposalData.proposalId);
+				await checkStartVoteSnapshot(proposalData.proposalId);
 			}
 		};
 		if (userAddress && proposalData.proposalId) {
@@ -50,6 +52,7 @@
 
 	let currentVotes = $state<voteType>();
 
+	// NOTE: Checking the current vote weight for each proposal
 	async function checkVotingWeight(proposalId: bigint) {
 		try {
 			const result = await readContract(wagmiConfig, {
@@ -68,6 +71,63 @@
 			currentVotes = { againstVotes, forVotes, abstainVotes };
 		} catch (error) {
 			console.error('Failed to fetch vote weight:', error);
+		}
+	}
+
+	// NOTE: Checking the ETA for start voting
+	let startToVote = $state<number>(0);
+	let countdown = $state<number>(0);
+
+	// Local state override — set optimistically when countdown ends
+	let localState = $state<ProposalStatusEnum | undefined>(undefined);
+	// Always sync localState back if parent re-fetches a new state
+	let displayState = $derived(localState !== undefined ? localState : proposalData.state);
+
+	// Seed countdown from on-chain value and start a 1-second interval
+	$effect(() => {
+		countdown = startToVote;
+		if (startToVote <= 0) return;
+
+		const interval = setInterval(() => {
+			const next = Math.max(0, countdown - 1);
+			countdown = next;
+			if (next === 0) {
+				clearInterval(interval);
+				localState = ProposalStatusEnum.Active;
+				onVoteSuccess(); // re-fetch from chain to confirm real state
+			}
+		}, 1000);
+
+		return () => clearInterval(interval);
+	});
+
+	function formatCountdown(secs: number): string {
+		const days = Math.floor(secs / 86400);
+		const hours = Math.floor((secs % 86400) / 3600);
+		const minutes = Math.floor((secs % 3600) / 60);
+		const seconds = secs % 60;
+
+		const parts: string[] = [];
+		if (days > 0) parts.push(`${days}d`);
+		if (hours > 0) parts.push(`${hours}h`);
+		if (minutes > 0) parts.push(`${minutes}m`);
+		parts.push(`${String(seconds).padStart(2, '0')}s`);
+		return parts.join(' ');
+	}
+
+	let countdownDisplay = $derived(formatCountdown(countdown));
+
+	async function checkStartVoteSnapshot(proposalId: bigint) {
+		try {
+			const result = await readContract(wagmiConfig, {
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'countdownStartVoting',
+				args: [proposalId]
+			});
+			startToVote = Number(result);
+		} catch (error) {
+			console.error('Failed to fetch voting eta:', error);
 		}
 	}
 
@@ -151,7 +211,22 @@
 		<div class="flex w-full flex-col items-center">
 			<div class="flex w-full flex-row items-center justify-between">
 				<div class="text-lg font-bold">{proposalData.title}</div>
-				<ProposalStatus status={proposalData.state} />
+				<div class="flex flex-row items-center space-x-2">
+					{#if countdown > 0}
+						<span
+							class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+						>
+							⏳ Starts in {countdownDisplay}
+						</span>
+					{:else}
+						<span
+							class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+						>
+							Start Voting Now
+						</span>
+					{/if}
+					<ProposalStatus status={displayState} />
+				</div>
 			</div>
 
 			<div class="space-y-5 self-start">

@@ -41,6 +41,18 @@ contract MiniDaoGovernance is
 		return 1 days; // TEST: for test only, normally 1 week
 	}
 
+	// COL: public view functions
+
+	function countdownStartVoting(uint256 proposalId) public view returns(uint256){
+		uint256 currentTime = clock();
+		uint256 proposalStartTime = proposalSnapshot(proposalId);
+		if (currentTime >= proposalStartTime) {
+			return 0; // Voting has already started
+		} else {
+			return proposalStartTime - currentTime; // Time remaining until voting starts
+		}
+	}
+
 	// COL: public override functions
 
 	function propose(address target) public returns (uint256 proposalId) {
