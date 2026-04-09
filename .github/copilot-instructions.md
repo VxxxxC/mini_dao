@@ -106,9 +106,217 @@ Mini DAO is a full-stack Web3 governance platform. The **contracts/** directory 
 
 ## Known Issues / TODOs (do not regress)
 
-- `MiniDaoGovernance`: `QUORUM_VOTES` is hardcoded to 5 tokens; future improvement is `GovernorVotesQuorumFraction`.
-- `appKitConfig.ts` and `viem/client`: Hardcoded to Anvil — must be updated for any non-local deployment.
-- Proposal pages currently use mock data (`src/lib/mock_data.ts`) — replace with real API calls when the backend is ready.
+- `MiniDaoGovernance`: `QUORUM_VOTES` is hardcoded to 3 tokens (as of April 2026); future improvement is `GovernorVotesQuorumFraction`.
+- `appKitConfig.ts` and `viem/client`: Hardcoded to Anvil (chain 31337) — must be updated for any non-local deployment.
+- Date/time formatting in proposal cards (HomeProposalCard.svelte, ProposalCard.svelte) needs `Intl.DateTimeFormat` correction.
+- Wallet modal z-index issue (Navbar.svelte line 100) — conflicts with hamburger dropdown on mobile.
+
+---
+
+## Implementation Checklist: State & Navigation
+
+When adding new data-fetching pages to the app:
+
+- [ ] Use `afterNavigate()` from `$app/navigation` for page-level fetches, NOT `onMount()`
+- [ ] If there's a success callback (e.g., `onVoteSuccess`), **re-assign** the result to state: `data = await fetch()`
+- [ ] All contract **reads** use `publicClient.readContract()` from `$lib/config/viem/client`
+- [ ] All contract **writes** use `writeContract()` + `wagmiConfig` from `@wagmi/core`
+- [ ] Contract return types: `uint256` → use `Number()` to convert bigint; never use `as number` as the only conversion
+- [ ] Timers/intervals: wrap in `$effect` with cleanup function (`return () => clearInterval(...)`)
+- [ ] Live displays: use `$derived` with guards (e.g., `countdown > 0`) to hide stale state
+- [ ] Optimistic updates: use local `$state` + `$derived` fallback to props, not direct prop mutation
+
+---
+
+## Frontend State Management & Navigation (Critical Patterns)
+
+### 1. Page-Level Data Fetching with `afterNavigate`
+
+**Problem:** Using `onMount()` for data fetching only fires once when the page initially mounts. In SvelteKit client-side navigation, switching away and back to a page (e.g., Home → Proposals → Home) does NOT re-mount; the component is reused. This causes stale data.
+
+**Solution:** Use `afterNavigate()` from `$app/navigation` instead. It fires on **every navigation** that lands on the page, including tab switches.
+
+```typescript
+// ❌ WRONG - data only fetches once
+import { onMount } from 'svelte';
+onMount(async () => {
+  proposals = await fetchProposals();
+});
+
+// ✅ CORRECT - data re-fetches on every tab switch back
+import { afterNavigate } from '$app/navigation';
+afterNavigate(async () => {
+  proposals = await fetchProposals();
+});
+```
+
+**Files:** `src/routes/proposals/+page.svelte` (line 9)
+
+---
+
+### 2. Callback State Re-assignment
+
+**Problem:** Callback functions like `onVoteSuccess` that trigger data re-fetch must **explicitly re-assign** the result to component state. Simply calling the async function without capturing the result discards the data.
+
+**Solution:** Always assign the result back to state in the callback.
+
+```typescript
+// ❌ WRONG - result is discarded
+onVoteSuccess={async () => await fetchProposals()}
+
+// ✅ CORRECT - result is assigned back to state
+onVoteSuccess={async () => {
+  proposals = await fetchProposals();
+}}
+```
+
+**Impact:** Without this, voting triggers the fetch but cards don't update — only an F5 refresh displays new data.
+
+---
+
+### 3. Contract Reads: Standalone Viem Client vs Wagmi
+
+**Problem:** Wagmi's `getPublicClient(wagmiConfig)` and `readContract(wagmiConfig, ...)` rely on wagmi's internal connector state. During client-side navigation, this state can become stale or unavailable, causing these functions to return `undefined` or fail silently.
+
+**Solution:** Use the standalone viem `publicClient` from `$lib/config/viem/client` for **all read-only contract calls**. Reserve `wagmiConfig` for write operations (signing/voting) where the wallet signer is needed.
+
+```typescript
+// ❌ WRONG - unreliable on tab navigation
+import { readContract, getPublicClient } from '@wagmi/core';
+const client = getPublicClient(wagmiConfig);
+const result = await readContract(wagmiConfig, { ... });
+
+// ✅ CORRECT - always available
+import { publicClient } from '$lib/config/viem/client';
+const result = await publicClient.readContract({ ... });
+```
+
+**When to use each:**
+- **`publicClient.readContract()`**: Querying contract state (voting weights, proposal status, countdown timers)
+- **`wagmiConfig` + `writeContract()`**: Voting, submitting transactions that require a wallet signer
+
+**Files:**
+- `src/lib/components/FetchProposals.svelte.ts` (all contract event reads + state queries)
+- `src/lib/components/ProposalCard.svelte` (checkVotingWeight, checkStartVoteSnapshot, checkUserVoteStatus)
+
+---
+
+### 4. TypeScript Type Casting vs Runtime Conversion
+
+**Problem:** TypeScript's `as X` syntax is **type-only** — it doesn't convert the value at runtime. If a contract returns `uint256` (which viem converts to `bigint`), `result as number` still leaves `result` as `bigint`, causing runtime arithmetic errors.
+
+**Solution:** Use runtime conversion functions: `Number()`, `String()`, `BigInt()`.
+
+```typescript
+// ❌ WRONG - still bigint at runtime
+const countdown = result as number;
+countdown - 1;  // TypeError: can't mix bigint and number
+
+// ✅ CORRECT - actual runtime conversion
+const countdown = Number(result);
+countdown - 1;  // Works ✓
+```
+
+**When you see `as number` in contract reads:** Always verify the actual return type. If viem returns `bigint` for `uint256`, use `Number(result)`.
+
+**Files:** `src/lib/components/ProposalCard.svelte` (line 128: `startToVote = Number(result)`)
+
+---
+
+### 5. Live Countdown Timer Pattern
+
+**Problem:** Displaying a countdown that ticks down every second requires:
+- Fetching the initial seconds from the contract
+- Starting a `setInterval` that decrements every 1000ms
+- Stopping the interval when the countdown ends (or component unmounts)
+- Formatting the display without showing "00s" after it ends
+
+**Solution:** Use `$effect` to manage the interval lifecycle, with proper cleanup.
+
+```typescript
+let startToVote = $state<number>(0);
+let countdown = $state<number>(0);
+
+// Re-run whenever startToVote changes (after contract fetch)
+$effect(() => {
+  countdown = startToVote;
+  if (startToVote <= 0) return;  // Don't start interval if already 0
+
+  const interval = setInterval(() => {
+    const next = Math.max(0, countdown - 1);
+    countdown = next;
+    if (next === 0) {
+      clearInterval(interval);  // Stop at zero
+      // Optionally trigger state update here
+    }
+  }, 1000);
+
+  // Cleanup: automatically runs when effect re-runs or component unmounts
+  return () => clearInterval(interval);
+});
+
+// Guard display to hide when countdown ends
+let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
+```
+
+**Key points:**
+- `$effect` cleanup function (return) is **always called** on re-run or unmount
+- `Math.max(0, countdown - 1)` prevents negative countdown
+- Guard the display with `countdown > 0` to hide "00s"
+- Don't use `let interval; interval = setInterval(...)` — scope issues make cleanup fragile
+
+**Files:** `src/lib/components/ProposalCard.svelte` (lines 81–102)
+
+---
+
+### 6. Optimistic State Updates with `$derived`
+
+**Problem:** When a countdown ends and you want to update the proposal status UI immediately before the parent re-fetches from chain, you need to override the prop temporarily.
+
+**Solution:** Use a local `$state` override that falls back to the prop via `$derived`.
+
+```typescript
+let localState = $state<ProposalStatus | undefined>(undefined);
+// Always sync localState back if parent re-fetches a new state
+let displayState = $derived(localState !== undefined ? localState : proposalData.state);
+
+// In countdown interval:
+if (next === 0) {
+  localState = ProposalStatus.Active;  // Show "Active" immediately
+  onVoteSuccess();  // Re-fetch from chain to confirm
+}
+```
+
+**Why not just mutate `proposalData.state` directly?**
+- Props are read-only in Svelte 5
+- Props will be re-passed from parent on re-fetch anyway
+- The local override is temporary — `localState` resets to `undefined` when parent updates `proposalData`
+
+**Files:** `src/lib/components/ProposalCard.svelte` (lines 82–84, 96)
+
+---
+
+### 7. Svelte 5 Reactivity: `$state` vs `$derived` vs `let`
+
+**Rule of thumb:**
+- **`let` (no prefix)**: One-time snapshots; changes don't reactively update dependents
+- **`$state`**: Mutable state; changes trigger reactivity (listeners, effects, derived)
+- **`$derived`**: Read-only computed value; auto-updates when deps change
+- **`$effect`**: Side effects; runs when deps change
+
+**Anti-pattern:** Destructuring from `$props()` into a `let` is a one-time snapshot:
+
+```typescript
+// ❌ WRONG - voteWeight is frozen at initial value
+const { voteWeight } = $props();
+let chart = let data: [voteWeight.forVotes] };  // Snapshot, never updates
+
+// ✅ CORRECT - re-computes whenever voteWeight changes
+const { voteWeight } = $props();
+let chart = $derived({ data: [voteWeight.forVotes] });
+```
+
+**Files:** `src/lib/components/ApexChart.svelte` (lines with `$derived` for voteYes, voteNo, etc.)
 
 ---
 
