@@ -125,6 +125,7 @@ When adding new data-fetching pages to the app:
 - [ ] Timers/intervals: wrap in `$effect` with cleanup function (`return () => clearInterval(...)`)
 - [ ] Live displays: use `$derived` with guards (e.g., `countdown > 0`) to hide stale state
 - [ ] Optimistic updates: use local `$state` + `$derived` fallback to props, not direct prop mutation
+- [ ] Async on-chain reads in child components: use `onMount` with `.then()/.catch()` — NEVER `$effect` (causes white screen if any synchronous `$state` write occurs)
 
 ---
 
@@ -320,6 +321,96 @@ let chart = $derived({ data: [voteWeight.forVotes] });
 
 ---
 
+### 8. ⚠️ Do NOT Use `$effect` for Blockchain / On-Chain Reads in Svelte 5
+
+**This is a hard rule learned through production breakage. `$effect` is fundamentally incompatible with async blockchain component patterns in Svelte 5.**
+
+#### Why `$effect` Breaks Blockchain Components
+
+Svelte 5's `$effect` runs synchronously and tracks reactive dependencies eagerly. When you use it for async on-chain reads, several failure modes arise:
+
+**Failure Mode A — White screen / infinite loop:**
+```typescript
+// ❌ CRASHES THE PAGE — synchronous $state write inside $effect
+$effect(() => {
+  isCheckingVote = true;  // ← synchronous $state write → Svelte detects loop → white screen
+  publicClient.readContract({ ... }).then(result => {
+    userHasVoted = result as boolean;
+    isCheckingVote = false;
+  });
+});
+```
+The synchronous `isCheckingVote = true` write inside `$effect` triggers Svelte 5's infinite reactivity loop detection → the entire page goes blank, nothing renders.
+
+**Failure Mode B — Stale data / silent re-trigger:**
+Even if you avoid synchronous writes, `$effect` re-runs on ANY reactive dependency change. Blockchain reads are expensive and asynchronous — re-triggering them on every prop change causes race conditions, duplicate requests, and unpredictable UI states.
+
+**Failure Mode C — Countdown timer works, but on-chain reads don't:**
+The countdown `$effect` pattern only works because all `$state` writes happen inside the `setInterval` callback (deferred/async), never synchronously. This is the ONE safe use of `$effect` with state. But trying to apply this same pattern to on-chain reads (which involve async network calls + synchronous loading flags) will crash.
+
+#### ✅ Correct Pattern: `onMount` for Child-Level Blockchain Reads
+
+```typescript
+// ✅ SAFE — use onMount for async on-chain reads in child components
+import { onMount } from 'svelte';
+
+let userHasVoted = $state<boolean>(false);
+let isCheckingVote = $state<boolean>(false);
+
+onMount(() => {
+  const addr = userAddress;
+  if (!addr || !addr.startsWith('0x')) return;  // guard against 'Not connected'
+
+  isCheckingVote = true;
+  publicClient.readContract({
+    functionName: 'hasVoted',
+    args: [proposalData.proposalId, addr as `0x${string}`]
+  }).then((result) => {
+    userHasVoted = result as boolean;
+  }).catch((error) => {
+    console.error('Failed to check vote status:', error);
+  }).finally(() => {
+    isCheckingVote = false;
+  });
+});
+```
+
+**Why `onMount` works:**
+- Runs once after the component mounts — no reactive dependency tracking
+- Async `.then()/.catch()` writes to `$state` are deferred — Svelte does NOT detect these as synchronous loops
+- No white screen risk
+- Stable and predictable
+
+#### ⚠️ Known Limitation of `onMount`
+
+`onMount` only fires **once** on initial mount. During SvelteKit client-side navigation (tab switch), the child component is reused — `onMount` does NOT re-run. This means after switching tabs, `hasVoted` will show the initial cached value until F5 refresh.
+
+**This is a known trade-off.** The alternative (lifting the fetch to the parent) can cause `Promise.all` failures if address validation is not careful. For now, `onMount` is the stable choice.
+
+#### Address Validation (Critical)
+
+`WalletStore` sets `address = 'Not connected'` when wallet disconnects — this is a **truthy non-address string**. Always validate before passing to contract calls:
+
+```typescript
+// ✅ Always guard address before blockchain calls
+const isValidAddress = userAddress && userAddress.startsWith('0x');
+if (!isValidAddress) return;
+```
+
+#### Summary: `$effect` Rules for Blockchain Components
+
+| Use Case | Use |
+|---|---|
+| Countdown timer (writes only in `setInterval`) | `$effect` ✅ |
+| Any `$state` write SYNCHRONOUSLY inside `$effect` | NEVER — white screen |
+| Async on-chain reads (`readContract`, `getContractEvents`) | `onMount` ✅ |
+| Derived/computed values from props | `$derived` ✅ |
+| Wallet writes (`writeContract`) | event handler functions ✅ |
+
+**Files:** `src/lib/components/ProposalCard.svelte` (onMount for hasVoted + countdown)
+
+---
+
 ## Project Audit Rule
 
 When asked to review, screen, or audit the project, always:
@@ -354,7 +445,7 @@ When asked to review, screen, or audit the project, always:
 #### `WARN` (contracts)
 | File | Line | Note |
 |---|---|---|
-| `contracts/src/MiniDaoGovernance.sol` | 22 | `QUORUM_VOTES` hardcoded to 5 tokens — replace with `GovernorVotesQuorumFraction` |
+| `contracts/src/MiniDaoGovernance.sol` | 22 | `QUORUM_VOTES` hardcoded to 3 tokens — replace with `GovernorVotesQuorumFraction` |
 | `contracts/src/MiniDaoVoteBox.sol` | 12 | Initial owner is `msg.sender`; ownership must be transferred to timelock post-deploy |
 | `contracts/src/MiniDaoToken.sol` | 30 | Override required by Solidity (informational — no action needed) |
 
