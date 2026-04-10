@@ -12,6 +12,7 @@
 	let status: string = $derived(walletStatus.status);
 	let hasClaimed: boolean = $derived(false);
 	let isClaiming: boolean = $derived(false);
+	let isDelegating: boolean = $derived(false);
 	let isLoadingStatus: boolean = $derived(false);
 
 	$effect(() => {
@@ -56,11 +57,12 @@
 			const claimReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: claimTx });
 
 			if (claimReceipt.status === 'success') {
-				hasClaimed = true;
 				console.log(
 					'Successfully claimed 100 MDAO! Please go to Delegate to activate your voting power!'
 				);
 			}
+
+			isClaiming = false;
 
 			const delegateTx = await writeContract(wagmiConfig, {
 				address: Address.TOKEN,
@@ -70,15 +72,18 @@
 				chainId: ChainId.ANVIL,
 			});
 
+			isDelegating = true;
+
 			const delegateReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: delegateTx });
 			if (delegateReceipt.status === 'success') {
 				alert('Successfully delegated your voting power to yourself! You can now vote on proposals!');
 			}
+			isDelegating = false;
 
 		} catch (error) {
 			console.error('Claim failed:', error);
 		} finally {
-			isClaiming = false;
+			hasClaimed = true;
 		}
 	}
 </script>
@@ -111,11 +116,13 @@
 	{:else}
 		<button
 			onclick={handleClaim}
-			disabled={isClaiming}
+			disabled={isClaiming || isDelegating}
 			class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
 		>
 			{#if isClaiming}
-				Processing transaction... (please confirm in your wallet)
+				Claiming the token from the faucet...
+			{:else if isDelegating}
+				Delegating your voting power...
 			{:else}
 				Claim 100 MDAO
 			{/if}
