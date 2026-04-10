@@ -7,9 +7,6 @@
 
 	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
 
-	// afterNavigate(async () => {
-	// 	proposals = await fetchProposals();
-	// });
 		onMount(async () => {
 		proposals = await fetchProposals();
 	});
