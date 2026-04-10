@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { afterNavigate } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import ProposalCard from '$lib/components/ProposalCard.svelte';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 
 	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
 
-		onMount(async () => {
+	// NOTE: afterNavigate fires on EVERY navigation to this page (including tab switches),
+	// unlike onMount which only fires once. This ensures data is always fresh.
+	afterNavigate(async () => {
 		proposals = await fetchProposals();
 	});
-
 </script>
 
 <div class="grid w-full space-y-5">
@@ -25,9 +25,9 @@
 		{#each proposals as proposal (proposal.proposalId)}
 			<ProposalCard
 				proposalData={proposal}
-				onVoteSuccess={async () => 
-					await fetchProposals()
-				}
+				onVoteSuccess={async () => {
+					proposals = await fetchProposals();
+				}}
 			/>
 		{/each}
 	</div>

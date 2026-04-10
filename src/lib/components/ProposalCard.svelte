@@ -13,7 +13,6 @@
 	import type { voteType } from '$lib/types/ProposalCard.t';
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 	import { onMount } from 'svelte';
-
 	// COL: Props
 	let { proposalData, onVoteSuccess } = $props<{
 		proposalData: ProposalCardInfoType;
@@ -33,30 +32,32 @@
 		abstainVotes: proposalData.voteAbstain
 	});
 
-	const options = {
+	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric'
 	};
 
-	onMount(async () => {
-		try {
-			isCheckingVote = true;
+	// NOTE: $effect re-runs whenever proposalData.proposalId or userAddress changes,
+	// including after parent re-fetches via afterNavigate. Unlike onMount, this stays fresh.
+	onMount(() => {
+		const pid = proposalData.proposalId;
+		const addr = userAddress;
+		if (!addr) return;
 
-			const result = await publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'hasVoted',
-				args: [proposalData.proposalId, userAddress]
-			});
-			console.log({ result });
-
+		isCheckingVote = true;
+		publicClient.readContract({
+			address: Address.GOVERNANCE,
+			abi: MiniDaoGovernance.abi,
+			functionName: 'hasVoted',
+			args: [pid, addr]
+		}).then((result) => {
 			userHasVoted = result as boolean;
-		} catch (error) {
+		}).catch((error) => {
 			console.error('Failed to check vote status:', error);
-		} finally {
+		}).finally(() => {
 			isCheckingVote = false;
-		}
+		});
 	});
 
 	// NOTE: Checking the ETA for start voting
@@ -68,7 +69,7 @@
 	let displayState = $derived(localState !== undefined ? localState : proposalData.state);
 
 	// Seed countdown from on-chain value and start a 1-second interval
-	$effect(() => {
+	onMount(() => {
 		countdown = proposalData.startToVote;
 		if (proposalData.startToVote <= 0) return;
 
@@ -145,27 +146,7 @@
 	}
 
 
-	async function checkUserVoteStatus() {
-		if (!userAddress) return;
 
-		try {
-			isCheckingVote = true;
-
-			const result = await publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'hasVoted',
-				args: [proposalData.proposalId, userAddress]
-			});
-			console.log({ result });
-
-			return result as boolean;
-		} catch (error) {
-			console.error('Failed to check vote status:', error);
-		} finally {
-			isCheckingVote = false;
-		}
-	}
 </script>
 
 <div class="flex flex-col items-center space-y-5">

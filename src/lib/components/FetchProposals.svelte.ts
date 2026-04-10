@@ -57,23 +57,23 @@ export async function fetchProposals() {
 					functionName: 'state',
 					args: [proposalId]
 				});
-// 2. Query real-time voting start time (On-chain)
+				// 2. Query real-time voting start time (On-chain)
 				const startVotePromise = publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'countdownStartVoting',
-				args: [proposalId]
-			});
+					address: Address.GOVERNANCE,
+					abi: governorAbi,
+					functionName: 'countdownStartVoting',
+					args: [proposalId]
+				});
 
-			// 3. Query real-time voting weight (On-chain)
-			const votingWeightPromise = publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'proposalVotes',
-				args: [proposalId]
-			});
+				// 3. Query real-time voting weight (On-chain)
+				const votingWeightPromise = publicClient.readContract({
+					address: Address.GOVERNANCE,
+					abi: governorAbi,
+					functionName: 'proposalVotes',
+					args: [proposalId]
+				});
 
-					// 2. Download proposal content (Off-chain IPFS)
+				// 4. Download proposal content (Off-chain IPFS)
 				const ipfsPromise = fetchIpfsData(ipfsCid);
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
