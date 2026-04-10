@@ -44,7 +44,7 @@ export async function fetchProposals() {
 			toBlock: 'latest'
 		});
 
-		const formattedProposals = await Promise.all(
+		const formattedProposals: ProposalCardInfoType[] = await Promise.all(
 			logs.map(async (log) => {
 				const args = log.args;
 				const proposalId = args.proposalId;
@@ -57,12 +57,28 @@ export async function fetchProposals() {
 					functionName: 'state',
 					args: [proposalId]
 				});
+// 2. Query real-time voting start time (On-chain)
+				const startVotePromise = publicClient.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'countdownStartVoting',
+				args: [proposalId]
+			});
+
+			// 3. Query real-time voting weight (On-chain)
+			const votingWeightPromise = publicClient.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'proposalVotes',
+				args: [proposalId]
+			});
 
 					// 2. Download proposal content (Off-chain IPFS)
 				const ipfsPromise = fetchIpfsData(ipfsCid);
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
-				const [stateResult, ipfsData] = await Promise.all([statePromise, ipfsPromise]);
+				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([statePromise, ipfsPromise, startVotePromise, votingWeightPromise]);
+				console.log({ stateResult, ipfsData, startVoteResult, votingWeightResult });
 
 				return {
 					proposalId: proposalId as bigint,
@@ -72,6 +88,11 @@ export async function fetchProposals() {
 					title: ipfsData.title as string,
 					description: ipfsData.description as string,
 					expire: ipfsData.expire as number,
+					startToVote: Number(startVoteResult),
+					totalVotes: Number(votingWeightResult[0]) + Number(votingWeightResult[1]) + Number(votingWeightResult[2]),
+					voteFor: Number(votingWeightResult[1]),
+					voteAgainst: Number(votingWeightResult[0]),
+					voteAbstain: Number(votingWeightResult[2])
 				};
 			})
 		);

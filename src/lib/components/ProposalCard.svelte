@@ -4,11 +4,7 @@
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
-	import {
-		writeContract,
-		waitForTransactionReceipt,
-		getTransactionCount
-	} from '@wagmi/core';
+	import { writeContract, waitForTransactionReceipt, getTransactionCount } from '@wagmi/core';
 	import ApexChart from '$lib/components/ApexChart.svelte';
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
@@ -26,22 +22,16 @@
 	let userAddress: string = $derived(walletStatus.address);
 
 	$effect(() => {
-		let isCancelled = false;
-
-		const runCheck = async () => {
-			if (!isCancelled) {
-				await checkUserVoteStatus();
-				await checkVotingWeight(proposalData.proposalId);
-				await checkStartVoteSnapshot(proposalData.proposalId);
+		if (connectStatus === 'connected') {
+			if(proposalData.proposalId){
+				checkUserVoteStatus();
+				checkVotingWeight(proposalData.proposalId);
+			}else{
+				console.error('Invalid proposal ID:', proposalData.proposalId);
 			}
-		};
-		if (userAddress && proposalData.proposalId) {
-			runCheck();
 		} else {
-			userHasVoted = false;
+			console.error('Wallet not connected. Cannot check vote status or voting weight.');
 		}
-
-		return () => (isCancelled = true);
 	});
 
 	const options = {
@@ -52,30 +42,7 @@
 
 	let currentVotes = $state<voteType>();
 
-	// NOTE: Checking the current vote weight for each proposal
-	async function checkVotingWeight(proposalId: bigint) {
-		try {
-			const result = await publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'proposalVotes',
-				args: [proposalId]
-			});
-
-			const { againstVotes, forVotes, abstainVotes } = result as {
-				againstVotes: number;
-				forVotes: number;
-				abstainVotes: number;
-			};
-
-			currentVotes = { againstVotes, forVotes, abstainVotes };
-		} catch (error) {
-			console.error('Failed to fetch vote weight:', error);
-		}
-	}
-
 	// NOTE: Checking the ETA for start voting
-	let startToVote = $state<number>(0);
 	let countdown = $state<number>(0);
 
 	// Local state override — set optimistically when countdown ends
@@ -85,8 +52,8 @@
 
 	// Seed countdown from on-chain value and start a 1-second interval
 	$effect(() => {
-		countdown = startToVote;
-		if (startToVote <= 0) return;
+		countdown = proposalData.startToVote;
+		if (proposalData.startToVote <= 0) return;
 
 		const interval = setInterval(() => {
 			const next = Math.max(0, countdown - 1);
@@ -117,19 +84,6 @@
 
 	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
 
-	async function checkStartVoteSnapshot(proposalId: bigint) {
-		try {
-			const result = await publicClient.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'countdownStartVoting',
-				args: [proposalId]
-			});
-			startToVote = Number(result);
-		} catch (error) {
-			console.error('Failed to fetch voting eta:', error);
-		}
-	}
 
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
@@ -245,7 +199,7 @@
 					Ends: {new Intl.DateTimeFormat('en-US', options).format(proposalData.expire)}
 				</div>
 
-				<div class="text-xs font-normal text-secondary">{proposalData.totalVotes ?? 0} votes</div>
+				<div class="text-xs font-normal text-secondary">{proposalData.totalVotes} votes</div>
 			</div>
 		</div>
 		{#if connectStatus !== 'connected'}

@@ -8,7 +8,11 @@ export interface ProposalCardInfoType {
 	state: ProposalStatusEnum;
 	ipfsCid: string;
 	expire: number;
+	startToVote?: number;
 	totalVotes?: number;
+	voteFor?: number;
+	voteAgainst?: number;
+	voteAbstain?: number;
 }
 
 export type HomeProposalCardInfoType = Omit<
