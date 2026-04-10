@@ -23,10 +23,9 @@
 
 	$effect(() => {
 		if (connectStatus === 'connected') {
-			if(proposalData.proposalId){
+			if (proposalData.proposalId) {
 				checkUserVoteStatus();
-				checkVotingWeight(proposalData.proposalId);
-			}else{
+			} else {
 				console.error('Invalid proposal ID:', proposalData.proposalId);
 			}
 		} else {
@@ -40,7 +39,11 @@
 		day: 'numeric'
 	};
 
-	let currentVotes = $state<voteType>();
+	let currentVotes = $derived<voteType>({
+		againstVotes: proposalData.voteAgainst,
+		forVotes: proposalData.voteFor,
+		abstainVotes: proposalData.voteAbstain
+	});
 
 	// NOTE: Checking the ETA for start voting
 	let countdown = $state<number>(0);
@@ -84,7 +87,6 @@
 
 	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
 
-
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
 			console.log(`Casting vote for proposal ${proposalId} with support: ${support}`);
@@ -108,8 +110,6 @@
 			console.log('Transaction confirmed. Receipt:', receipt);
 
 			if (receipt.status === 'success') {
-				userHasVoted = true;
-
 				alert('🎉 Vote submitted! Your vote has been recorded on-chain.');
 
 				// NOTE: After voted success, re-fetch all the proposals status
@@ -130,7 +130,7 @@
 		}
 	}
 
-	let userHasVoted = $state<boolean>(false);
+	let userHasVoted = $derived(async () => await checkUserVoteStatus());
 	let isCheckingVote = $state<boolean>(false);
 
 	async function checkUserVoteStatus() {
@@ -145,8 +145,9 @@
 				functionName: 'hasVoted',
 				args: [proposalData.proposalId, userAddress]
 			});
+			console.log({ result });
 
-			userHasVoted = result as boolean;
+			return result as boolean;
 		} catch (error) {
 			console.error('Failed to check vote status:', error);
 		} finally {
