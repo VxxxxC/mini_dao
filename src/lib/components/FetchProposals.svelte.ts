@@ -78,7 +78,6 @@ export async function fetchProposals() {
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
 				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([statePromise, ipfsPromise, startVotePromise, votingWeightPromise]);
-				console.log({ stateResult, ipfsData, startVoteResult, votingWeightResult });
 
 				return {
 					proposalId: proposalId as bigint,

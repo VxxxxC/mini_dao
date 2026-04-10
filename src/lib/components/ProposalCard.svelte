@@ -12,25 +12,25 @@
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import type { voteType } from '$lib/types/ProposalCard.t';
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
+	import { onMount } from 'svelte';
 
 	// COL: Props
 	let { proposalData, onVoteSuccess } = $props<{
 		proposalData: ProposalCardInfoType;
 		onVoteSuccess: () => void;
 	}>();
+
+	// COL: state / derived
 	let connectStatus: string = $derived(walletStatus.status);
 	let userAddress: string = $derived(walletStatus.address);
 
-	$effect(() => {
-		if (connectStatus === 'connected') {
-			if (proposalData.proposalId) {
-				checkUserVoteStatus();
-			} else {
-				console.error('Invalid proposal ID:', proposalData.proposalId);
-			}
-		} else {
-			console.error('Wallet not connected. Cannot check vote status or voting weight.');
-		}
+	let userHasVoted = $state<boolean>(false);
+	let isCheckingVote = $state<boolean>(false);
+
+	let currentVotes = $derived<voteType>({
+		againstVotes: proposalData.voteAgainst,
+		forVotes: proposalData.voteFor,
+		abstainVotes: proposalData.voteAbstain
 	});
 
 	const options = {
@@ -39,10 +39,24 @@
 		day: 'numeric'
 	};
 
-	let currentVotes = $derived<voteType>({
-		againstVotes: proposalData.voteAgainst,
-		forVotes: proposalData.voteFor,
-		abstainVotes: proposalData.voteAbstain
+	onMount(async () => {
+		try {
+			isCheckingVote = true;
+
+			const result = await publicClient.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'hasVoted',
+				args: [proposalData.proposalId, userAddress]
+			});
+			console.log({ result });
+
+			userHasVoted = result as boolean;
+		} catch (error) {
+			console.error('Failed to check vote status:', error);
+		} finally {
+			isCheckingVote = false;
+		}
 	});
 
 	// NOTE: Checking the ETA for start voting
@@ -130,8 +144,6 @@
 		}
 	}
 
-	let userHasVoted = $derived(async () => await checkUserVoteStatus());
-	let isCheckingVote = $state<boolean>(false);
 
 	async function checkUserVoteStatus() {
 		if (!userAddress) return;
