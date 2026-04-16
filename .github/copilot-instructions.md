@@ -411,6 +411,98 @@ if (!isValidAddress) return;
 
 ---
 
+## Testing Conventions
+
+### Directory Layout
+
+All tests live in a **dedicated `tests/` directory at the project root** — never co-located with source files.
+
+```
+tests/
+  components/           ← mirrors src/lib/components/
+    ProposalStatus.svelte.test.ts   (browser – vitest-browser-svelte)
+    ProposalCard.svelte.test.ts     (browser)
+    FetchProposals.test.ts          (server – node environment)
+    WalletStore.test.ts             (server)
+  routes/               ← mirrors src/routes/
+    create-proposal/
+      submitButtonUnable.test.ts    (server)
+
+contracts/test/         ← Foundry tests stay here (separate tool chain)
+  unit/
+  integration/
+  security/
+```
+
+### Vitest Setup (`vite.config.ts`)
+
+Two Vitest projects are configured:
+
+| Project | Pattern | Environment | Use for |
+|---------|---------|-------------|---------|
+| `client` | `tests/**/*.svelte.{test,spec}.{js,ts}` | Browser (Playwright/Firefox headless) | Svelte component rendering tests |
+| `server` | `tests/**/*.{test,spec}.{js,ts}` (excl. `*.svelte.*`) | Node | Pure logic, fetch mocks, utility functions |
+
+Run all tests: `npm run test`
+Watch mode: `npm run test:unit`
+
+### File Naming
+
+- **Browser component test**: `ComponentName.svelte.test.ts` — picked up by the `client` project
+- **Server/logic test**: `moduleName.test.ts` — picked up by the `server` project
+- Must always be placed inside `tests/`, mirroring the source directory structure
+
+### Required Imports per Test Type
+
+**Browser tests** (`*.svelte.test.ts`):
+```typescript
+import { render } from 'vitest-browser-svelte';
+import { expect, test, describe, vi } from 'vitest';
+import { page } from '@vitest/browser/context';
+```
+
+**Server tests** (`*.test.ts`):
+```typescript
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+```
+
+### Standard Mock Patterns
+
+```typescript
+// publicClient (all on-chain reads)
+vi.mock('$lib/config/viem/client', () => ({
+  publicClient: { readContract: vi.fn(), getContractEvents: vi.fn() }
+}));
+
+// WalletStore (wallet state)
+vi.mock('$lib/components/WalletStore.svelte.ts', () => ({
+  walletStatus: { address: '', status: 'disconnected' }
+}));
+
+// wagmi (writes only)
+vi.mock('@wagmi/core', () => ({
+  writeContract: vi.fn(),
+  waitForTransactionReceipt: vi.fn(),
+  getTransactionCount: vi.fn()
+}));
+
+// Stub heavy Svelte sub-components (e.g. ApexChart)
+vi.mock('$lib/components/ApexChart.svelte', () => ({ default: {} }));
+```
+
+### `expect: { requireAssertions: true }`
+
+Every test must include **at least one assertion**. Tests with no `expect(...)` call will fail.
+
+### Fuzz Testing
+
+Add fuzz/boundary tests alongside unit tests in the same file:
+- Use `for` loops over boundary value arrays (e.g., `n = 0..10` for length boundaries)
+- Test out-of-range enum values, zero counts, empty strings, unicode inputs, extreme `bigint` values
+- Fuzz tests are grouped in a `describe('... – fuzz: ...')` block
+
+---
+
 ## Project Audit Rule
 
 When asked to review, screen, or audit the project, always:
