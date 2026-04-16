@@ -51,7 +51,7 @@
 				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'claim',
-				chainId: ChainId.ANVIL,
+				chainId: ChainId.ANVIL
 			});
 
 			const claimReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: claimTx });
@@ -69,17 +69,18 @@
 				abi: MiniDaoToken.abi,
 				functionName: 'delegate',
 				args: [address],
-				chainId: ChainId.ANVIL,
+				chainId: ChainId.ANVIL
 			});
 
 			isDelegating = true;
 
 			const delegateReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: delegateTx });
 			if (delegateReceipt.status === 'success') {
-				alert('Successfully delegated your voting power to yourself! You can now vote on proposals!');
+				alert(
+					'Successfully delegated your voting power to yourself! You can now vote on proposals!'
+				);
 			}
 			isDelegating = false;
-
 		} catch (error) {
 			console.error('Claim failed:', error);
 		} finally {
@@ -116,7 +117,7 @@
 	{:else}
 		<button
 			onclick={handleClaim}
-			disabled={isClaiming || isDelegating}
+			disabled={isClaiming && isDelegating}
 			class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
 		>
 			{#if isClaiming}
@@ -129,4 +130,3 @@
 		</button>
 	{/if}
 </div>
-

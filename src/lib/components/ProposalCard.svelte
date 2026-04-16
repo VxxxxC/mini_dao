@@ -23,6 +23,7 @@
 	let connectStatus: string = $derived(walletStatus.status);
 	let userAddress: string = $derived(walletStatus.address);
 
+	let startToVote = $derived(proposalData.startToVote);
 	let userHasVoted = $state<boolean>(false);
 	let isCheckingVote = $state<boolean>(false);
 
@@ -46,18 +47,22 @@
 		if (!addr) return;
 
 		isCheckingVote = true;
-		publicClient.readContract({
-			address: Address.GOVERNANCE,
-			abi: MiniDaoGovernance.abi,
-			functionName: 'hasVoted',
-			args: [pid, addr]
-		}).then((result) => {
-			userHasVoted = result as boolean;
-		}).catch((error) => {
-			console.error('Failed to check vote status:', error);
-		}).finally(() => {
-			isCheckingVote = false;
-		});
+		publicClient
+			.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'hasVoted',
+				args: [pid, addr]
+			})
+			.then((result) => {
+				userHasVoted = result as boolean;
+			})
+			.catch((error) => {
+				console.error('Failed to check vote status:', error);
+			})
+			.finally(() => {
+				isCheckingVote = false;
+			});
 	});
 
 	// NOTE: Checking the ETA for start voting
@@ -128,9 +133,7 @@
 				alert('🎉 Vote submitted! Your vote has been recorded on-chain.');
 
 				// NOTE: After voted success, re-fetch all the proposals status
-				if (onVoteSuccess) {
-					onVoteSuccess();
-				}
+				onVoteSuccess();
 			}
 		} catch (error) {
 			console.error('Vote failed:', error);
@@ -145,8 +148,9 @@
 		}
 	}
 
-
-
+	const voteButtonDisable = (): boolean => {
+		return proposalData.state !== ProposalStatusEnum.Active || connectStatus !== 'connected';
+	};
 </script>
 
 <div class="flex flex-col items-center space-y-5">
@@ -217,26 +221,26 @@
 					<div class="grid w-full grid-cols-7 gap-x-2">
 						<button
 							onclick={() => handleVote(proposalData.proposalId, 1)}
-							disabled={connectStatus !== 'connected'}
+							disabled={voteButtonDisable()}
 							class={[
 								'col-span-3 min-h-12 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
-								connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 							]}>For</button
 						>
 						<button
 							onclick={() => handleVote(proposalData.proposalId, 2)}
-							disabled={connectStatus !== 'connected'}
+							disabled={voteButtonDisable()}
 							class={[
 								'col-span-1 min-h-12 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
-								connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 							]}>Abstain</button
 						>
 						<button
 							onclick={() => handleVote(proposalData.proposalId, 0)}
-							disabled={connectStatus !== 'connected'}
+							disabled={voteButtonDisable()}
 							class={[
 								'col-span-3 min-h-12 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
-								connectStatus !== 'connected' ? 'cursor-not-allowed opacity-30' : ''
+								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 							]}>Against</button
 						>
 					</div>
