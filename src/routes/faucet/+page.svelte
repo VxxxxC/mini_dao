@@ -13,6 +13,7 @@
 	let hasClaimed: boolean = $derived(false);
 	let isClaiming: boolean = $derived(false);
 	let isDelegating: boolean = $derived(false);
+	let isProcessing: boolean = $derived(false);
 	let isLoadingStatus: boolean = $derived(false);
 
 	$effect(() => {
@@ -45,6 +46,7 @@
 		if (status !== 'connected') return alert('Please connect your wallet first!');
 
 		try {
+			isProcessing = true;
 			isClaiming = true;
 
 			const claimTx = await writeContract(wagmiConfig, {
@@ -85,6 +87,7 @@
 			console.error('Claim failed:', error);
 		} finally {
 			hasClaimed = true;
+			isProcessing = false;
 		}
 	}
 </script>
@@ -117,7 +120,7 @@
 	{:else}
 		<button
 			onclick={handleClaim}
-			disabled={isClaiming && isDelegating}
+			disabled={isProcessing}
 			class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
 		>
 			{#if isClaiming}

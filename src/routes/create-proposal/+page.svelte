@@ -19,8 +19,11 @@
 	let proposalTitle: string = $state('');
 	let proposalDescription: string = $state('');
 
+	let isProcessing: boolean = $derived(false);
+
 	// NOTE: send POST request to upload_proposal/+server.ts , and return API response
 	async function submitProposal(event: Event) {
+		isProcessing = true;
 		event.preventDefault();
 
 		if (!walletAddress && connectStatus !== 'connected') {
@@ -59,7 +62,7 @@
 			const cid = result.cid;
 
 			const proposalToOnchain = await createOnChainProposal(cid);
-			
+
 			if (proposalToOnchain?.status !== 'success') {
 				throw new Error('On-chain proposal creation failed');
 			} else {
@@ -70,6 +73,8 @@
 			}
 		} catch (error) {
 			console.error('Error submitting proposal:', error);
+		} finally {
+			isProcessing = false;
 		}
 	}
 
@@ -193,25 +198,32 @@
 							</div>
 						</div>
 						<div class="flex flex-row items-center space-x-5">
-							<button
-								disabled={submitButtonUnable() !== true}
-								type="button"
-								onclick={() => (popupModal = true)}
-								class={[
-									'h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 transition duration-500 ease-in-out hover:border-red-300 hover:bg-pink-50',
-									submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
-								]}
-							>
-								Cancel</button
-							>
-							<button
-								type="submit"
-								disabled={submitButtonUnable() !== true}
-								class={[
-									'h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white transition duration-500 ease-in-out hover:from-indigo-600 hover:to-purple-600',
-									submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
-								]}>Submit Proposal</button
-							>
+							{#if !isProcessing}
+								<button
+									disabled={submitButtonUnable() !== true}
+									type="button"
+									onclick={() => (popupModal = true)}
+									class={[
+										'h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 transition duration-500 ease-in-out hover:border-red-300 hover:bg-pink-50',
+										submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
+									]}
+								>
+									Cancel</button
+								>
+								<button
+									type="submit"
+									disabled={submitButtonUnable() !== true}
+									class={[
+										'h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white transition duration-500 ease-in-out hover:from-indigo-600 hover:to-purple-600',
+										submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
+									]}>Submit Proposal</button
+								>
+							{:else}
+								<button
+									disabled
+									class="h-12 w-full rounded-md bg-linear-to-r/shorter from-indigo-400 to-purple-400 text-white transition duration-500 ease-in-out hover:from-indigo-600 hover:to-purple-600 disabled:cursor-wait disabled:opacity-50"
+									>Propsoal Submiting..</button
+								>{/if}
 						</div>
 					</form>
 				</Card>

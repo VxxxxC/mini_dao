@@ -23,9 +23,10 @@
 	let connectStatus: string = $derived(walletStatus.status);
 	let userAddress: string = $derived(walletStatus.address);
 
-	let startToVote = $derived(proposalData.startToVote);
 	let userHasVoted = $state<boolean>(false);
 	let isCheckingVote = $state<boolean>(false);
+
+	let isProcessing: boolean = $derived(false);
 
 	let currentVotes = $derived<voteType>({
 		againstVotes: proposalData.voteAgainst,
@@ -109,7 +110,7 @@
 
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
-			console.log(`Casting vote for proposal ${proposalId} with support: ${support}`);
+			isProcessing = true;
 
 			const latestNonce = await getTransactionCount(wagmiConfig, {
 				address: userAddress as `0x${string}`,
@@ -124,10 +125,7 @@
 				nonce: latestNonce // Ensure we use the latest nonce to prevent "replacement transaction underpriced" error
 			});
 
-			console.log('Vote transaction submitted. Tx Hash:', voteTx);
-
 			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: voteTx });
-			console.log('Transaction confirmed. Receipt:', receipt);
 
 			if (receipt.status === 'success') {
 				alert('🎉 Vote submitted! Your vote has been recorded on-chain.');
@@ -145,6 +143,8 @@
 					'Vote failed. Please ensure the voting period is active and you have delegated voting power.'
 				);
 			}
+		} finally {
+			isProcessing = false;
 		}
 	}
 
@@ -219,30 +219,38 @@
 					</div>
 				{:else}
 					<div class="grid w-full grid-cols-7 gap-x-2">
-						<button
-							onclick={() => handleVote(proposalData.proposalId, 1)}
-							disabled={voteButtonDisable()}
-							class={[
-								'col-span-3 min-h-12 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
-								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
-							]}>For</button
-						>
-						<button
-							onclick={() => handleVote(proposalData.proposalId, 2)}
-							disabled={voteButtonDisable()}
-							class={[
-								'col-span-1 min-h-12 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
-								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
-							]}>Abstain</button
-						>
-						<button
-							onclick={() => handleVote(proposalData.proposalId, 0)}
-							disabled={voteButtonDisable()}
-							class={[
-								'col-span-3 min-h-12 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
-								voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
-							]}>Against</button
-						>
+						{#if !isProcessing}
+							<button
+								onclick={() => handleVote(proposalData.proposalId, 1)}
+								disabled={voteButtonDisable()}
+								class={[
+									'col-span-3 min-h-12 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
+									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
+								]}>For</button
+							>
+							<button
+								onclick={() => handleVote(proposalData.proposalId, 2)}
+								disabled={voteButtonDisable()}
+								class={[
+									'col-span-1 min-h-12 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
+									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
+								]}>Abstain</button
+							>
+							<button
+								onclick={() => handleVote(proposalData.proposalId, 0)}
+								disabled={voteButtonDisable()}
+								class={[
+									'col-span-3 min-h-12 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
+									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
+								]}>Against</button
+							>
+						{:else}
+							<button
+								disabled
+								class="col-span-full min-h-12 animate-pulse rounded-md bg-gray-200 disabled:cursor-wait disabled:opacity-50"
+								>Voting...</button
+							>
+						{/if}
 					</div>
 				{/if}
 			</div>
