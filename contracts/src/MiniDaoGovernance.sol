@@ -12,7 +12,7 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl {
     // WARN: Minimum number of 3 votes required for a proposal to pass, it is better use `QuorumFraction` instead of hardcode a fix number of votes
-    uint256 public constant QUORUM_VOTES = 3 * 10 ** 18; // 3 votes
+    uint256 public constant QUORUM_VOTES = 300 * 10 ** 18; // TEST: 300 tokens = 3 votes = 3 peoples/wallets
 
     constructor(IVotes _token, TimelockController _timelock)
         Governor("Mini Governor")
@@ -85,7 +85,7 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
         }
     }
 
-    // NOTE: The following functions are overrides required by Solidity.
+    // WARN: The following functions are overrides required by Solidity.
 
     function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
         return super.state(proposalId);

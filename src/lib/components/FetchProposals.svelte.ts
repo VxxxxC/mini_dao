@@ -92,15 +92,17 @@ export async function fetchProposals() {
 					description: ipfsData.description as string,
 					expire: ipfsData.expire as number,
 					startToVote: Number(startVoteResult),
-					totalVotes: formatEther(
-						Number(votingWeightResult[0]) +
-							Number(votingWeightResult[1]) +
-							Number(votingWeightResult[2])
-					),
-					voteFor: Number(votingWeightResult[1]),
-					voteAgainst: Number(votingWeightResult[0]),
-					voteAbstain: Number(votingWeightResult[2])
+					totalVotes:
+						formatEther(
+							Number(votingWeightResult[0]) +
+								Number(votingWeightResult[1]) +
+								Number(votingWeightResult[2])
+						) / 100,
+					voteFor: formatEther(Number(votingWeightResult[1])) / 100,
+					voteAgainst: formatEther(Number(votingWeightResult[0])) / 100,
+					voteAbstain: formatEther(Number(votingWeightResult[2])) / 100
 				};
+				// NOTE: use formatEther convert bigint to number, and divided by 100 for representing 1 voting weight
 			})
 		);
 
