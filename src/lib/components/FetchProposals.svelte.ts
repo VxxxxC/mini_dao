@@ -1,13 +1,12 @@
-
 import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 import { Address } from '$lib/config/contractAddress';
 import { publicClient } from '$lib/config/viem/client';
+import { formatEther } from 'viem';
 
 const governorAbi = MiniDaoGovernance.abi;
 
-const IPFS_GATEWAY =
-	'https://ipfs.filebase.io/ipfs/';
+const IPFS_GATEWAY = 'https://ipfs.filebase.io/ipfs/';
 
 async function fetchIpfsData(cid: string) {
 	try {
@@ -23,7 +22,7 @@ async function fetchIpfsData(cid: string) {
 			title: data.proposalTitle || 'Untitled',
 			description: data.proposalDescription || 'No content',
 			proposer: data.proposerAddress || 'Unknown',
-			expire: new Date(data.timestamp).getTime() + 7 * 24 * 60 * 60 * 1000, // INFO: 7 days expired
+			expire: new Date(data.timestamp).getTime() + 60 * 1000 // TEST: 1 minute expired
 		};
 	} catch (error) {
 		console.error(`Load IPFS data failed (CID: ${cid}):`, error);
@@ -77,18 +76,27 @@ export async function fetchProposals() {
 				const ipfsPromise = fetchIpfsData(ipfsCid);
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
-				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([statePromise, ipfsPromise, startVotePromise, votingWeightPromise]);
+				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([
+					statePromise,
+					ipfsPromise,
+					startVotePromise,
+					votingWeightPromise
+				]);
 
 				return {
 					proposalId: proposalId as bigint,
 					proposer: ipfsData.proposer as `0x${string}`,
 					ipfsCid: ipfsCid as string,
-					state: stateResult as number,
+					state: stateResult as number, // NOTE: 0 - 7 (0: Pending, 1: Active, 2: Canceled, 3: Defeated, 4: Succeeded, 5: Queued, 6: Expired, 7: Executed)
 					title: ipfsData.title as string,
 					description: ipfsData.description as string,
 					expire: ipfsData.expire as number,
 					startToVote: Number(startVoteResult),
-					totalVotes: Number(votingWeightResult[0]) + Number(votingWeightResult[1]) + Number(votingWeightResult[2]),
+					totalVotes: formatEther(
+						Number(votingWeightResult[0]) +
+							Number(votingWeightResult[1]) +
+							Number(votingWeightResult[2])
+					),
 					voteFor: Number(votingWeightResult[1]),
 					voteAgainst: Number(votingWeightResult[0]),
 					voteAbstain: Number(votingWeightResult[2])
@@ -102,3 +110,4 @@ export async function fetchProposals() {
 		return [];
 	}
 }
+
