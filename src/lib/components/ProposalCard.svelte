@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { Card } from 'flowbite-svelte';
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
@@ -20,9 +21,9 @@
 	}>();
 
 	// COL: state / derived
+	let pid: bigint = $state(0n);
 	let connectStatus: string = $derived(walletStatus.status);
 	let userAddress: string = $derived(walletStatus.address);
-
 	let userHasVoted = $state<boolean>(false);
 	let isCheckingVote = $state<boolean>(false);
 
@@ -40,20 +41,27 @@
 		day: 'numeric'
 	};
 
-	// NOTE: $effect re-runs whenever proposalData.proposalId or userAddress changes,
-	// including after parent re-fetches via afterNavigate. Unlike onMount, this stays fresh.
 	onMount(() => {
-		const pid = proposalData.proposalId;
-		const addr = userAddress;
-		if (!addr) return;
+		pid = proposalData.proposalId;
+		userAddress = walletStatus.address;
+		if (!userAddress) return;
+		checkHasVoted();
+	});
 
+	// NOTE: If user changes wallet/account while on the page, we should also re-check vote status for the new address
+	$effect(() => {
+		userAddress = walletStatus.address;
+		checkHasVoted();
+	});
+
+	function checkHasVoted() {
 		isCheckingVote = true;
 		publicClient
 			.readContract({
 				address: Address.GOVERNANCE,
 				abi: MiniDaoGovernance.abi,
 				functionName: 'hasVoted',
-				args: [pid, addr]
+				args: [pid, userAddress]
 			})
 			.then((result) => {
 				userHasVoted = result as boolean;
@@ -64,7 +72,7 @@
 			.finally(() => {
 				isCheckingVote = false;
 			});
-	});
+	}
 
 	// NOTE: Checking the ETA for start voting
 	let countdown = $state<number>(0);
@@ -76,20 +84,38 @@
 
 	// Seed countdown from on-chain value and start a 1-second interval
 	onMount(() => {
-		countdown = proposalData.startToVote;
-		if (proposalData.startToVote <= 0) return;
+		if (proposalData.state === ProposalStatusEnum.Pending) {
+			countdown = proposalData.startToVote;
+			if (proposalData.startToVote <= 0) return;
 
-		const interval = setInterval(() => {
-			const next = Math.max(0, countdown - 1);
-			countdown = next;
-			if (next === 0) {
-				clearInterval(interval);
-				localState = ProposalStatusEnum.Active;
-				onVoteSuccess(); // re-fetch from chain to confirm real state
-			}
-		}, 1000);
+			const interval = setInterval(() => {
+				const next = Math.max(0, countdown - 1);
+				countdown = next;
+				if (next === 0) {
+					clearInterval(interval);
+					localState = ProposalStatusEnum.Active;
+					onVoteSuccess(); // re-fetch from chain to confirm real state
+				}
+			}, 1000);
+			return () => clearInterval(interval);
+		}
 
-		return () => clearInterval(interval);
+		if (proposalData.state === ProposalStatusEnum.Active) {
+			const secondsRemaining = Math.max(0, Math.floor((proposalData.expire - Date.now()) / 1000));
+			countdown = secondsRemaining;
+			if (secondsRemaining <= 0) return;
+
+			const interval = setInterval(() => {
+				const next = Math.max(0, countdown - 1);
+				countdown = next;
+				if (next === 0) {
+					clearInterval(interval);
+					localState = ProposalStatusEnum.Expired;
+					onVoteSuccess(); // re-fetch from chain to confirm real state
+				}
+			}, 1000);
+			return () => clearInterval(interval);
+		}
 	});
 
 	function formatCountdown(secs: number): string {
@@ -108,6 +134,7 @@
 
 	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
 
+	// COL: Governor contract functions
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
 			isProcessing = true;
@@ -164,18 +191,20 @@
 			<div class="flex w-full flex-row items-center justify-between">
 				<div class="text-lg font-bold">{proposalData.title}</div>
 				<div class="flex flex-row items-center space-x-2">
-					{#if countdown > 0}
-						<span
-							class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
-						>
-							⏳ Starts in {countdownDisplay}
-						</span>
-					{:else}
-						<span
-							class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
-						>
-							Start Voting Now
-						</span>
+					{#if countdownDisplay}
+						{#if proposalData.state === ProposalStatusEnum.Pending}
+							<span
+								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+							>
+								⏳ Starts in {countdownDisplay}
+							</span>
+						{:else if proposalData.state === ProposalStatusEnum.Active}
+							<span
+								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+							>
+								Start Voting Now - Ends in {countdownDisplay}
+							</span>
+						{/if}
 					{/if}
 					<ProposalStatus status={displayState} />
 				</div>
