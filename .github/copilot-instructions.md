@@ -381,11 +381,52 @@ onMount(() => {
 - No white screen risk
 - Stable and predictable
 
-#### ⚠️ Known Limitation of `onMount`
+#### ⚠️ Known Limitation of `onMount` — Solved with `watchAccount`
 
-`onMount` only fires **once** on initial mount. During SvelteKit client-side navigation (tab switch), the child component is reused — `onMount` does NOT re-run. This means after switching tabs, `hasVoted` will show the initial cached value until F5 refresh.
+`onMount` only fires **once** on initial mount. This means after switching MetaMask accounts, `hasVoted` would show the old wallet's cached value until F5 refresh.
 
-**This is a known trade-off.** The alternative (lifting the fetch to the parent) can cause `Promise.all` failures if address validation is not careful. For now, `onMount` is the stable choice.
+**Solution: Use `watchAccount` from `@wagmi/core` inside `onMount`** — subscribe to account changes and re-run the check on every wallet switch. This avoids `$effect` (white-screen risk) while staying reactive to address changes.
+
+```typescript
+import { watchAccount } from '@wagmi/core';
+
+// Version counter prevents stale in-flight results from old wallet overwriting new wallet's result
+let checkVersion = 0;
+
+function checkHasVoted(addr: string) {
+  if (!addr || !addr.startsWith('0x')) {
+    userHasVoted = false;
+    isCheckingVote = false;
+    return;
+  }
+  const version = ++checkVersion;
+  isCheckingVote = true;
+  publicClient.readContract({ functionName: 'hasVoted', args: [pid, addr] })
+    .then((result) => { if (version === checkVersion) userHasVoted = result as boolean; })
+    .catch((error) => { console.error(error); })
+    .finally(() => { if (version === checkVersion) isCheckingVote = false; });
+}
+
+onMount(() => {
+  checkHasVoted(userAddress); // initial check
+
+  const unwatch = watchAccount(wagmiConfig, {
+    onChange(account) {
+      const addr = account.address ?? '';
+      userHasVoted = false; // reset immediately — never show stale state
+      checkHasVoted(addr);
+    }
+  });
+
+  return () => unwatch(); // cleanup on component unmount
+});
+```
+
+**Why not `$effect`?** See Failure Mode A above — synchronous `$state` writes (like `isCheckingVote = true`) inside `$effect` cause white screens. `watchAccount` inside `onMount` gives the same reactivity without the risk.
+
+**Why the version counter?** When the user switches quickly between two wallets, both checks are in-flight simultaneously. Without the version guard, the older (slower) request could resolve last and overwrite the correct result.
+
+**`watchConnection` vs `watchAccount`:** Use `watchConnection` (wagmi v3 rename of the deprecated `watchAccount`) for address-change reactivity in components. `WalletStore.svelte.ts` also uses `watchConnection` globally. Both receive a callback with `{ address, status, ... }` — the rename is cosmetic only.
 
 #### Address Validation (Critical)
 
@@ -404,6 +445,7 @@ if (!isValidAddress) return;
 | Countdown timer (writes only in `setInterval`) | `$effect` ✅ |
 | Any `$state` write SYNCHRONOUSLY inside `$effect` | NEVER — white screen |
 | Async on-chain reads (`readContract`, `getContractEvents`) | `onMount` ✅ |
+| Wallet address change reactivity in a component | `watchConnection` inside `onMount` ✅ (wagmi v3; `watchAccount` is deprecated) |
 | Derived/computed values from props | `$derived` ✅ |
 | Wallet writes (`writeContract`) | event handler functions ✅ |
 
@@ -507,7 +549,7 @@ Add fuzz/boundary tests alongside unit tests in the same file:
 
 When asked to review, screen, or audit the project, always:
 
-1. **Scan all source files** (both `contracts/src/` and `src/`) for inline comment tags: `FIX`, `BUG`, `ISSUE`, `WARN`, `IMPORTANT`.
+1. **Scan all source files** (both `contracts/src/` and `src/`) for inline comment tags: `FIX`, `BUG`, `ISSUE`, `WARN`, `IMPORTANT`, `TEST`.
 2. **Catalogue every finding** with its file path, line number, tag type, and the comment text.
 3. **Assess Pros and Cons** of the current architecture and implementation:
    - Pros: What the project does well (security patterns, decentralization, code clarity, test coverage, stack choices).
@@ -534,10 +576,22 @@ When asked to review, screen, or audit the project, always:
 |---|---|---|
 | `src/lib/components/Navbar.svelte` | 100 | Wallet modal overlay conflicts with hamburger dropdown (z-index / event propagation) |
 
+#### `TEST` (contracts — demo/local only, NEVER use in production)
+
+> ⚠️ The following `TEST:` values in `MiniDaoGovernance.sol` are intentionally shortened for local development and demonstration. Deploying these values to any public network (Sepolia, mainnet) creates extreme governance risks — proposals can be created, voted on, queued, and executed in under 2 minutes with virtually no quorum resistance.
+
+| File | Line | Current (TEST) value | Production value |
+|---|---|---|---|
+| `contracts/src/MiniDaoGovernance.sol` | 15 | `QUORUM_VOTES = 300 * 10^18` (≈ 3 wallets each holding ≥10 MDAO) | Use `GovernorVotesQuorumFraction` (e.g. 4%) |
+| `contracts/src/MiniDaoGovernance.sol` | 36 | `votingDelay = 30 seconds` | `1 days` minimum |
+| `contracts/src/MiniDaoGovernance.sol` | 40 | `votingPeriod = 1 minutes` | `1 weeks` minimum |
+
+Before any non-local deployment, replace all three values and switch `QUORUM_VOTES` to a fraction-based quorum.
+
 #### `WARN` (contracts)
 | File | Line | Note |
 |---|---|---|
-| `contracts/src/MiniDaoGovernance.sol` | 22 | `QUORUM_VOTES` hardcoded to 3 tokens — replace with `GovernorVotesQuorumFraction` |
+| `contracts/src/MiniDaoGovernance.sol` | 14 | `QUORUM_VOTES` hardcoded — replace with `GovernorVotesQuorumFraction` for production |
 | `contracts/src/MiniDaoVoteBox.sol` | 12 | Initial owner is `msg.sender`; ownership must be transferred to timelock post-deploy |
 | `contracts/src/MiniDaoToken.sol` | 30 | Override required by Solidity (informational — no action needed) |
 

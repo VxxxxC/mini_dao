@@ -109,10 +109,10 @@ sequenceDiagram
     User->>Token: delegate(self)
 
     User->>Gov: propose(targets, calldatas, description)
-    Note over Gov: Voting Delay — 1 day
+    Note over Gov: Voting Delay — 30s (TEST) / 1 day (prod)
 
     User->>Gov: castVote(proposalId, FOR)
-    Note over Gov: Voting Period — 1 week
+    Note over Gov: Voting Period — 1 min (TEST) / 1 week (prod)
 
     User->>Gov: queue(proposalId)
     Gov->>Timelock: scheduleBatch(...)
@@ -124,11 +124,15 @@ sequenceDiagram
 
 ### Contracts
 
+> ⚠️ **DEMO / LOCAL USE ONLY — NOT PRODUCTION SAFE**
+>
+> `MiniDaoGovernance` is configured with intentionally short `TEST:` values for local demonstration on Anvil. These values create **extreme governance risk** on any public network — a proposal can be created, fully voted on, queued, and executed in under 2 minutes by as few as 3 wallets. **Never deploy these values to Sepolia or mainnet.** Before any public deployment, update `votingDelay`, `votingPeriod`, and `QUORUM_VOTES` in `contracts/src/MiniDaoGovernance.sol`.
+
 | Contract | Role |
 |---|---|
 | `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — distributed via faucet; remainder held by timelock. |
 | `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
-| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 3-token quorum. |
+| `MiniDaoGovernance` | Governor. **TEST config**: 30s voting delay, 1 min voting period, quorum = 3 wallets (≥10 MDAO each). **Production values**: 1 day delay, 1 week period, fraction-based quorum. |
 | `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
 | `MiniDaoVoteBox` | Governance-controlled vote store. Owned by the timelock. |
 
@@ -146,7 +150,7 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 - ✅ Network isolation — `HelperConfig.s.sol` separates Anvil / Sepolia params; no hardcoded addresses in scripts
 
 **Cons / Known Issues**
-- ⚠️ `QUORUM_VOTES` hardcoded to 3 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
+- ⚠️ `MiniDaoGovernance` uses `TEST:` config values (30s delay, 1 min period, 3-wallet quorum) — **not safe for any public network**; must be changed before non-local deployment
 - ⚠️ Proposal pages use mock data (`src/lib/mock_data.ts`) — live IPFS API calls not yet wired up
 - ⚠️ `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
 - ⚠️ Date/time formatting broken in `HomeProposalCard.svelte` and `ProposalCard.svelte` — replace with `Intl.DateTimeFormat`
@@ -170,10 +174,17 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 #### 🟡 `WARN`
 | File | Line | Description |
 |---|---|---|
-| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L23) | 23 | `QUORUM_VOTES` hardcoded to 3 — replace with `GovernorVotesQuorumFraction` |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L14) | 14 | `QUORUM_VOTES` hardcoded — replace with `GovernorVotesQuorumFraction` for production |
 | [MiniDaoVoteBox.sol](contracts/src/MiniDaoVoteBox.sol#L12) | 12 | Initial owner is `msg.sender`; transfer to timelock post-deploy |
 | [appKitConfig.ts](src/lib/config/appKitConfig.ts#L12) | 12, 20 | Network hardcoded to Anvil — switch before production |
 | [viem/client.ts](src/lib/config/viem/client.ts#L5) | 5 | Network hardcoded to Anvil — switch before production |
+
+#### 🟠 `TEST` — Demo values, never deploy to public networks
+| File | Line | Current (TEST) | Must be for production |
+|---|---|---|---|
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L15) | 15 | `QUORUM_VOTES = 300 * 10^18` (≈ 3 wallets) | `GovernorVotesQuorumFraction` |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L36) | 36 | `votingDelay = 30 seconds` | `1 days` minimum |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L40) | 40 | `votingPeriod = 1 minutes` | `1 weeks` minimum |
 
 #### 🔵 `IMPORTANT`
 | File | Line | Description |
