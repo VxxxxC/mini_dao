@@ -15,7 +15,7 @@ contract HelperConfig is Script {
     address constant ETH_SEPOLIA_DEPLOYER_ADDRESS = 0x0406c906ad4214E97F80F706d4203e6d1cBF5E3E; // NOTE: my metamask account address
     address constant ANVIL_DEPLOYER_ADDRESS = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720; // NOTE: Anvil account 9
 
-	uint256 s_minDelay = 2 days;
+	uint256 s_minDelay = 1 minutes; // TEST: for test only, normally 2 day
 	address[] s_proposers = new address[](0);
 	address[] s_executors = new address[](0);
 
