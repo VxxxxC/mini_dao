@@ -15,9 +15,9 @@
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 	import { onMount } from 'svelte';
 	// COL: Props
-	let { proposalData, onVoteSuccess } = $props<{
+	let { proposalData, onVoteSuccess = $bindable() } = $props<{
 		proposalData: ProposalCardInfoType;
-		onVoteSuccess: () => void;
+		onVoteSuccess: boolean;
 	}>();
 
 	// COL: state / derived
@@ -27,7 +27,9 @@
 	let userHasVoted = $state<boolean>(false);
 	let isCheckingVote = $state<boolean>(false);
 
-	let isProcessing: boolean = $derived(false);
+	let isProcessing: boolean = $state(false);
+
+	let proposalState = $state<ProposalStatusEnum>(proposalData.state);
 
 	let currentVotes = $derived<voteType>({
 		againstVotes: proposalData.voteAgainst,
@@ -41,16 +43,10 @@
 		day: 'numeric'
 	};
 
-	onMount(() => {
+	$effect(() => {
 		pid = proposalData.proposalId;
 		userAddress = walletStatus.address;
 		if (!userAddress) return;
-		checkHasVoted();
-	});
-
-	// NOTE: If user changes wallet/account while on the page, we should also re-check vote status for the new address
-	$effect(() => {
-		userAddress = walletStatus.address;
 		checkHasVoted();
 	});
 
@@ -94,9 +90,9 @@
 				if (next === 0) {
 					clearInterval(interval);
 					localState = ProposalStatusEnum.Active;
-					onVoteSuccess(); // re-fetch from chain to confirm real state
+					onVoteSuccess = true; // re-fetch from chain to confirm real state
 				}
-			}, 1000);
+			}, 2000);
 			return () => clearInterval(interval);
 		}
 
@@ -111,9 +107,9 @@
 				if (next === 0) {
 					clearInterval(interval);
 					localState = ProposalStatusEnum.Expired;
-					onVoteSuccess(); // re-fetch from chain to confirm real state
+					onVoteSuccess = true; // re-fetch from chain to confirm real state
 				}
-			}, 1000);
+			}, 2000);
 			return () => clearInterval(interval);
 		}
 	});
@@ -156,9 +152,6 @@
 
 			if (receipt.status === 'success') {
 				alert('🎉 Vote submitted! Your vote has been recorded on-chain.');
-
-				// NOTE: After voted success, re-fetch all the proposals status
-				onVoteSuccess();
 			}
 		} catch (error) {
 			console.error('Vote failed:', error);
@@ -172,12 +165,14 @@
 			}
 		} finally {
 			isProcessing = false;
+			checkHasVoted();
+			onVoteSuccess = true; // re-fetch from chain to confirm real state
 		}
 	}
 
-	const voteButtonDisable = (): boolean => {
+	let voteButtonDisable = $derived(() => {
 		return proposalData.state !== ProposalStatusEnum.Active || connectStatus !== 'connected';
-	};
+	});
 </script>
 
 <div class="flex flex-col items-center space-y-5">
@@ -238,14 +233,20 @@
 				{#if isCheckingVote}
 					<p class="animate-pulse text-gray-500">Checking vote record...</p>
 				{:else if userHasVoted}
-					<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-						<p class="text-lg font-bold text-green-700">
-							✅ You have already voted on this proposal!
-						</p>
-						<p class="mt-1 text-sm text-green-600">
-							Thank you for participating in DAO governance.
-						</p>
-					</div>
+					{#if proposalState === ProposalStatusEnum.Active}
+						<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
+							<p class="text-lg font-bold text-green-700">
+								✅ You have already voted on this proposal!
+							</p>
+							<p class="mt-1 text-sm text-green-600">
+								Thank you for participating in DAO governance.
+							</p>
+						</div>
+					{:else if proposalState === ProposalStatusEnum.Succeeded}
+						<button class="w-full min-h-12 rounded-md bg-purple-200">To Queue</button>
+					{:else if proposalState === ProposalStatusEnum.Queued}
+						<button class="w-full min-h-12 rounded-md bg-orange-200">To Execute</button>
+					{/if}
 				{:else}
 					<div class="grid w-full grid-cols-7 gap-x-2">
 						{#if !isProcessing}
