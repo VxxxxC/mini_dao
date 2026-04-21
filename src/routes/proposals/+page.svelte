@@ -6,6 +6,22 @@
 
 	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
 
+	let voteSuccess = $state<boolean>(false);
+
+		$effect(() => {
+		function refetchProposals(){
+			async function fetchData() {
+				proposals = await fetchProposals();
+			}
+			fetchData(); 
+		}
+
+		if(voteSuccess){
+			refetchProposals();
+			voteSuccess = false; // reset after refetch
+		}
+	});
+
 	// NOTE: afterNavigate fires on EVERY navigation to this page (including tab switches),
 	// unlike onMount which only fires once. This ensures data is always fresh.
 	afterNavigate(async () => {
@@ -25,9 +41,7 @@
 		{#each proposals as proposal (proposal.proposalId)}
 			<ProposalCard
 				proposalData={proposal}
-				onVoteSuccess={async () => {
-					proposals = await fetchProposals();
-				}}
+				bind:onVoteSuccess={voteSuccess}
 			/>
 		{/each}
 	</div>
