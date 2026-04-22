@@ -21,6 +21,7 @@ mini_dao/
 │   │   ├── stores/         # Svelte reactive stores
 │   │   └── types/          # TypeScript type definitions
 │   └── routes/             # SvelteKit pages and API endpoints
+├── tests/                  # Frontend Vitest test suite (mirrors src/ structure)
 └── static/                 # Public static assets
 ```
 
@@ -29,7 +30,7 @@ mini_dao/
 ## 🛠 Tech Stack
 
 **Smart Contracts**
-- **Solidity ^0.8.24** — Contract language
+- **Solidity ^0.8.27** — Contract language
 - **Foundry** — Build, test, and deploy toolchain
 - **OpenZeppelin Contracts ^5.x** — Governor, TimelockController, ERC20Votes, ERC20Permit
 
@@ -40,6 +41,7 @@ mini_dao/
 - **Wagmi v3 + Viem v2** — EVM contract reads/writes
 - **Reown AppKit** — Wallet connection (WalletConnect)
 - **Filebase SDK / AWS S3** — Off-chain proposal storage on IPFS
+- **Vitest + vitest-browser-svelte** — Frontend unit and component testing
 
 ---
 
@@ -51,7 +53,10 @@ mini_dao/
 - Off-chain proposal metadata stored on IPFS; authenticity verified by wallet signature + 5-min expiry
 - Fully decentralised post-deploy — deployer's `DEFAULT_ADMIN_ROLE` is revoked at setup
 - ERC20Permit support — gasless token approvals via EIP-712 signatures
-- 134-test suite: unit, integration, fuzz, invariant, and security tests
+- Live countdown timers on proposal cards — ticks down from voting delay (Pending) and voting period (Active)
+- Wallet-reactive UI — proposal card automatically re-checks vote status when MetaMask account switches
+- Queue & Execute flow — voted proposals surface Queue/Execute buttons when in `Succeeded`/`Queued` state
+- Dual test suite: 135 Foundry tests (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
 
 ---
 
@@ -256,9 +261,19 @@ Open [http://localhost:5173](http://localhost:5173).
 ```bash
 cd contracts
 forge build        # compile
-forge test -vv     # run all 134 tests
+forge test -vv     # run all 135 tests
 forge fmt          # format
 forge snapshot     # gas snapshot
+```
+
+### Frontend Tests
+
+```bash
+# Run all Vitest tests (component + logic)
+bun run test
+
+# Watch mode
+bun run test:unit
 ```
 
 ### Build for Production
