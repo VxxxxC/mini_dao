@@ -5,9 +5,11 @@
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
+	import { keccak256, toHex, encodeFunctionData } from 'viem';
 	import { writeContract, waitForTransactionReceipt, getTransactionCount } from '@wagmi/core';
 	import ApexChart from '$lib/components/ApexChart.svelte';
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
+	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
@@ -70,7 +72,7 @@
 			});
 	}
 
-	// NOTE: Checking the ETA for start voting
+	/************************************ NOTE: Checking the ETA for start voting ********************************************/
 	let countdown = $state<number>(0);
 
 	// Seed countdown from on-chain value and start a 1-second interval
@@ -90,7 +92,6 @@
 		}
 
 		if (proposalState === ProposalStatusEnum.Active) {
-			console.log(Math.max(0, Math.floor((Date.now() - proposalData.expire) / 1000)));
 			const secondsRemaining = Math.max(0, Math.floor((proposalData.expire - Date.now()) / 1000));
 			countdown = secondsRemaining;
 			if (secondsRemaining <= 0) return;
@@ -122,7 +123,7 @@
 
 	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
 
-	// COL: Governor contract functions
+	/********************************************** NOTE: Queue and Execute function call ********************************************************/
 	async function handleVote(proposalId: bigint, support: number) {
 		try {
 			isProcessing = true;
@@ -165,6 +166,60 @@
 	let voteButtonDisable = $derived(() => {
 		return proposalData.state !== ProposalStatusEnum.Active || connectStatus !== 'connected';
 	});
+
+	/********************************************** NOTE: Queue and Execute function call ********************************************************/
+	const encodedFunctionCall = encodeFunctionData({
+		abi: MiniDaoVoteBox.abi,
+		functionName: 'storeVote'
+	});
+
+	const targets = [Address.VOTEBOX];
+	const values = [0];
+	const calldatas = [encodedFunctionCall];
+
+	const descriptionHash = keccak256(toHex(proposalData.ipfsCid));
+
+	async function handleQueue() {
+		try {
+			const Tx = await writeContract(wagmiConfig, {
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'queue',
+				args: [targets, values, calldatas, descriptionHash]
+			});
+
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
+
+			if (receipt.status !== 'success') {
+				throw new Error('On-chain proposal creation failed');
+			} else {
+				alert(`Proposal queued successfully! Tx Hash: ${receipt.transactionHash}`);
+			}
+		} catch (e) {
+			console.error('Error in queue transaction', e);
+		}
+	}
+
+	async function handleExecute() {
+		try {
+			const Tx = await writeContract(wagmiConfig, {
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'execute',
+				args: [targets, values, calldatas, descriptionHash]
+			});
+
+			const receipt = await waitForTransactionReceipt(wagmiConfig, { hash: Tx });
+
+			if (receipt.status !== 'success') {
+				throw new Error('On-chain proposal execution failed');
+			} else {
+				alert(`Proposal executed successfully! Tx Hash: ${receipt.transactionHash}`);
+			}
+		} catch (e) {
+			console.error('Error in execute transaction', e);
+		}
+	}
 </script>
 
 <div class="flex flex-col items-center space-y-5">
@@ -172,7 +227,7 @@
 		size="xl"
 		shadow="sm"
 		horizontal={false}
-		class="h-full w-full items-start justify-between space-y-5 p-8 transition duration-200 ease-in-out hover:border-purple-400"
+		class="mb-5 h-full w-full items-start justify-between p-8 transition duration-200 ease-in-out hover:border-purple-400"
 	>
 		<div class="flex w-full flex-col items-center">
 			<div class="flex w-full flex-row items-center justify-between">
@@ -235,9 +290,17 @@
 							</p>
 						</div>
 					{:else if proposalState === ProposalStatusEnum.Succeeded}
-						<button class="w-full min-h-12 rounded-md bg-purple-200">To Queue</button>
+						<button
+							onclick={() => handleQueue()}
+							class="min-h-12 w-full rounded-md border border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100"
+							>To Queue</button
+						>
 					{:else if proposalState === ProposalStatusEnum.Queued}
-						<button class="w-full min-h-12 rounded-md bg-orange-200">To Execute</button>
+						<button
+							onclick={() => handleExecute()}
+							class="min-h-12 w-full rounded-md border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100"
+							>To Execute</button
+						>
 					{/if}
 				{:else}
 					<div class="grid w-full grid-cols-7 gap-x-2">
