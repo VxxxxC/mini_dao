@@ -15,9 +15,9 @@
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 	import { onMount } from 'svelte';
 	// COL: Props
-	let { proposalData, onVoteSuccess = $bindable() } = $props<{
+	let { proposalData, refetchData = $bindable() } = $props<{
 		proposalData: ProposalCardInfoType;
-		onVoteSuccess: boolean;
+		refetchData: boolean;
 	}>();
 
 	// COL: state / derived
@@ -29,7 +29,7 @@
 
 	let isProcessing: boolean = $state(false);
 
-	let proposalState = $state<ProposalStatusEnum>(proposalData.state);
+	let proposalState = $derived<ProposalStatusEnum>(proposalData.state);
 
 	let currentVotes = $derived<voteType>({
 		againstVotes: proposalData.voteAgainst,
@@ -73,14 +73,9 @@
 	// NOTE: Checking the ETA for start voting
 	let countdown = $state<number>(0);
 
-	// Local state override — set optimistically when countdown ends
-	let localState = $state<ProposalStatusEnum | undefined>(undefined);
-	// Always sync localState back if parent re-fetches a new state
-	let displayState = $derived(localState !== undefined ? localState : proposalData.state);
-
 	// Seed countdown from on-chain value and start a 1-second interval
 	onMount(() => {
-		if (proposalData.state === ProposalStatusEnum.Pending) {
+		if (proposalState === ProposalStatusEnum.Pending) {
 			countdown = proposalData.startToVote;
 			if (proposalData.startToVote <= 0) return;
 
@@ -88,15 +83,14 @@
 				const next = Math.max(0, countdown - 1);
 				countdown = next;
 				if (next === 0) {
-					clearInterval(interval);
-					localState = ProposalStatusEnum.Active;
-					onVoteSuccess = true; // re-fetch from chain to confirm real state
+					refetchData = true; // re-fetch from chain to confirm real state
 				}
-			}, 2000);
+			}, 1500);
 			return () => clearInterval(interval);
 		}
 
-		if (proposalData.state === ProposalStatusEnum.Active) {
+		if (proposalState === ProposalStatusEnum.Active) {
+			console.log(Math.max(0, Math.floor((Date.now() - proposalData.expire) / 1000)));
 			const secondsRemaining = Math.max(0, Math.floor((proposalData.expire - Date.now()) / 1000));
 			countdown = secondsRemaining;
 			if (secondsRemaining <= 0) return;
@@ -105,11 +99,9 @@
 				const next = Math.max(0, countdown - 1);
 				countdown = next;
 				if (next === 0) {
-					clearInterval(interval);
-					localState = ProposalStatusEnum.Expired;
-					onVoteSuccess = true; // re-fetch from chain to confirm real state
+					refetchData = true; // re-fetch from chain to confirm real state
 				}
-			}, 2000);
+			}, 1500);
 			return () => clearInterval(interval);
 		}
 	});
@@ -165,8 +157,8 @@
 			}
 		} finally {
 			isProcessing = false;
+			refetchData = true; // re-fetch from chain to confirm real state
 			checkHasVoted();
-			onVoteSuccess = true; // re-fetch from chain to confirm real state
 		}
 	}
 
@@ -187,13 +179,13 @@
 				<div class="text-lg font-bold">{proposalData.title}</div>
 				<div class="flex flex-row items-center space-x-2">
 					{#if countdownDisplay}
-						{#if proposalData.state === ProposalStatusEnum.Pending}
+						{#if proposalState === ProposalStatusEnum.Pending}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
 								⏳ Starts in {countdownDisplay}
 							</span>
-						{:else if proposalData.state === ProposalStatusEnum.Active}
+						{:else if proposalState === ProposalStatusEnum.Active}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
@@ -201,7 +193,7 @@
 							</span>
 						{/if}
 					{/if}
-					<ProposalStatus status={displayState} />
+					<ProposalStatus status={proposalState} />
 				</div>
 			</div>
 

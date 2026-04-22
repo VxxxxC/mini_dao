@@ -41,7 +41,7 @@
 		{#each proposals as proposal (proposal.proposalId)}
 			<ProposalCard
 				proposalData={proposal}
-				bind:onVoteSuccess={voteSuccess}
+				bind:refetchData={voteSuccess}
 			/>
 		{/each}
 	</div>
