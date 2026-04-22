@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import { Card } from 'flowbite-svelte';
 	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
-	import { keccak256, toHex, encodeFunctionData } from 'viem';
+	import { keccak256, toHex, encodeFunctionData, formatUnits } from 'viem';
 	import { writeContract, waitForTransactionReceipt, getTransactionCount } from '@wagmi/core';
 	import ApexChart from '$lib/components/ApexChart.svelte';
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
@@ -42,7 +41,10 @@
 	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		month: 'long',
-		day: 'numeric'
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit'
 	};
 
 	$effect(() => {
@@ -72,6 +74,26 @@
 			});
 	}
 
+	async function blockTimestamp() {
+		let result = await publicClient
+			.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'clock',
+			});
+		return Number(result);
+	}
+
+	async function votingPeriod() {
+		let result = await publicClient
+			.readContract({
+				address: Address.GOVERNANCE,
+				abi: MiniDaoGovernance.abi,
+				functionName: 'votingPeriod',
+			});
+		return Number(result);
+	}
+
 	/************************************ NOTE: Checking the ETA for start voting ********************************************/
 	let countdown = $state<number>(0);
 
@@ -87,24 +109,38 @@
 				if (next === 0) {
 					refetchData = true; // re-fetch from chain to confirm real state
 				}
-			}, 1500);
+			}, 1000);
 			return () => clearInterval(interval);
 		}
 
-		if (proposalState === ProposalStatusEnum.Active) {
-			const secondsRemaining = Math.max(0, Math.floor((proposalData.expire - Date.now()) / 1000));
-			countdown = secondsRemaining;
-			if (secondsRemaining <= 0) return;
-
-			const interval = setInterval(() => {
-				const next = Math.max(0, countdown - 1);
-				countdown = next;
-				if (next === 0) {
-					refetchData = true; // re-fetch from chain to confirm real state
-				}
-			}, 1500);
-			return () => clearInterval(interval);
-		}
+		/** FIX: need to investigate how to handle active proposal countdown */
+		// if (proposalState === ProposalStatusEnum.Active) {
+		// 	try{
+		// 		(async () => {
+		// 			const timestamp = await blockTimestamp();
+		// 			console.log('current block timestamp (s):', timestamp);
+		// 			const period = await votingPeriod()
+		// 			console.log("voting period (s):", period);
+	
+		// 			const target = timestamp + period;
+	
+		// 				const secondsRemaining = (target - timestamp);
+		// 				countdown = secondsRemaining;
+		// 				if (secondsRemaining <= 0) return;
+	
+		// 				const interval = setInterval(() => {
+		// 					const next = Math.max(0, countdown - 1);
+		// 					countdown = next;
+		// 					if (next === 0) {
+		// 						refetchData = true; // re-fetch from chain to confirm real state
+		// 					}
+		// 				}, 1000);
+		// 				return () => clearInterval(interval);
+		// 		})()
+		// 	}catch(e){
+		// 		console.error('Failed to fetch block timestamp or voting period:', e);
+		// 	}
+		// }
 	});
 
 	function formatCountdown(secs: number): string {
@@ -240,12 +276,13 @@
 							>
 								⏳ Starts in {countdownDisplay}
 							</span>
-						{:else if proposalState === ProposalStatusEnum.Active}
+						<!--  FIX: need to handle active proposal countdown display, currently we only display countdown for pending proposal -->
+							<!-- {:else if proposalState === ProposalStatusEnum.Active}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
 								Start Voting Now - Ends in {countdownDisplay}
-							</span>
+							</span> -->
 						{/if}
 					{/if}
 					<ProposalStatus status={proposalState} />
@@ -265,7 +302,7 @@
 			<!-- FIX: need to fix below date time format-->
 			<div class="flex w-full flex-row items-center justify-between">
 				<div class="text-xs font-normal text-secondary">
-					Ends: {new Intl.DateTimeFormat('en-US', options).format(proposalData.expire)}
+					Vote End : {new Intl.DateTimeFormat('en-US', options).format(proposalData.expire)}
 				</div>
 
 				<div class="text-xs font-normal text-secondary">{proposalData.totalVotes} votes</div>
