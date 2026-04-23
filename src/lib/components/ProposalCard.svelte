@@ -88,31 +88,14 @@
 			});
 	}
 
-	async function blockTimestamp() {
+	async function queueEta() {
 		let result = await publicClient.readContract({
 			address: Address.GOVERNANCE,
 			abi: MiniDaoGovernance.abi,
-			functionName: 'clock'
+			functionName: 'proposalEta',
+			args: [pid]
 		});
-		return Number(result);
-	}
-
-	async function votingPeriod() {
-		let result = await publicClient.readContract({
-			address: Address.GOVERNANCE,
-			abi: MiniDaoGovernance.abi,
-			functionName: 'votingPeriod'
-		});
-		return Number(result);
-	}
-
-	async function queueDelay() {
-		let result = await publicClient.readContract({
-			address: Address.TIMELOCK,
-			abi: MiniDaoTimeLock.abi,
-			functionName: 'getMinDelay'
-		});
-		return Number(result);
+		return Number(result) * 1000;
 	}
 
 	/************************************ NOTE: Checking the ETA for start voting ********************************************/
@@ -138,12 +121,16 @@
 		if (proposalState === ProposalStatusEnum.Queued) {
 			(async () => {
 				try {
-					const delay = await queueDelay();
-					countdown = delay;
-					if (delay <= 0) return;
+					const eta = await queueEta();
+					const now = Date.now();
+					console.log("eta (ms):", eta, "now (ms):", now);
+					const diff = eta! - now;
+					console.log('Queue ETA (ms):', diff);
+					countdown = diff;
+					if (diff <= 0) return;
 
 					const interval = setInterval(() => {
-						const next = Math.max(0, countdown - 1);
+						const next = Math.max(0, diff);
 						countdown = next;
 						if (next === 0) {
 							refetchData = true; // re-fetch from chain to confirm real state
@@ -152,7 +139,7 @@
 					}, 1000);
 					return () => clearInterval(interval);
 				} catch (e) {
-					console.error('Failed to fetch queue delay:', e);
+					console.error('Failed to fetch queue ETA:', e);
 				}
 			})();
 		}
