@@ -10,11 +10,13 @@
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
+	import MiniDaoTimeLock from '$lib/contracts_abi/MiniDaoTimeLock.json';
 
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import type { voteType } from '$lib/types/ProposalCard.t';
 	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 	import { onMount } from 'svelte';
+
 	// COL: Props
 	let { proposalData, refetchData = $bindable() } = $props<{
 		proposalData: ProposalCardInfoType;
@@ -47,11 +49,23 @@
 		second: '2-digit'
 	};
 
-	$effect(() => {
+	onMount(() => {
 		pid = proposalData.proposalId;
-		userAddress = walletStatus.address;
+	});
+
+	$effect(() => {
+		let isLoaded = false;
 		if (!userAddress) return;
-		checkHasVoted();
+
+		if(!isLoaded){
+			userAddress = walletStatus.address;
+			checkHasVoted();
+			isLoaded = true;
+		}
+
+		return () => {
+			isLoaded = false;
+		}
 	});
 
 	function checkHasVoted() {
@@ -75,22 +89,29 @@
 	}
 
 	async function blockTimestamp() {
-		let result = await publicClient
-			.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'clock',
-			});
+		let result = await publicClient.readContract({
+			address: Address.GOVERNANCE,
+			abi: MiniDaoGovernance.abi,
+			functionName: 'clock'
+		});
 		return Number(result);
 	}
 
 	async function votingPeriod() {
-		let result = await publicClient
-			.readContract({
-				address: Address.GOVERNANCE,
-				abi: MiniDaoGovernance.abi,
-				functionName: 'votingPeriod',
-			});
+		let result = await publicClient.readContract({
+			address: Address.GOVERNANCE,
+			abi: MiniDaoGovernance.abi,
+			functionName: 'votingPeriod'
+		});
+		return Number(result);
+	}
+
+	async function queueDelay() {
+		let result = await publicClient.readContract({
+			address: Address.TIMELOCK,
+			abi: MiniDaoTimeLock.abi,
+			functionName: 'getMinDelay'
+		});
 		return Number(result);
 	}
 
@@ -108,9 +129,32 @@
 				countdown = next;
 				if (next === 0) {
 					refetchData = true; // re-fetch from chain to confirm real state
+					clearInterval(interval)
 				}
 			}, 1000);
 			return () => clearInterval(interval);
+		}
+
+		if (proposalState === ProposalStatusEnum.Queued) {
+			(async () => {
+				try {
+					const delay = await queueDelay();
+					countdown = delay;
+					if (delay <= 0) return;
+
+					const interval = setInterval(() => {
+						const next = Math.max(0, countdown - 1);
+						countdown = next;
+						if (next === 0) {
+							refetchData = true; // re-fetch from chain to confirm real state
+							clearInterval(interval)
+						}
+					}, 1000);
+					return () => clearInterval(interval);
+				} catch (e) {
+					console.error('Failed to fetch queue delay:', e);
+				}
+			})();
 		}
 
 		/** FIX: need to investigate how to handle active proposal countdown */
@@ -121,13 +165,13 @@
 		// 			console.log('current block timestamp (s):', timestamp);
 		// 			const period = await votingPeriod()
 		// 			console.log("voting period (s):", period);
-	
+
 		// 			const target = timestamp + period;
-	
+
 		// 				const secondsRemaining = (target - timestamp);
 		// 				countdown = secondsRemaining;
 		// 				if (secondsRemaining <= 0) return;
-	
+
 		// 				const interval = setInterval(() => {
 		// 					const next = Math.max(0, countdown - 1);
 		// 					countdown = next;
@@ -233,6 +277,8 @@
 			}
 		} catch (e) {
 			console.error('Error in queue transaction', e);
+		} finally {
+			refetchData = true; // re-fetch from chain to confirm real state
 		}
 	}
 
@@ -254,6 +300,8 @@
 			}
 		} catch (e) {
 			console.error('Error in execute transaction', e);
+		} finally {
+			refetchData = true; // re-fetch from chain to confirm real state
 		}
 	}
 </script>
@@ -276,13 +324,19 @@
 							>
 								⏳ Starts in {countdownDisplay}
 							</span>
-						<!--  FIX: need to handle active proposal countdown display, currently we only display countdown for pending proposal -->
+							<!--  FIX: need to handle active proposal countdown display, currently we only display countdown for pending proposal -->
 							<!-- {:else if proposalState === ProposalStatusEnum.Active}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
 								Start Voting Now - Ends in {countdownDisplay}
 							</span> -->
+						{:else if proposalState === ProposalStatusEnum.Queued}
+							<span
+								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
+							>
+								Execute in : {countdownDisplay}
+							</span>
 						{/if}
 					{/if}
 					<ProposalStatus status={proposalState} />

@@ -9,6 +9,8 @@
 	let voteSuccess = $state<boolean>(false);
 
 		$effect(() => {
+			let isLoaded = false;
+
 		function refetchProposals(){
 			async function fetchData() {
 				proposals = await fetchProposals();
@@ -16,9 +18,13 @@
 			fetchData(); 
 		}
 
-		if(voteSuccess){
+		if(!isLoaded && voteSuccess){
+			isLoaded = true;
 			refetchProposals();
 			voteSuccess = false; // reset after refetch
+		}
+		return () => {
+			isLoaded = false; // reset on cleanup
 		}
 	});
 
