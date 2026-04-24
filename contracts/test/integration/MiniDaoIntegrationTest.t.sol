@@ -21,6 +21,7 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 	function testFullGovernanceLifecycle_MultipleVoters() public {
 		_claimAndDelegate(USER_A);
 		_claimAndDelegate(USER_B);
+		_claimAndDelegate(USER_C); // third voter needed to meet QUORUM_VOTES (300e18)
 
 		(
 			address[] memory targets,
@@ -37,6 +38,8 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 		governance.castVote(id, 1);
 		vm.prank(USER_B);
 		governance.castVote(id, 1);
+		vm.prank(USER_C);
+		governance.castVote(id, 1); // 3 × 100e18 = 300e18 meets quorum
 		_passVotingPeriod();
 		governance.queue(targets, values, calldatas, descriptionHash);
 		_passTimelockDelay();
@@ -54,7 +57,7 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 		address voter        = makeAddr("SMALL");
 
 		vm.prank(DEPLOYER);
-		t.transfer(voter, 4e18); // 4 tokens < 5 quorum
+		t.transfer(voter, 4e18); // 4 tokens < 300e18 quorum
 		vm.prank(voter);
 		t.delegate(voter);
 
@@ -98,11 +101,12 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 
 		_passVotingDelay();
 		vm.prank(USER_A);
-		governance.castVote(id, 1); // For  100
+		governance.castVote(id, 1); // For   100e18
 		vm.prank(USER_B);
-		governance.castVote(id, 0); // Against 100
+		governance.castVote(id, 0); // Against 100e18
 		vm.prank(USER_C);
-		governance.castVote(id, 0); // Against 100
+		governance.castVote(id, 0); // Against 100e18
+		// forVotes = 100e18 < QUORUM_VOTES (300e18) so Defeated due to quorum not met
 
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 3, "should be Defeated");
@@ -111,6 +115,9 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 
 	function testProposalFails_ExecuteBeforeTimelockDelay() public {
 		_claimAndDelegate(USER_A);
+		// Claim + delegate USER_B/C BEFORE proposing so snapshot captures their power
+		_claimAndDelegate(USER_B);
+		_claimAndDelegate(USER_C);
 
 		(
 			address[] memory targets,
@@ -122,11 +129,17 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		uint256 pid = governance.propose(targets, values, calldatas, "Early execute");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES so queue() succeeds
 		vm.prank(USER_A);
+		governance.castVote(pid, 1);
+		vm.prank(USER_B);
+		governance.castVote(pid, 1);
+		vm.prank(USER_C);
 		governance.castVote(pid, 1);
 		_passVotingPeriod();
 		governance.queue(targets, values, calldatas, descriptionHash);
 
+		// Timelock delay not passed yet – execute must revert
 		vm.expectRevert();
 		governance.execute(targets, values, calldatas, descriptionHash);
 	}

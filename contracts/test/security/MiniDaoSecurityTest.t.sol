@@ -275,6 +275,10 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 		// SECURITY: Calldata is part of the operation hash. Submitting different calldata
 		// at execute() time produces a hash mismatch and the timelock reverts.
 
+		// Claim + delegate USER_B and USER_C BEFORE proposing (needed for quorum snapshot)
+		_claimAndDelegate(USER_B);
+		_claimAndDelegate(USER_C);
+
 		(
 			address[] memory targets,
 			uint256[] memory values,
@@ -285,7 +289,12 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		uint256 pid = governance.propose(targets, values, calldataArr, "Wrong calldata");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES
 		vm.prank(USER_A);
+		governance.castVote(pid, 1);
+		vm.prank(USER_B);
+		governance.castVote(pid, 1);
+		vm.prank(USER_C);
 		governance.castVote(pid, 1);
 		_passVotingPeriod();
 		governance.queue(targets, values, calldataArr, descriptionHash);
@@ -315,30 +324,36 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 		);
 	}
 
-	function testSecurity_ProposalSelectorMismatch_HelperFunctionReverts() public {
-		// SECURITY: Expose the selector mismatch - execution must revert.
-		// Propose with wrong selector from the start so all lifecycle steps share the same proposal ID.
+	function testSecurity_ProposalHelper_CorrectSelectorExecutesSuccessfully() public {
+		// SECURITY: governance.propose(address) correctly encodes storeVote() (no args).
+		// A proposal created via the helper must queue and execute without reverting.
+
+		// Claim + delegate USER_B and USER_C BEFORE proposing (needed for quorum snapshot)
+		_claimAndDelegate(USER_B);
+		_claimAndDelegate(USER_C);
+
+		uint256 pId = governance.propose(address(voteBox));
+		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES
+		vm.prank(USER_A);
+		governance.castVote(pId, 1);
+		vm.prank(USER_B);
+		governance.castVote(pId, 1);
+		vm.prank(USER_C);
+		governance.castVote(pId, 1);
+		_passVotingPeriod();
+
 		address[] memory targets   = new address[](1);
 		uint256[] memory values    = new uint256[](1);
 		bytes[]   memory calldatas = new bytes[](1);
 		targets[0]   = address(voteBox);
 		values[0]    = 0;
-		calldatas[0] = abi.encodeWithSignature("storeVote(uint256)", 1); // TEST: wrong selector – storeVote takes no args
+		calldatas[0] = abi.encodeWithSignature("storeVote()"); // correct selector
 
-		string memory description = "Create New MiniDao Proposal";
-		bytes32 descriptionHash   = keccak256(abi.encodePacked(description));
-
-		vm.prank(USER_A);
-		uint256 pId = governance.propose(targets, values, calldatas, description);
-
-		_passVotingDelay();
-		vm.prank(USER_A);
-		governance.castVote(pId, 1);
-		_passVotingPeriod();
+		bytes32 descriptionHash = keccak256(abi.encodePacked("Create New MiniDao Proposal"));
 
 		governance.queue(targets, values, calldatas, descriptionHash);
 		_passTimelockDelay();
-
 		governance.execute(targets, values, calldatas, descriptionHash);
 		assertEq(voteBox.getVote(), 1, "storeVote() must be called successfully via proposal helper");
 	}

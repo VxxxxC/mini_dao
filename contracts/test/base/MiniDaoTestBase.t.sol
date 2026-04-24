@@ -24,7 +24,7 @@ abstract contract MiniDaoTestBase is Test {
 	MiniDaoVoteBox    internal voteBox;
 	MiniDaoFaucet     internal faucet;
 
-	uint256 internal MIN_DELAY = 1 hours;
+	uint256 internal MIN_DELAY = 1 minutes;
 
 	/// @dev Deploy the full system: Timelock → Token → Faucet → Governance → VoteBox
 	function _deployAll() internal {
@@ -89,7 +89,7 @@ abstract contract MiniDaoTestBase is Test {
 	}
 
 	function _passVotingPeriod() internal {
-		// votingPeriod = 1 days is interpreted as 1 days worth of blocks
+		// votingPeriod = 1 minutes is interpreted as 60 blocks (block-number clock)
 		vm.roll(block.number + governance.votingPeriod() + 1);
 		vm.warp(block.timestamp + governance.votingPeriod() + 1);
 	}
@@ -100,11 +100,17 @@ abstract contract MiniDaoTestBase is Test {
 		vm.roll(block.number + 1);
 	}
 
-	/// @dev Full governance round-trip: propose → vote For → queue → execute
+	/// @dev Full governance round-trip: propose → vote For (3 voters for quorum) → queue → execute
 	function _proposeVoteQueueExecute(
 		address proposer,
 		string memory description
 	) internal returns (uint256 proposalId) {
+		// QUORUM_VOTES = 300e18; each faucet claim = 100e18 → need 3 voters.
+		// Claim + delegate USER_B and USER_C BEFORE proposing so their balances
+		// are captured in the snapshot (proposalBlock + votingDelay).
+		if (!faucet.hasClaimed(USER_B)) { _claimAndDelegate(USER_B); }
+		if (!faucet.hasClaimed(USER_C)) { _claimAndDelegate(USER_C); }
+
 		(
 			address[] memory targets,
 			uint256[] memory values,
@@ -119,6 +125,16 @@ abstract contract MiniDaoTestBase is Test {
 
 		vm.prank(proposer);
 		governance.castVote(proposalId, 1); // For
+
+		// Have USER_B and USER_C also vote for quorum (skip if already voted)
+		if (!governance.hasVoted(proposalId, USER_B)) {
+			vm.prank(USER_B);
+			governance.castVote(proposalId, 1);
+		}
+		if (!governance.hasVoted(proposalId, USER_C)) {
+			vm.prank(USER_C);
+			governance.castVote(proposalId, 1);
+		}
 
 		_passVotingPeriod();
 
