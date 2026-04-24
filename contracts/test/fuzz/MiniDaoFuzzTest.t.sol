@@ -277,7 +277,7 @@ contract MiniDaoFuzzTest is MiniDaoTestBase {
 		);
 	}
 
-	function testFuzz_QuorumBoundaryAroundFiveTokens(uint256 voteWeight) public {
+	function testFuzz_QuorumBoundaryAroundThreeHundredTokens(uint256 voteWeight) public {
 		voteWeight = bound(voteWeight, 0, governance.quorum(block.number) * 3);
 
 		address[] memory p   = new address[](0);

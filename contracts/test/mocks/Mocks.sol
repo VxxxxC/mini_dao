@@ -23,25 +23,60 @@ contract MockFailToken is IERC20 {
 // Re-entrancy Attack Contracts
 // ============================================================
 
-/// @dev Re-entrancy attacker for the faucet
-contract ReentrantFaucetAttack {
+/// @dev Callback interface used by MockCallbackToken to notify token recipients
+interface ITokenReceiver {
+	function onTokenReceived(address from, uint256 amount) external;
+}
+
+/// @dev Mock ERC20 that calls onTokenReceived on the recipient during transfer,
+///      simulating an ERC777/ERC1363-style callback used to trigger re-entrancy.
+contract MockCallbackToken is IERC20 {
+	mapping(address => uint256) private _balances;
+	uint256 private _totalSupply;
+
+	constructor() {
+		uint256 initialSupply = 1_000_000 * 10 ** 18;
+		_balances[msg.sender] = initialSupply;
+		_totalSupply = initialSupply;
+	}
+
+	function totalSupply() external view override returns (uint256) { return _totalSupply; }
+	function balanceOf(address account) external view override returns (uint256) { return _balances[account]; }
+	function allowance(address, address) external pure override returns (uint256) { return 0; }
+	function approve(address, uint256) external pure override returns (bool) { return true; }
+	function transferFrom(address, address, uint256) external pure override returns (bool) { return false; }
+
+	function transfer(address to, uint256 amount) external override returns (bool) {
+		require(_balances[msg.sender] >= amount, "MockCallbackToken: insufficient balance");
+		_balances[msg.sender] -= amount;
+		_balances[to] += amount;
+		// Trigger re-entrancy callback if recipient is a contract (ERC1363-style)
+		if (to.code.length > 0) {
+			try ITokenReceiver(to).onTokenReceived(msg.sender, amount) {} catch {}
+		}
+		return true;
+	}
+}
+
+/// @dev Re-entrancy attacker for the faucet.
+///      Implements ITokenReceiver so that MockCallbackToken can trigger a re-entrant
+///      claim() call on the faucet during the token transfer.
+contract ReentrantFaucetAttack is ITokenReceiver {
 	MiniDaoFaucet public faucet;
-	bool private _attacking;
 
 	constructor(address _faucet) {
 		faucet = MiniDaoFaucet(_faucet);
 	}
 
+	/// @dev Entry point: initiates the first claim which may trigger a callback.
 	function attack() external {
 		faucet.claim();
 	}
 
-	// Called when tokens are transferred to this contract via any low-level hook
-	fallback() external {
-		if (!_attacking) {
-			_attacking = true;
-			faucet.claim(); // second claim must revert AlreadyClaimed
-		}
+	/// @dev Called by MockCallbackToken during transfer to this contract.
+	///      Attempts a second claim() – must revert with AlreadyClaimed due to CEI.
+	function onTokenReceived(address /*from*/, uint256 /*amount*/) external override {
+		faucet.claim();
 	}
 
 	receive() external payable {}

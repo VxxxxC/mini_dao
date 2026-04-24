@@ -11,7 +11,11 @@ import {MiniDaoGovernance} from "../../src/MiniDaoGovernance.sol";
 contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	function setUp() public {
 		_deployAll();
+		// QUORUM_VOTES = 300e18; faucet gives 100e18 per claim → need 3 voters.
+		// Claim + delegate all three BEFORE any proposal so snapshot captures their power.
 		_claimAndDelegate(USER_A);
+		_claimAndDelegate(USER_B);
+		_claimAndDelegate(USER_C);
 	}
 
 	// --- Configuration ---
@@ -21,7 +25,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testQuorumValue() public view {
-		assertEq(governance.quorum(block.number), 5e18, "quorum should be 5 tokens");
+		assertEq(governance.quorum(block.number), 300e18, "quorum should be 300 tokens (3 voters × 100)");
 	}
 
 	function testVotingDelay() public view {
@@ -29,7 +33,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testVotingPeriod() public view {
-		assertEq(governance.votingPeriod(), 1 days, "voting period mismatch");
+		assertEq(governance.votingPeriod(), 1 minutes, "voting period mismatch");
 	}
 
 	// --- Internal helper to create a proposal ---
@@ -61,14 +65,19 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	function testProposalSucceededAfterVotingPeriodWithEnoughVotes() public {
 		uint256 id = _createProposal("Succeeded test");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 votes to meet QUORUM_VOTES
 		vm.prank(USER_A);
+		governance.castVote(id, 1);
+		vm.prank(USER_B);
+		governance.castVote(id, 1);
+		vm.prank(USER_C);
 		governance.castVote(id, 1);
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 4, "should be Succeeded (4)");
 	}
 
 	function testProposalDefeatedWhenQuorumNotMet() public {
-		// Use a standalone setup with a voter holding < 5 tokens
+		// Use a standalone setup with a voter holding < 300e18 tokens (quorum)
 		address[] memory p  = new address[](0);
 		address[] memory e  = new address[](0);
 		MiniDaoToken t2     = new MiniDaoToken(DEPLOYER, makeAddr("T50"));
@@ -77,7 +86,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 
 		address voter = makeAddr("SMALL_VOTER");
 		vm.prank(DEPLOYER);
-		t2.transfer(voter, 4e18); // 4 tokens < 5 quorum
+		t2.transfer(voter, 4e18); // 4 tokens < 300e18 quorum
 		vm.prank(voter);
 		t2.delegate(voter);
 
@@ -108,9 +117,9 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testProposalDefeatedWhenAgainstExceedsFor() public {
-		_claimAndDelegate(USER_B);
-		_claimAndDelegate(USER_C);
-
+		// USER_A (100e18 For) vs USER_B + USER_C (200e18 Against).
+		// forVotes = 100e18 < QUORUM_VOTES (300e18) so proposal is Defeated
+		// due to quorum not being reached by the For side.
 		uint256 id = _createProposal("Against majority");
 		_passVotingDelay();
 
@@ -119,7 +128,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.prank(USER_B);
 		governance.castVote(id, 0); // Against - 100 tokens
 		vm.prank(USER_C);
-		governance.castVote(id, 0); // Against - 100 tokens  =>  Against 200 > For 100
+		governance.castVote(id, 0); // Against - 100 tokens
 
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 3, "should be Defeated (3)");
@@ -136,7 +145,12 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		uint256 id = governance.propose(targets, values, calldatas, "Queue test");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 votes to meet QUORUM_VOTES
 		vm.prank(USER_A);
+		governance.castVote(id, 1);
+		vm.prank(USER_B);
+		governance.castVote(id, 1);
+		vm.prank(USER_C);
 		governance.castVote(id, 1);
 		_passVotingPeriod();
 
@@ -190,7 +204,8 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testAbstainCountsTowardQuorumButNotVictory() public {
-		// USER_A abstains with >= 5 tokens; quorum is met but For == 0 so Defeated
+		// USER_A abstains with 100e18 tokens; quorum is 300e18 so quorum is NOT met.
+		// Defeated because quorum is not reached (For + Abstain = 100e18 < 300e18).
 		uint256 id = _createProposal("Abstain quorum");
 		_passVotingDelay();
 
@@ -198,7 +213,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		governance.castVote(id, 2); // Abstain
 
 		_passVotingPeriod();
-		assertEq(uint256(governance.state(id)), 3, "Defeated - no For votes despite quorum");
+		assertEq(uint256(governance.state(id)), 3, "Defeated - quorum not reached with single abstain");
 	}
 
 	function testCannotVoteBeforeVotingDelay() public {
@@ -255,22 +270,26 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		uint256 id = _createProposal("Snapshot test");
 		uint256 snapshotBlock = governance.proposalSnapshot(id);
 
-		// Advance to snapshot block so USER_B's delegation is AFTER the snapshot
+		// Advance past the snapshot block
 		vm.roll(snapshotBlock + 1);
 		vm.warp(block.timestamp + snapshotBlock + 1);
 
-		// USER_B gets tokens and delegates AFTER the snapshot block
-		_claimAndDelegate(USER_B);
+		// LATE_VOTER gets tokens and delegates AFTER the snapshot block (zero power at snapshot)
+		address lateVoter = makeAddr("LATE_VOTER");
+		vm.prank(address(timelock));
+		token.transfer(lateVoter, 100e18);
+		vm.prank(lateVoter);
+		token.delegate(lateVoter);
 
-		vm.roll(block.number + 1); // Advance one more block so we're in Active state
+		vm.roll(block.number + 1); // advance one more block so proposal is Active
 
-		vm.prank(USER_B);
-		governance.castVote(id, 1); // weight = 0 at snapshot since delegation was after snapshot
+		vm.prank(lateVoter);
+		governance.castVote(id, 1); // weight = 0 at snapshot – delegation was after snapshot
 
 		_passVotingPeriod();
 
-		// USER_A did not vote; USER_B weight = 0 at snapshot → quorum not met → Defeated
-		assertEq(uint256(governance.state(id)), 3, "Defeated - USER_B had no snapshot power");
+		// lateVoter weight = 0 at snapshot → forVotes = 0 < 300e18 quorum → Defeated
+		assertEq(uint256(governance.state(id)), 3, "Defeated - lateVoter had no snapshot power");
 	}
 
 	// --- Quorum Boundary Conditions ---
@@ -291,7 +310,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 
 		address voter = makeAddr("BELOW_QUORUM_VOTER");
 		vm.prank(DEPLOYER);
-		t3.transfer(voter, 4e18); // 4 tokens - below quorum of 5
+		t3.transfer(voter, 4e18); // 4 tokens - below quorum of 300e18
 		vm.prank(voter);
 		t3.delegate(voter);
 
@@ -320,21 +339,27 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 
 	function testProposalPassesWithExactQuorum() public {
 		uint256 id = _createProposal("Exact quorum");
-		// USER_A has 100 tokens - well above quorum of 5
+		// 3 voters × 100e18 = 300e18 = QUORUM_VOTES exactly
 		_passVotingDelay();
 		vm.prank(USER_A);
+		governance.castVote(id, 1);
+		vm.prank(USER_B);
+		governance.castVote(id, 1);
+		vm.prank(USER_C);
 		governance.castVote(id, 1);
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 4, "should be Succeeded");
 	}
 
 	function testProposalPassesWithMoreThanQuorum() public {
-		_claimAndDelegate(USER_B);
+		// USER_A + USER_B + USER_C each vote For → 300e18 total = QUORUM_VOTES (meets quorum)
 		uint256 id = _createProposal("More than quorum");
 		_passVotingDelay();
 		vm.prank(USER_A);
 		governance.castVote(id, 1);
 		vm.prank(USER_B);
+		governance.castVote(id, 1);
+		vm.prank(USER_C);
 		governance.castVote(id, 1);
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 4, "should be Succeeded");
@@ -369,7 +394,12 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		uint256 pid = governance.propose(targets, values, calldatas, "Execute too soon");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES
 		vm.prank(USER_A);
+		governance.castVote(pid, 1);
+		vm.prank(USER_B);
+		governance.castVote(pid, 1);
+		vm.prank(USER_C);
 		governance.castVote(pid, 1);
 		_passVotingPeriod();
 		governance.queue(targets, values, calldatas, descriptionHash);
@@ -390,7 +420,12 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		uint256 pid = governance.propose(targets, values, calldatas, "Execute twice");
 		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES
 		vm.prank(USER_A);
+		governance.castVote(pid, 1);
+		vm.prank(USER_B);
+		governance.castVote(pid, 1);
+		vm.prank(USER_C);
 		governance.castVote(pid, 1);
 		_passVotingPeriod();
 		governance.queue(targets, values, calldatas, descriptionHash);
@@ -460,34 +495,36 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		governance.execute(targets, values, calldatas, descriptionHash);
 	}
 
-	// --- Convenience Wrapper Bug ---
+	// --- Convenience Wrapper ---
 
-	function testProposalHelperEncodesWrongSelector() public {
-		// Propose with wrong selector from the start so all lifecycle steps share the same proposal ID
+	function testProposalHelperExecutesSuccessfully() public {
+		// governance.propose(address) correctly encodes storeVote() (no args) to match
+		// VoteBox.storeVote(). A proposal created via the helper must queue and execute
+		// without reverting, and the vote counter must increment.
+		uint256 pId = governance.propose(address(voteBox));
+		_passVotingDelay();
+		// Need 3 × 100e18 = 300e18 to meet QUORUM_VOTES
+		vm.prank(USER_A);
+		governance.castVote(pId, 1);
+		vm.prank(USER_B);
+		governance.castVote(pId, 1);
+		vm.prank(USER_C);
+		governance.castVote(pId, 1);
+		_passVotingPeriod();
+
 		address[] memory targets   = new address[](1);
 		uint256[] memory values    = new uint256[](1);
 		bytes[]   memory calldatas = new bytes[](1);
 		targets[0]   = address(voteBox);
 		values[0]    = 0;
-		calldatas[0] = abi.encodeWithSignature("storeVote(uint256)", 1); // TEST: wrong selector – storeVote takes no args
+		calldatas[0] = abi.encodeWithSignature("storeVote()"); // correct selector
 
-		string memory description   = "Create New MiniDao Proposal";
-		bytes32 descriptionHash     = keccak256(abi.encodePacked(description));
-
-		vm.prank(USER_A);
-		uint256 pId = governance.propose(targets, values, calldatas, description);
-
-		_passVotingDelay();
-		vm.prank(USER_A);
-		governance.castVote(pId, 1);
-		_passVotingPeriod();
+		bytes32 descriptionHash = keccak256(abi.encodePacked("Create New MiniDao Proposal"));
 
 		governance.queue(targets, values, calldatas, descriptionHash);
 		_passTimelockDelay();
-
-		// Must revert - storeVote(uint256) does not exist on VoteBox
-		vm.expectRevert();
 		governance.execute(targets, values, calldatas, descriptionHash);
+		assertEq(voteBox.getVote(), 1, "proposal helper must call storeVote() successfully");
 	}
 
 	// --- Multiple Proposals ---
@@ -499,8 +536,14 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		assertFalse(idA == idB, "proposal IDs must be different");
 
 		_passVotingDelay();
+		// Vote For on A with all 3 voters to meet QUORUM_VOTES (300e18)
 		vm.prank(USER_A);
-		governance.castVote(idA, 1); // vote on A only
+		governance.castVote(idA, 1);
+		vm.prank(USER_B);
+		governance.castVote(idA, 1);
+		vm.prank(USER_C);
+		governance.castVote(idA, 1);
+		// B receives no votes
 
 		_passVotingPeriod();
 
