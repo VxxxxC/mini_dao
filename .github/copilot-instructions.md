@@ -26,6 +26,40 @@ Mini DAO is a full-stack Web3 governance platform. The **contracts/** directory 
 - Declare errors at the top of the contract, before state variables.
 - Custom error names are `PascalCase` (e.g., `AlreadyClaimed`, `TransferFailed`).
 
+### CEI Pattern (Checks-Effects-Interactions)
+
+Every state-changing function **must** follow CEI order. This is the primary defence against re-entrancy.
+
+1. **Checks** — validate all conditions first (permissions, balances, flags). Revert with a custom error if any check fails.
+2. **Effects** — update all contract state (flags, counters, balances, emit events) before any external call.
+3. **Interactions** — call external contracts or transfer ETH/tokens **last**.
+
+```solidity
+// ✅ CORRECT — CEI order (MiniDaoFaucet.claim pattern)
+function claim() external {
+    // 1. Checks
+    if (hasClaimed[msg.sender]) revert AlreadyClaimed();
+    if (token.balanceOf(address(this)) < FAUCET_AMOUNT) revert FaucetEmpty();
+    // 2. Effects
+    hasClaimed[msg.sender] = true;          // state updated before external call
+    // 3. Interactions
+    bool success = token.transfer(msg.sender, FAUCET_AMOUNT);
+    if (!success) revert TransferFailed();
+}
+
+// ❌ WRONG — Interaction before Effect (re-entrancy risk)
+function claim() external {
+    if (hasClaimed[msg.sender]) revert AlreadyClaimed();
+    bool success = token.transfer(msg.sender, FAUCET_AMOUNT); // ← external call first!
+    hasClaimed[msg.sender] = true;  // too late — re-entrant call sees false flag
+    if (!success) revert TransferFailed();
+}
+```
+
+- **Events count as effects** — always emit before external calls.
+- Use OpenZeppelin `ReentrancyGuard` as an additional safety net for complex flows where CEI alone is insufficient.
+- In security tests, always verify CEI is enforced: the re-entrancy attack must revert with the *exact custom error* (e.g., `AlreadyClaimed`), proving the state flag was set before the transfer.
+
 ### Naming
 - Constants: `UPPER_SNAKE_CASE` with explicit units (`100 * 10 ** 18`).
 - State variables: `camelCase`.

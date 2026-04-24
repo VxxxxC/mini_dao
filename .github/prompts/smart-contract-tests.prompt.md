@@ -14,6 +14,7 @@ You are an **expert Foundry security auditor** with 5+ years in DeFi protocol de
 - OpenZeppelin Governor, TimelockController, ERC20Votes, and ERC20Permit security surface areas
 - Foundry's full testing stack: unit tests, fuzz tests (`testFuzz_`), and stateful invariant tests (`invariant_` + `StdInvariant` Handler pattern)
 - Common attack vectors: re-entrancy, flash-loan governance attacks, front-running, vote manipulation, privilege escalation, and signature replay
+- The **CEI (Checks-Effects-Interactions)** pattern — every security test that touches external calls must verify that CEI is correctly enforced; the re-entrancy attack must revert with the *exact custom error* (e.g. `AlreadyClaimed`) proving state was mutated before the transfer
 - Writing tests that fail loudly and document the *why* behind every assertion
 
 ---
@@ -545,7 +546,11 @@ attack vector.
 - `testSecurity_Reentrancy_FaucetClaimCannotBeReentered` — deploy a `ReentrantFaucetAttack`
   contract whose `onERC20Received` / fallback re-calls `faucet.claim()` during the token
   transfer; the second `claim()` must revert with `AlreadyClaimed` because the state flag is
-  set **before** the transfer (checks-effects-interactions pattern)
+  set **before** the transfer (**CEI pattern** — Checks-Effects-Interactions).
+
+  > **CEI verification**: assert that the revert error is `AlreadyClaimed` (not just any revert).
+  > This proves `hasClaimed[attacker] = true` was written (Effect) before `token.transfer()`
+  > (Interaction) — i.e., CEI is correctly enforced in `MiniDaoFaucet.claim()`.
 
   ```solidity
   contract ReentrantFaucetAttack {
@@ -556,6 +561,11 @@ attack vector.
       fallback() external { if (!attacking) { attacking = true; faucet.claim(); } }
   }
   ```
+
+- `testSecurity_Reentrancy_CEI_EffectBeforeInteraction` — positive test that directly validates
+  CEI ordering in `MiniDaoFaucet`: call `claim()` once, then in the same tx (via a helper)
+  verify `faucet.hasClaimed(msg.sender) == true` *and* the token balance increased. This confirms
+  Effect was applied even though re-entry was attempted.
 
 - `testSecurity_Reentrancy_TimelockCannotBeReenteredDuringExecute` — craft a malicious
   target contract that re-calls `timelock.execute()` inside its own execution; expect revert
@@ -790,10 +800,12 @@ Before finishing the test file:
 **Security Tests**
 - [ ] Every security test has a `// SECURITY:` comment explaining the attack vector
 - [ ] Re-entrancy tests verify the *specific* error that prevents the attack (e.g., `AlreadyClaimed`)
+- [ ] Re-entrancy tests include a `// CEI:` comment confirming the Effect (state write) precedes the Interaction (external call) in the contract under test
 - [ ] Flash loan tests check voting power at the *snapshot block*, not the current block
 - [ ] The `proposal()` selector mismatch bug has comment: `// BUG: encodes storeVote(uint256) but VoteBox.storeVote() takes no args`
 
 **General**
 - [ ] Mock contracts are self-contained and minimal
+- [ ] Every function that calls an external contract or transfers tokens follows **CEI order** (Checks first, Effects second, Interactions last); add a `// CEI:` comment to confirm ordering in any non-trivial function
 - [ ] Run `forge test -vv` — all unit/fuzz/security tests green; invariants hold
 - [ ] Run `forge test --match-contract MiniDaoInvariantTest -vv` separately (invariants are slow)
