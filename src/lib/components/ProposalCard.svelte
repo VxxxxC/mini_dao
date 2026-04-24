@@ -5,7 +5,12 @@
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
 	import { keccak256, toHex, encodeFunctionData, formatUnits } from 'viem';
-	import { writeContract, waitForTransactionReceipt, getTransactionCount } from '@wagmi/core';
+	import {
+		getBlock,
+		writeContract,
+		waitForTransactionReceipt,
+		getTransactionCount
+	} from '@wagmi/core';
 	import ApexChart from '$lib/components/ApexChart.svelte';
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
@@ -55,17 +60,19 @@
 
 	$effect(() => {
 		let isLoaded = false;
-		if (!userAddress) return;
 
-		if(!isLoaded){
-			userAddress = walletStatus.address;
-			checkHasVoted();
+		if (!isLoaded) {
+			if (connectStatus === 'connected') {
+				checkHasVoted();
+			} else {
+				userHasVoted = false;
+			}
 			isLoaded = true;
 		}
 
 		return () => {
 			isLoaded = false;
-		}
+		};
 	});
 
 	function checkHasVoted() {
@@ -88,6 +95,16 @@
 			});
 	}
 
+	async function votingPeriod() {
+		let result = await publicClient.readContract({
+			address: Address.GOVERNANCE,
+			abi: MiniDaoGovernance.abi,
+			functionName: 'votingPeriod'
+		});
+
+		return Number(result);
+	}
+
 	async function queueEta() {
 		let result = await publicClient.readContract({
 			address: Address.GOVERNANCE,
@@ -103,75 +120,70 @@
 
 	// Seed countdown from on-chain value and start a 1-second interval
 	onMount(() => {
-		if (proposalState === ProposalStatusEnum.Pending) {
-			countdown = proposalData.startToVote;
-			if (proposalData.startToVote <= 0) return;
+		(async () => {
+			const block = await getBlock(wagmiConfig, { blockTag: 'latest' });
+			const blockTime = Number(block.timestamp) * 1000;
 
-			const interval = setInterval(() => {
-				const next = Math.max(0, countdown - 1);
-				countdown = next;
-				if (next === 0) {
-					refetchData = true; // re-fetch from chain to confirm real state
-					clearInterval(interval)
-				}
-			}, 1000);
-			return () => clearInterval(interval);
-		}
+			if (proposalState === ProposalStatusEnum.Pending) {
+				countdown = proposalData.startToVote;
+				if (proposalData.startToVote <= 0) return;
 
-		if (proposalState === ProposalStatusEnum.Queued) {
-			(async () => {
-				try {
-					const eta = await queueEta();
-					const now = Date.now();
-					console.log("eta (ms):", eta, "now (ms):", now);
-					const diff = eta! - now;
-					console.log('Queue ETA (ms):', diff);
-					countdown = diff;
-					if (diff <= 0) return;
+				const interval = setInterval(() => {
+					const next = Math.max(0, countdown - 1);
+					countdown = next;
+					if (next === 0) {
+						refetchData = true; // re-fetch from chain to confirm real state
+						clearInterval(interval);
+					}
+				}, 1000);
+				return () => clearInterval(interval);
+			}
 
-					const interval = setInterval(() => {
-						const next = Math.max(0, diff);
-						countdown = next;
-						if (next === 0) {
-							refetchData = true; // re-fetch from chain to confirm real state
-							clearInterval(interval)
-						}
-					}, 1000);
-					return () => clearInterval(interval);
-				} catch (e) {
-					console.error('Failed to fetch queue ETA:', e);
-				}
-			})();
-		}
+			/** FIX: need to investigate how to handle active proposal countdown */
+			// else if (proposalState === ProposalStatusEnum.Active) {
+			// 	try{
+			// 		(async () => {
+			// 			const period = await votingPeriod()
+			// 			console.log("voting period (s):", period);
 
-		/** FIX: need to investigate how to handle active proposal countdown */
-		// if (proposalState === ProposalStatusEnum.Active) {
-		// 	try{
-		// 		(async () => {
-		// 			const timestamp = await blockTimestamp();
-		// 			console.log('current block timestamp (s):', timestamp);
-		// 			const period = await votingPeriod()
-		// 			console.log("voting period (s):", period);
+			// 			const target = blockTime + period;
 
-		// 			const target = timestamp + period;
+			// 				const next = (target - blockTime);
+			// 				console.log({next})
+			// 				countdown = next;
+			// 				if (next <= 0) return;
 
-		// 				const secondsRemaining = (target - timestamp);
-		// 				countdown = secondsRemaining;
-		// 				if (secondsRemaining <= 0) return;
+			// 				const interval = setInterval(() => {
+			// 					const next = Math.max(0, countdown - 1);
+			// 					countdown = next;
+			// 					if (next === 0) {
+			// 						refetchData = true; // re-fetch from chain to confirm real state
+			// 					}
+			// 				}, 1000);
+			// 				return () => clearInterval(interval);
+			// 		})()
+			// 	}catch(e){
+			// 		console.error('Failed to fetch block timestamp or voting period:', e);
+			// 	}
+			// }
+			else if (proposalState === ProposalStatusEnum.Queued) {
+				const eta = await queueEta();
 
-		// 				const interval = setInterval(() => {
-		// 					const next = Math.max(0, countdown - 1);
-		// 					countdown = next;
-		// 					if (next === 0) {
-		// 						refetchData = true; // re-fetch from chain to confirm real state
-		// 					}
-		// 				}, 1000);
-		// 				return () => clearInterval(interval);
-		// 		})()
-		// 	}catch(e){
-		// 		console.error('Failed to fetch block timestamp or voting period:', e);
-		// 	}
-		// }
+				const diff = (eta - blockTime) / 1000; // convert ms to seconds
+				if (diff <= 0) return;
+				countdown = diff;
+
+				const interval = setInterval(() => {
+					const next = Math.max(0, diff - 1);
+					countdown = next;
+					if (next === 0) {
+						refetchData = true; // re-fetch from chain to confirm real state
+						clearInterval(interval);
+					}
+				}, 1000);
+				return () => clearInterval(interval);
+			}
+		})();
 	});
 
 	function formatCountdown(secs: number): string {

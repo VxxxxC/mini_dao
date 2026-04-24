@@ -17,11 +17,20 @@
 	let isLoadingStatus: boolean = $derived(false);
 
 	$effect(() => {
-		if (status === 'connected') {
-			checkClaimStatus(address);
-		} else {
-			hasClaimed = false;
+		let isLoaded = false;
+
+		if (!isLoaded) {
+			isLoaded = true;
+			if (status === 'connected') {
+				checkClaimStatus(address);
+			} else {
+				hasClaimed = false;
+			}
 		}
+
+		return () => {
+			isLoaded = false;
+		};
 	});
 
 	async function checkClaimStatus(address: string) {
