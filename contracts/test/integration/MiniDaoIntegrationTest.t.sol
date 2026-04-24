@@ -106,7 +106,8 @@ contract MiniDaoIntegrationTest is MiniDaoTestBase {
 		governance.castVote(id, 0); // Against 100e18
 		vm.prank(USER_C);
 		governance.castVote(id, 0); // Against 100e18
-		// forVotes = 100e18 < QUORUM_VOTES (300e18) so Defeated due to quorum not met
+		// In OZ Governor only For + Abstain count toward quorum (not Against).
+		// forVotes = 100e18 < QUORUM_VOTES (300e18) → Defeated due to quorum not reached.
 
 		_passVotingPeriod();
 		assertEq(uint256(governance.state(id)), 3, "should be Defeated");

@@ -274,22 +274,22 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.roll(snapshotBlock + 1);
 		vm.warp(block.timestamp + snapshotBlock + 1);
 
-		// NEW_VOTER gets tokens and delegates AFTER the snapshot block (zero power at snapshot)
-		address newVoter = makeAddr("LATE_VOTER");
+		// LATE_VOTER gets tokens and delegates AFTER the snapshot block (zero power at snapshot)
+		address lateVoter = makeAddr("LATE_VOTER");
 		vm.prank(address(timelock));
-		token.transfer(newVoter, 100e18);
-		vm.prank(newVoter);
-		token.delegate(newVoter);
+		token.transfer(lateVoter, 100e18);
+		vm.prank(lateVoter);
+		token.delegate(lateVoter);
 
 		vm.roll(block.number + 1); // advance one more block so proposal is Active
 
-		vm.prank(newVoter);
+		vm.prank(lateVoter);
 		governance.castVote(id, 1); // weight = 0 at snapshot – delegation was after snapshot
 
 		_passVotingPeriod();
 
-		// newVoter weight = 0 at snapshot → forVotes = 0 < 300e18 quorum → Defeated
-		assertEq(uint256(governance.state(id)), 3, "Defeated - newVoter had no snapshot power");
+		// lateVoter weight = 0 at snapshot → forVotes = 0 < 300e18 quorum → Defeated
+		assertEq(uint256(governance.state(id)), 3, "Defeated - lateVoter had no snapshot power");
 	}
 
 	// --- Quorum Boundary Conditions ---
