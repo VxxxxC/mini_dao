@@ -1,73 +1,73 @@
 <script lang="ts">
-	import { ProposalStatus } from '$lib/types/ProposalCard.t';
+	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 	import type { Component } from 'svelte';
 	import { ClockOutline, CheckCircleOutline, CloseCircleOutline } from 'flowbite-svelte-icons';
 
 	let { status, showIcon = true } = $props();
 
-	function getStatusColor(status: ProposalStatus): string | null {
+	function getStatusColor(status: ProposalStatusEnum): string | null {
 		switch (status) {
-			case ProposalStatus.Pending:
+			case ProposalStatusEnum.Pending:
 				return 'text-yellow-500 bg-yellow-100';
-			case ProposalStatus.Active:
+			case ProposalStatusEnum.Active:
 				return 'text-indigo-500 bg-indigo-100';
-			case ProposalStatus.Canceled:
+			case ProposalStatusEnum.Canceled:
 				return 'text-gray-500 bg-gray-100';
-			case ProposalStatus.Defeated:
+			case ProposalStatusEnum.Defeated:
 				return 'text-red-500 bg-red-100';
-			case ProposalStatus.Succeeded:
+			case ProposalStatusEnum.Succeeded:
 				return 'text-green-500 bg-green-100';
-			case ProposalStatus.Queued:
+			case ProposalStatusEnum.Queued:
 				return 'text-blue-500 bg-blue-100';
-			case ProposalStatus.Expired:
+			case ProposalStatusEnum.Expired:
 				return 'text-orange-500 bg-orange-100';
-			case ProposalStatus.Executed:
+			case ProposalStatusEnum.Executed:
 				return 'text-emerald-500 bg-emerald-100';
 			default:
 				return null;
 		}
 	}
 
-	function getStatusIcon(status: ProposalStatus): Component | null {
+	function getStatusIcon(status: ProposalStatusEnum): Component | null {
 		switch (status) {
-			case ProposalStatus.Pending:
+			case ProposalStatusEnum.Pending:
 				return ClockOutline;
-			case ProposalStatus.Active:
+			case ProposalStatusEnum.Active:
 				return ClockOutline;
-			case ProposalStatus.Canceled:
+			case ProposalStatusEnum.Canceled:
 				return CloseCircleOutline;
-			case ProposalStatus.Defeated:
+			case ProposalStatusEnum.Defeated:
 				return CloseCircleOutline;
-			case ProposalStatus.Succeeded:
+			case ProposalStatusEnum.Succeeded:
 				return CheckCircleOutline;
-			case ProposalStatus.Queued:
+			case ProposalStatusEnum.Queued:
 				return ClockOutline;
-			case ProposalStatus.Expired:
+			case ProposalStatusEnum.Expired:
 				return ClockOutline;
-			case ProposalStatus.Executed:
+			case ProposalStatusEnum.Executed:
 				return CheckCircleOutline;
 			default:
 				return null;
 		}
 	}
 
-	function getStatusText(status: ProposalStatus): string {
+	function getStatusText(status: ProposalStatusEnum): string {
 		switch (status) {
-			case ProposalStatus.Pending:
+			case ProposalStatusEnum.Pending:
 				return 'Pending';
-			case ProposalStatus.Active:
+			case ProposalStatusEnum.Active:
 				return 'Active';
-			case ProposalStatus.Canceled:
+			case ProposalStatusEnum.Canceled:
 				return 'Canceled';
-			case ProposalStatus.Defeated:
+			case ProposalStatusEnum.Defeated:
 				return 'Defeated';
-			case ProposalStatus.Succeeded:
+			case ProposalStatusEnum.Succeeded:
 				return 'Succeeded';
-			case ProposalStatus.Queued:
+			case ProposalStatusEnum.Queued:
 				return 'Queued';
-			case ProposalStatus.Expired:
+			case ProposalStatusEnum.Expired:
 				return 'Expired';
-			case ProposalStatus.Executed:
+			case ProposalStatusEnum.Executed:
 				return 'Executed';
 			default:
 				return 'Unknown';

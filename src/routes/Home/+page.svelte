@@ -23,7 +23,7 @@
 		passedProposal,
 		totalVotes
 	];
-	let proposals: HomeProposalCardInfoType[] = $state<HomeProposalCardInfoType[]>();
+	let proposals: HomeProposalCardInfoType[] = $state<HomeProposalCardInfoType[]>([]);
 
 	onMount(async () => {
 		proposals = await fetchProposals();

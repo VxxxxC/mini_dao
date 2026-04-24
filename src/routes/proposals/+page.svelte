@@ -1,15 +1,36 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { getPublicClient, readContract } from '@wagmi/core';
+	import { afterNavigate } from '$app/navigation';
 	import ProposalCard from '$lib/components/ProposalCard.svelte';
-	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
-	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 
 	let proposals: ProposalCardInfoType[] = $state<ProposalCardInfoType[]>([]);
 
-	onMount(async () => {
+	let voteSuccess = $state<boolean>(false);
+
+		$effect(() => {
+			let isLoaded = false;
+
+		function refetchProposals(){
+			async function fetchData() {
+				proposals = await fetchProposals();
+			}
+			fetchData(); 
+		}
+
+		if(!isLoaded && voteSuccess){
+			isLoaded = true;
+			refetchProposals();
+			voteSuccess = false; // reset after refetch
+		}
+		return () => {
+			isLoaded = false; // reset on cleanup
+		}
+	});
+
+	// NOTE: afterNavigate fires on EVERY navigation to this page (including tab switches),
+	// unlike onMount which only fires once. This ensures data is always fresh.
+	afterNavigate(async () => {
 		proposals = await fetchProposals();
 	});
 </script>
@@ -22,9 +43,12 @@
 		</p>
 	</div>
 
-	<div>
-	{#each proposals as proposal, index (index)}
-		<ProposalCard {...proposal} />
-	{/each}
+	<div class="flex flex-col space-y-5">
+		{#each proposals as proposal (proposal.proposalId)}
+			<ProposalCard
+				proposalData={proposal}
+				bind:refetchData={voteSuccess}
+			/>
+		{/each}
 	</div>
 </div>

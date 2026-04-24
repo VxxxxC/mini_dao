@@ -21,6 +21,7 @@ mini_dao/
 │   │   ├── stores/         # Svelte reactive stores
 │   │   └── types/          # TypeScript type definitions
 │   └── routes/             # SvelteKit pages and API endpoints
+├── tests/                  # Frontend Vitest test suite (mirrors src/ structure)
 └── static/                 # Public static assets
 ```
 
@@ -29,7 +30,7 @@ mini_dao/
 ## 🛠 Tech Stack
 
 **Smart Contracts**
-- **Solidity ^0.8.24** — Contract language
+- **Solidity ^0.8.27** — Contract language
 - **Foundry** — Build, test, and deploy toolchain
 - **OpenZeppelin Contracts ^5.x** — Governor, TimelockController, ERC20Votes, ERC20Permit
 
@@ -40,6 +41,7 @@ mini_dao/
 - **Wagmi v3 + Viem v2** — EVM contract reads/writes
 - **Reown AppKit** — Wallet connection (WalletConnect)
 - **Filebase SDK / AWS S3** — Off-chain proposal storage on IPFS
+- **Vitest + vitest-browser-svelte** — Frontend unit and component testing
 
 ---
 
@@ -51,7 +53,10 @@ mini_dao/
 - Off-chain proposal metadata stored on IPFS; authenticity verified by wallet signature + 5-min expiry
 - Fully decentralised post-deploy — deployer's `DEFAULT_ADMIN_ROLE` is revoked at setup
 - ERC20Permit support — gasless token approvals via EIP-712 signatures
-- 134-test suite: unit, integration, fuzz, invariant, and security tests
+- Live countdown timers on proposal cards — ticks down from voting delay (Pending) and voting period (Active)
+- Wallet-reactive UI — proposal card automatically re-checks vote status when MetaMask account switches
+- Queue & Execute flow — voted proposals surface Queue/Execute buttons when in `Succeeded`/`Queued` state
+- Dual test suite: 135 Foundry tests (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
 
 ---
 
@@ -109,10 +114,10 @@ sequenceDiagram
     User->>Token: delegate(self)
 
     User->>Gov: propose(targets, calldatas, description)
-    Note over Gov: Voting Delay — 1 day
+    Note over Gov: Voting Delay — 30s (TEST) / 1 day (prod)
 
     User->>Gov: castVote(proposalId, FOR)
-    Note over Gov: Voting Period — 1 week
+    Note over Gov: Voting Period — 1 min (TEST) / 1 week (prod)
 
     User->>Gov: queue(proposalId)
     Gov->>Timelock: scheduleBatch(...)
@@ -124,11 +129,15 @@ sequenceDiagram
 
 ### Contracts
 
+> ⚠️ **DEMO / LOCAL USE ONLY — NOT PRODUCTION SAFE**
+>
+> `MiniDaoGovernance` is configured with intentionally short `TEST:` values for local demonstration on Anvil. These values create **extreme governance risk** on any public network — a proposal can be created, fully voted on, queued, and executed in under 2 minutes by as few as 3 wallets. **Never deploy these values to Sepolia or mainnet.** Before any public deployment, update `votingDelay`, `votingPeriod`, and `QUORUM_VOTES` in `contracts/src/MiniDaoGovernance.sol`.
+
 | Contract | Role |
 |---|---|
 | `MiniDaoToken` | ERC20 governance token (MDAO). 1B supply — distributed via faucet; remainder held by timelock. |
 | `MiniDaoTimeLock` | `TimelockController`. 2-day minDelay gates all on-chain execution. |
-| `MiniDaoGovernance` | Governor. 1-day voting delay, 1-week voting period, 5-token quorum. |
+| `MiniDaoGovernance` | Governor. **TEST config**: 30s voting delay, 1 min voting period, quorum = 3 wallets (≥10 MDAO each). **Production values**: 1 day delay, 1 week period, fraction-based quorum. |
 | `MiniDaoFaucet` | One-time claim of 100 MDAO per address. |
 | `MiniDaoVoteBox` | Governance-controlled vote store. Owned by the timelock. |
 
@@ -146,7 +155,7 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 - ✅ Network isolation — `HelperConfig.s.sol` separates Anvil / Sepolia params; no hardcoded addresses in scripts
 
 **Cons / Known Issues**
-- ⚠️ `QUORUM_VOTES` hardcoded to 5 tokens — does not scale with supply; use `GovernorVotesQuorumFraction` instead
+- ⚠️ `MiniDaoGovernance` uses `TEST:` config values (30s delay, 1 min period, 3-wallet quorum) — **not safe for any public network**; must be changed before non-local deployment
 - ⚠️ Proposal pages use mock data (`src/lib/mock_data.ts`) — live IPFS API calls not yet wired up
 - ⚠️ `appKitConfig.ts` and `viem/client.ts` are hardcoded to Anvil (chain 31337) — must be updated for production
 - ⚠️ Date/time formatting broken in `HomeProposalCard.svelte` and `ProposalCard.svelte` — replace with `Intl.DateTimeFormat`
@@ -165,22 +174,29 @@ Deployment order: **Timelock → Token → Faucet → Governance → VoteBox**
 | File | Line | Description |
 |---|---|---|
 | [HomeProposalCard.svelte](src/lib/components/HomeProposalCard.svelte#L27) | 27 | Date/time formatting broken — replace with `Intl.DateTimeFormat` |
-| [ProposalCard.svelte](src/lib/components/ProposalCard.svelte#L43) | 43 | Same date/time formatting issue |
+| [ProposalCard.svelte](src/lib/components/ProposalCard.svelte#L136) | 136 | Same date/time formatting issue |
 
 #### 🟡 `WARN`
 | File | Line | Description |
 |---|---|---|
-| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L22) | 22 | `QUORUM_VOTES` hardcoded — replace with `GovernorVotesQuorumFraction` |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L14) | 14 | `QUORUM_VOTES` hardcoded — replace with `GovernorVotesQuorumFraction` for production |
 | [MiniDaoVoteBox.sol](contracts/src/MiniDaoVoteBox.sol#L12) | 12 | Initial owner is `msg.sender`; transfer to timelock post-deploy |
 | [appKitConfig.ts](src/lib/config/appKitConfig.ts#L12) | 12, 20 | Network hardcoded to Anvil — switch before production |
 | [viem/client.ts](src/lib/config/viem/client.ts#L5) | 5 | Network hardcoded to Anvil — switch before production |
 
+#### 🟠 `TEST` — Demo values, never deploy to public networks
+| File | Line | Current (TEST) | Must be for production |
+|---|---|---|---|
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L15) | 15 | `QUORUM_VOTES = 300 * 10^18` (≈ 3 wallets) | `GovernorVotesQuorumFraction` |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L36) | 36 | `votingDelay = 30 seconds` | `1 days` minimum |
+| [MiniDaoGovernance.sol](contracts/src/MiniDaoGovernance.sol#L40) | 40 | `votingPeriod = 1 minutes` | `1 weeks` minimum |
+
 #### 🔵 `IMPORTANT`
 | File | Line | Description |
 |---|---|---|
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L17) | 17 | Signature expiry check — rejects requests older than 5 minutes |
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L26) | 26 | Signature verification via `verifyMessage` |
-| [upload_to_ipfs.ts](src/routes/api/upload_proposal/upload_to_ipfs.ts#L73) | 73 | IPFS CID extracted from Filebase response header |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L16) | 16 | Signature expiry check — rejects requests older than 5 minutes |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L25) | 25 | Signature verification via `verifyMessage` |
+| [upload_to_ipfs.ts](src/routes/api/create_proposal/upload_to_ipfs.ts#L72) | 72 | IPFS CID extracted from Filebase response header |
 
 ---
 
@@ -245,9 +261,19 @@ Open [http://localhost:5173](http://localhost:5173).
 ```bash
 cd contracts
 forge build        # compile
-forge test -vv     # run all 134 tests
+forge test -vv     # run all 135 tests
 forge fmt          # format
 forge snapshot     # gas snapshot
+```
+
+### Frontend Tests
+
+```bash
+# Run all Vitest tests (component + logic)
+bun run test
+
+# Watch mode
+bun run test:unit
 ```
 
 ### Build for Production

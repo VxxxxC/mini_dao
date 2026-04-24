@@ -11,7 +11,7 @@ contract MiniDaoFaucet {
 
 	uint256 public constant FAUCET_AMOUNT = 100 * 10 ** 18;
 
-	mapping(address => bool) public hasClaimedFaucet;
+	mapping(address => bool) private hasClaimedFaucet;
 	IERC20 public immutable token;
 	constructor(address _tokenAddress) {
 		token = IERC20(_tokenAddress);

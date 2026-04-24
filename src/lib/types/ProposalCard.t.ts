@@ -5,21 +5,22 @@ export interface ProposalCardInfoType {
 	description: string;
 	proposalId: bigint;
 	proposer: `0x${string}`;
-	state: ProposalStatus;
+	state: ProposalStatusEnum;
 	ipfsCid: string;
 	expire: number;
+	startToVote?: number;
 	totalVotes?: number;
 	voteFor?: number;
 	voteAgainst?: number;
 	voteAbstain?: number;
-} // 0 = Against, 1 = For, 2 = Abstain
+}
 
 export type HomeProposalCardInfoType = Omit<
 	ProposalCardInfoType,
 	'proposer' | 'voteFor' | 'voteAgainst' | 'voteAbstain'
 >;
 
-export enum ProposalStatus {
+export enum ProposalStatusEnum {
 	"Pending",
 	"Active",
 	"Canceled",
@@ -29,3 +30,10 @@ export enum ProposalStatus {
 	"Expired",
 	"Executed"
 }
+
+export type voteType = {
+		againstVotes: number;
+		forVotes: number;
+		abstainVotes: number;
+	};
+// 0 = Against, 1 = For, 2 = Abstain

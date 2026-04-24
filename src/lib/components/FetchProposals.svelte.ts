@@ -1,14 +1,12 @@
-
-import { getPublicClient, readContract } from '@wagmi/core';
 import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
-import { wagmiConfig } from '$lib/config/appKitConfig';
 import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 import { Address } from '$lib/config/contractAddress';
+import { publicClient } from '$lib/config/viem/client';
+import { formatEther } from 'viem';
 
 const governorAbi = MiniDaoGovernance.abi;
 
-const IPFS_GATEWAY =
-	'https://ipfs.filebase.io/ipfs/';
+const IPFS_GATEWAY = 'https://ipfs.filebase.io/ipfs/';
 
 async function fetchIpfsData(cid: string) {
 	try {
@@ -24,7 +22,7 @@ async function fetchIpfsData(cid: string) {
 			title: data.proposalTitle || 'Untitled',
 			description: data.proposalDescription || 'No content',
 			proposer: data.proposerAddress || 'Unknown',
-			expire: new Date(data.timestamp).getTime() + 7 * 24 * 60 * 60 * 1000, // INFO: 7 days expired
+			expire: new Date(data.timestamp).getTime() + 60 * 1000 // TEST: 1 minute expired
 		};
 	} catch (error) {
 		console.error(`Load IPFS data failed (CID: ${cid}):`, error);
@@ -37,9 +35,7 @@ async function fetchIpfsData(cid: string) {
 
 export async function fetchProposals() {
 	try {
-		const publicClient = getPublicClient(wagmiConfig);
-
-		const logs = await publicClient?.getContractEvents({
+		const logs = await publicClient.getContractEvents({
 			address: Address.GOVERNANCE,
 			abi: governorAbi,
 			eventName: 'ProposalCreated',
@@ -47,35 +43,66 @@ export async function fetchProposals() {
 			toBlock: 'latest'
 		});
 
-		const formattedProposals = await Promise.all(
-			logs!.map(async (log) => {
+		const formattedProposals: ProposalCardInfoType[] = await Promise.all(
+			logs.map(async (log) => {
 				const args = log.args;
 				const proposalId = args.proposalId;
 				const ipfsCid = args.description;
 
 				// 1. Query real-time state (On-chain)
-				const statePromise = readContract(wagmiConfig, {
+				const statePromise = publicClient.readContract({
 					address: Address.GOVERNANCE,
 					abi: governorAbi,
 					functionName: 'state',
 					args: [proposalId]
 				});
+				// 2. Query real-time voting start time (On-chain)
+				const startVotePromise = publicClient.readContract({
+					address: Address.GOVERNANCE,
+					abi: governorAbi,
+					functionName: 'countdownStartVoting',
+					args: [proposalId]
+				});
 
-					// 2. Download proposal content (Off-chain IPFS)
+				// 3. Query real-time voting weight (On-chain)
+				const votingWeightPromise = publicClient.readContract({
+					address: Address.GOVERNANCE,
+					abi: governorAbi,
+					functionName: 'proposalVotes',
+					args: [proposalId]
+				});
+
+				// 4. Download proposal content (Off-chain IPFS)
 				const ipfsPromise = fetchIpfsData(ipfsCid);
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
-				const [stateResult, ipfsData] = await Promise.all([statePromise, ipfsPromise]);
+				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([
+					statePromise,
+					ipfsPromise,
+					startVotePromise,
+					votingWeightPromise
+				]);
 
 				return {
 					proposalId: proposalId as bigint,
 					proposer: ipfsData.proposer as `0x${string}`,
 					ipfsCid: ipfsCid as string,
-					state: stateResult as number,
+					state: stateResult as number, // NOTE: 0 - 7 (0: Pending, 1: Active, 2: Canceled, 3: Defeated, 4: Succeeded, 5: Queued, 6: Expired, 7: Executed)
 					title: ipfsData.title as string,
 					description: ipfsData.description as string,
 					expire: ipfsData.expire as number,
+					startToVote: Number(startVoteResult),
+					totalVotes:
+						formatEther(
+							Number(votingWeightResult[0]) +
+								Number(votingWeightResult[1]) +
+								Number(votingWeightResult[2])
+						) / 100,
+					voteFor: formatEther(Number(votingWeightResult[1])) / 100,
+					voteAgainst: formatEther(Number(votingWeightResult[0])) / 100,
+					voteAbstain: formatEther(Number(votingWeightResult[2])) / 100
 				};
+				// NOTE: use formatEther convert bigint to number, and divided by 100 for representing 1 voting weight
 			})
 		);
 
@@ -85,3 +112,4 @@ export async function fetchProposals() {
 		return [];
 	}
 }
+
