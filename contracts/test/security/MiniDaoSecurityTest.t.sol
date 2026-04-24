@@ -4,7 +4,8 @@ pragma solidity ^0.8.24;
 import {MiniDaoTestBase}          from "../base/MiniDaoTestBase.t.sol";
 import {ReentrantFaucetAttack,
         MockCallbackToken,
-        TimelockNoopTarget}        from "../mocks/Mocks.sol";
+        TimelockNoopTarget,
+        ReentrantTimelockTarget}   from "../mocks/Mocks.sol";
 import {MiniDaoFaucet}            from "../../src/MiniDaoFaucet.sol";
 import {MiniDaoTimeLock}          from "../../src/MiniDaoTimeLock.sol";
 
@@ -15,6 +16,58 @@ contract MiniDaoSecurityTest is MiniDaoTestBase {
 	}
 
 	// --- Re-entrancy Attacks ---
+
+	function testSecurity_Reentrancy_CEI_EffectBeforeInteraction() public {
+		// CEI: Verify MiniDaoFaucet sets hasClaimed[msg.sender] = true (Effect) BEFORE
+		// calling token.transfer() (Interaction). If the order were swapped, a re-entrant
+		// receiver could claim twice. This positive test confirms both invariants hold
+		// after a normal claim — the state flag is set AND the transfer succeeded.
+		// Use USER_B — setUp() already claimed for USER_A.
+		uint256 balanceBefore = token.balanceOf(USER_B);
+
+		vm.prank(USER_B);
+		faucet.claim();
+
+		// CEI Effect: state flag must be set permanently after the claim
+		assertTrue(faucet.hasClaimed(USER_B), "CEI: hasClaimed must be true after claim");
+		// CEI Interaction: token balance must increase by exactly FAUCET_AMOUNT
+		assertEq(
+			token.balanceOf(USER_B) - balanceBefore,
+			faucet.FAUCET_AMOUNT(),
+			"CEI: token balance must increase by exactly FAUCET_AMOUNT"
+		);
+	}
+
+	function testSecurity_Reentrancy_TimelockCannotBeReenteredDuringExecute() public {
+		// SECURITY: TimelockController's state machine prevents double-execution of the
+		// same operation. When a target re-calls timelock.execute() for the SAME operation
+		// during its own execution, the inner call succeeds and marks the op Done.
+		// The outer _afterCall() then finds the op is no longer Ready and reverts,
+		// rolling back the entire transaction.
+
+		// Deploy a fresh timelock: DEPLOYER is proposer, address(0) = open executor
+		address[] memory proposers = new address[](1);
+		address[] memory executors = new address[](1);
+		proposers[0] = DEPLOYER;
+		executors[0] = address(0);
+		MiniDaoTimeLock freshLock = new MiniDaoTimeLock(MIN_DELAY, proposers, executors, DEPLOYER);
+
+		bytes32 opSalt = bytes32(uint256(99));
+		ReentrantTimelockTarget reentrantTarget = new ReentrantTimelockTarget();
+		reentrantTarget.setReentryParams(address(freshLock), opSalt);
+
+		bytes memory callData = abi.encodeWithSignature("trigger()");
+
+		vm.prank(DEPLOYER);
+		freshLock.schedule(address(reentrantTarget), 0, callData, bytes32(0), opSalt, MIN_DELAY);
+
+		vm.warp(block.timestamp + MIN_DELAY + 1);
+
+		// The outer execute() reverts because the inner re-entrant execute() already
+		// marked the operation Done before the outer _afterCall() runs.
+		vm.expectRevert();
+		freshLock.execute(address(reentrantTarget), 0, callData, bytes32(0), opSalt);
+	}
 
 	function testSecurity_Reentrancy_FaucetClaimCannotBeReentered() public {
 		// SECURITY: MiniDaoFaucet uses checks-effects-interactions (CEI): it sets

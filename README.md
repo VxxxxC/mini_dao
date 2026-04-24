@@ -56,7 +56,7 @@ mini_dao/
 - Live countdown timers on proposal cards — ticks down from voting delay (Pending) and voting period (Active)
 - Wallet-reactive UI — proposal card automatically re-checks vote status when MetaMask account switches
 - Queue & Execute flow — voted proposals surface Queue/Execute buttons when in `Succeeded`/`Queued` state
-- Dual test suite: 135 Foundry tests (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
+- Dual test suite: 136 Foundry tests (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
 
 ---
 
@@ -261,7 +261,7 @@ Open [http://localhost:5173](http://localhost:5173).
 ```bash
 cd contracts
 forge build        # compile
-forge test -vv     # run all 135 tests
+forge test -vv     # run all 136 tests
 forge fmt          # format
 forge snapshot     # gas snapshot
 ```

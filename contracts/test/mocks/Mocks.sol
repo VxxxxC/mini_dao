@@ -82,20 +82,30 @@ contract ReentrantFaucetAttack is ITokenReceiver {
 	receive() external payable {}
 }
 
-/// @dev Malicious timelock target for re-entrancy test
+/// @dev Malicious timelock target for re-entrancy test.
+///      When trigger() is called during timelock execution, it re-calls timelock.execute()
+///      on the SAME operation. The inner execute() succeeds and marks the operation Done;
+///      the outer _afterCall() then finds it no longer Ready and reverts —
+///      proving the state-machine guards against double-execution.
 contract ReentrantTimelockTarget {
 	TimelockController public timelock;
-	bool private _entered;
+	bytes32 public salt;
+	bool private _triggered;
 
-	function setTimelock(address _t) external {
+	function setReentryParams(address _t, bytes32 _salt) external {
 		timelock = TimelockController(payable(_t));
+		salt = _salt;
 	}
 
+	/// @dev Called by the timelock during execute(). Attempts a re-entrant execute()
+	///      on the exact same operation to prove state-machine re-entrancy protection.
 	function trigger() external {
-		// Re-entry attempt is blocked by timelock's operation-state guard
-		if (!_entered) {
-			_entered = true;
-		}
+		if (_triggered) return; // prevent infinite recursion
+		_triggered = true;
+		bytes memory callData = abi.encodeWithSignature("trigger()");
+		// Inner execute() succeeds → marks op as Done.
+		// Outer _afterCall() finds op is no longer Ready → reverts entire tx.
+		try timelock.execute(address(this), 0, callData, bytes32(0), salt) {} catch {}
 	}
 }
 

@@ -35,7 +35,7 @@ Generate a comprehensive Foundry test suite covering every contract in the Mini 
 ## Project Context
 
 **Framework**: Foundry (forge-std)  
-**Language**: Solidity ^0.8.24  
+**Language**: Solidity ^0.8.27  
 **Test root**: `contracts/test/` (Foundry auto-discovers `test/**/*.t.sol`)  
 **Source contracts**: `contracts/src/`  
 **Remapping**: `@openzeppelin/contracts/` → `lib/openzeppelin-contracts/contracts/`
@@ -55,18 +55,22 @@ Generate a comprehensive Foundry test suite covering every contract in the Mini 
 ```solidity
 MiniDaoToken.TOTAL_SUPPLY   = 1_000_000_000 * 10**18  // 1 billion
 MiniDaoFaucet.FAUCET_AMOUNT = 100 * 10**18             // 100 tokens
-MiniDaoGovernance.QUORUM_VOTES = 5 * 10**18            // 5 tokens
+MiniDaoGovernance.QUORUM_VOTES = 300 * 10**18          // 300 tokens (≈ 3 wallets × 100 MDAO each)
 MiniDaoGovernance.votingDelay()  = 30 seconds
-MiniDaoGovernance.votingPeriod() = 1 days
+MiniDaoGovernance.votingPeriod() = 1 minutes            // NOTE: shortened for local demo — use 1 weeks in production
 ```
 
-### Known Bug to Expose with a Test
+### Regression Test: Selector Bug Was Fixed
 
-`MiniDaoGovernance.proposal(address target)` (the convenience wrapper) encodes
-`abi.encodeWithSignature("storeVote(uint256)")` — but `MiniDaoVoteBox.storeVote()` takes
-**no arguments**. The selector mismatch means this wrapper will always revert on execution.
-Write a test that calls `governance.proposal(address(voteBox))`, advances time through
-the full lifecycle, and verifies the execution reverts (exposing the bug).
+`MiniDaoGovernance.propose(address target)` (the convenience wrapper) previously encoded
+`abi.encodeWithSignature("storeVote(uint256)")` — a selector mismatch because
+`MiniDaoVoteBox.storeVote()` takes **no arguments**. This bug has been **fixed**: the
+wrapper now encodes `abi.encodeWithSignature("storeVote()")` correctly.
+
+Write a regression test `testProposalHelperExecutesSuccessfully` that calls
+`governance.propose(address(voteBox))`, advances through the full lifecycle, calls
+`execute()`, and asserts `voteBox.getVote() == 1` (confirming no revert and the vote was
+stored).
 
 ---
 
@@ -296,15 +300,15 @@ abstract contract MiniDaoTestBase is Test {
 
 #### Configuration
 - `testGovernorName` — `governance.name() == "Mini Governor"`
-- `testQuorumValue` — `governance.quorum(block.number) == 5e18`
+- `testQuorumValue` — `governance.quorum(block.number) == 300e18`
 - `testVotingDelay` — `governance.votingDelay() == 30 seconds`
-- `testVotingPeriod` — `governance.votingPeriod() == 1 days`
+- `testVotingPeriod` — `governance.votingPeriod() == 1 minutes`
 
 #### Proposal State Machine
 - `testProposalIsPendingImmediatelyAfterCreation` — state = `ProposalState.Pending`
 - `testProposalBecomesActiveAfterVotingDelay` — warp past delay; state = `ProposalState.Active`
 - `testProposalSucceededAfterVotingPeriodWithEnoughVotes` — vote For, warp past period; state = `ProposalState.Succeeded`
-- `testProposalDefeatedWhenQuorumNotMet` — vote with < 5 tokens; state = `ProposalState.Defeated`
+- `testProposalDefeatedWhenQuorumNotMet` — vote with < 300 tokens; state = `ProposalState.Defeated`
 - `testProposalDefeatedWhenAgainstExceedsFor` — more Against than For; state = `ProposalState.Defeated`
 - `testProposalQueuedAfterSucceeded` — queue after Succeeded; state = `ProposalState.Queued`
 - `testProposalExecutedAfterTimelockDelay` — execute after queued + minDelay; state = `ProposalState.Executed`
@@ -336,8 +340,8 @@ abstract contract MiniDaoTestBase is Test {
 - `testProposerCanCancelActiveProposal` — proposer calls cancel in Active state; state = Cancelled
 - `testCancelledProposalCannotBeExecuted` — cancel then try execute; expect revert
 
-#### Convenience Wrapper Bug
-- `testProposalHelperEncodesWrongSelector` — call `governance.proposal(address(voteBox))`, advance through full lifecycle, call `execute()`, expect revert (exposes selector mismatch bug)
+#### Convenience Wrapper (Fixed — Regression Test)
+- `testProposalHelperExecutesSuccessfully` — call `governance.propose(address(voteBox))`, advance through full lifecycle, call `execute()`, assert `voteBox.getVote() == 1` (confirms the selector mismatch bug is fixed)
 
 #### Multiple Proposals
 - `testTwoSimultaneousProposalsAreIndependent` — create proposalA and proposalB with different descriptions; each has its own state
@@ -618,13 +622,10 @@ attack vector.
   calling `timelock.executeBatch()` with a VoteBox target directly (bypassing Governor) before
   minDelay must revert
 
-- `testSecurity_ProposalSelectorMismatch_HelperFunctionReverts` — expose the known bug:
-  `governance.proposal(address(voteBox))` encodes `storeVote(uint256)` but VoteBox exposes
-  only `storeVote()` (no params); advance through full governance lifecycle; `execute()` reverts
-  due to selector mismatch
-  ```solidity
-  // BUG: proposal() encodes storeVote(uint256) but VoteBox.storeVote() takes no args
-  ```
+- `testSecurity_ProposalHelper_CorrectSelectorExecutesSuccessfully` — regression test
+  confirming the selector bug is fixed: `governance.propose(address(voteBox))` now correctly
+  encodes `storeVote()` (no args); advance through full governance lifecycle; `execute()` succeeds
+  and `voteBox.getVote() == 1`
 
 ---
 

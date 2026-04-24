@@ -25,7 +25,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testQuorumValue() public view {
-		assertEq(governance.quorum(block.number), 300e18, "quorum should be 300 tokens (3 voters × 100)");
+		assertEq(governance.quorum(block.number), 300e18, "quorum should be 300 tokens (3 voters x 100)");
 	}
 
 	function testVotingDelay() public view {
