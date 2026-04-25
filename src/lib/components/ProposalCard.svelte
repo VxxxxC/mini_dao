@@ -135,7 +135,7 @@
 						refetchData = true; // re-fetch from chain to confirm real state
 						clearInterval(interval);
 					}
-				}, 1000);
+				}, 1500);
 				return () => clearInterval(interval);
 			}
 
@@ -159,7 +159,7 @@
 			// 					if (next === 0) {
 			// 						refetchData = true; // re-fetch from chain to confirm real state
 			// 					}
-			// 				}, 1000);
+			// 				}, 1500);
 			// 				return () => clearInterval(interval);
 			// 		})()
 			// 	}catch(e){
@@ -180,7 +180,7 @@
 						refetchData = true; // re-fetch from chain to confirm real state
 						clearInterval(interval);
 					}
-				}, 1000);
+				}, 1500);
 				return () => clearInterval(interval);
 			}
 		})();
