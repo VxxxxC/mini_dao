@@ -1,18 +1,9 @@
 <script lang="ts">
-	import {
-		DarkMode,
-		Navbar,
-		NavLi,
-		NavUl,
-		Button,
-		Dropdown,
-		DropdownItem
-	} from 'flowbite-svelte';
+	import { DarkMode, Navbar, NavLi, NavUl, Button, Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { page } from '$app/state';
 	import { BarsOutline } from 'flowbite-svelte-icons';
 	import { getBalance } from '@wagmi/core';
 	import { type GetBalanceReturnType } from '@wagmi/core';
-	import { sepolia } from '@wagmi/core/chains';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { formatEther } from 'viem';
 	import WalletConnectButton from '$lib/components/WalletConnectButton.svelte';
@@ -22,12 +13,13 @@
 	let address: string = $derived(walletStatus.address);
 	let status: string = $derived(walletStatus.status);
 	let balance: string = $derived('');
+	let chainId: number = $derived(walletStatus.chainId);
 
 	async function fetchBalance() {
 		if (status === 'connected') {
 			let result: GetBalanceReturnType = await getBalance(wagmiConfig, {
 				address: `0x${address.slice(2)}`,
-				chainId: sepolia.id
+				chainId: chainId
 			});
 
 			balance = formatEther(result.value, 'wei').slice(0, 5) + result.symbol;
@@ -38,7 +30,7 @@
 		{ name: 'Home', href: '/' },
 		{ name: 'Proposals', href: '/proposals' },
 		{ name: 'Create', href: '/create-proposal' },
-		{ name: "Faucet", href: '/faucet' }
+		{ name: 'Faucet', href: '/faucet' }
 	];
 </script>
 
