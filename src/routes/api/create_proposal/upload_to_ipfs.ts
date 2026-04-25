@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { FILEBASE_BUCKET_NAME } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { s3 } from '$lib/config/filebase_s3_client';
 import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
 import { publicClient } from '$lib/config/viem/client';
@@ -63,7 +63,7 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
 		const ipfsCid: string[] = new Array(1);
 
 		const command = new PutObjectCommand({
-			Bucket: FILEBASE_BUCKET_NAME,
+			Bucket: env.FILEBASE_BUCKET_NAME,
 			Key: fileName,
 			Body: bodyString,
 			ContentType: 'application/json'
@@ -95,10 +95,11 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
 
 		console.log('\n✅ Upload completed!!');
 
-		return ipfsCid[0] ? { success: true, cid: ipfsCid[0] } : { success: false, error: '❌ Failed to retrieve IPFS CID from response' };
+		return ipfsCid[0]
+			? { success: true, cid: ipfsCid[0] }
+			: { success: false, error: '❌ Failed to retrieve IPFS CID from response' };
 	} catch (error) {
 		console.error('❌ Filebase Upload Error:', error);
 		return { success: false, error: '❌ Filebase Upload Error' };
 	}
 }
-
