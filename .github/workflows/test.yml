@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  # ── Smart Contract Tests ──────────────────────────────────────────────────
+  contracts:
+    name: Foundry Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Cache forge artifacts
+        uses: actions/cache@v4
+        with:
+          path: contracts/out
+          key: forge-out-${{ hashFiles('contracts/src/**/*.sol') }}
+
+      - name: Build
+        run: forge build --sizes
+
+      - name: Run tests
+        run: forge test -vv
+
+      - name: Coverage (non-invariant)
+        run: forge coverage --no-match-contract "MiniDaoInvariantTest" --report summary
+
+  # ── Frontend Tests ────────────────────────────────────────────────────────
+  frontend:
+    name: Vitest Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun run test --run
+
+      - name: Build (type-check + bundle)
+        run: bun run build
