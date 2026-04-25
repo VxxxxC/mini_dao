@@ -1,5 +1,7 @@
 # Mini DAO
 
+[![CI](https://github.com/VxxxxC/mini_dao/actions/workflows/test.yml/badge.svg)](https://github.com/VxxxxC/mini_dao/actions/workflows/test.yml)
+
 A full-stack Web3 governance platform where community members claim governance tokens, delegate voting power, create proposals, vote, and execute approved actions on-chain through a time-locked controller.
 
 ---
@@ -56,7 +58,8 @@ mini_dao/
 - Live countdown timers on proposal cards — ticks down from voting delay (Pending) and voting period (Active)
 - Wallet-reactive UI — proposal card automatically re-checks vote status when MetaMask account switches
 - Queue & Execute flow — voted proposals surface Queue/Execute buttons when in `Succeeded`/`Queued` state
-- Dual test suite: 136 Foundry tests (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
+- Dual test suite: **143 Foundry tests** (unit / integration / fuzz / invariant / security) + Vitest frontend component tests
+- **CI/CD** — GitHub Actions runs contract tests + coverage + frontend tests on every push
 
 ---
 
@@ -261,7 +264,7 @@ Open [http://localhost:5173](http://localhost:5173).
 ```bash
 cd contracts
 forge build        # compile
-forge test -vv     # run all 136 tests
+forge test -vv     # run all 143 tests
 forge fmt          # format
 forge snapshot     # gas snapshot
 ```
