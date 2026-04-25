@@ -133,17 +133,17 @@
 		<DemoBanner />
 
 		<div class="space-y-5">
-			<p class="text-3xl font-bold text-gray-900">Create New Proposal</p>
-			<p class="text-sm font-normal text-gray-500">Submit your ideas and let the community vote</p>
+			<p class="text-3xl font-bold text-gray-900 dark:text-white">Create New Proposal</p>
+			<p class="text-sm font-normal text-gray-500 dark:text-gray-400">Submit your ideas and let the community vote</p>
 		</div>
 		<div class="w-full space-y-5">
 			{#if connectStatus !== 'connected'}
 				<div
-					class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-yellow-200 bg-yellow-50 px-2 py-3 text-yellow-600"
+					class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-yellow-200 bg-yellow-50 px-2 py-3 text-yellow-600 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-400"
 				>
 					<ExclamationCircleOutline size="lg" />
 					<div class="flex-col space-y-2">
-						<p class="text-sm font-medium text-yellow-800">Wallet Connection Required</p>
+						<p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Wallet Connection Required</p>
 						<p class="text-xs">Please connect your wallet to create a proposal.</p>
 					</div>
 				</div>
@@ -153,12 +153,12 @@
 				<Card size="xl" shadow="md" horizontal={false} class="h-full w-full space-y-5 p-8">
 					<form onsubmit={submitProposal} class="flex flex-col space-y-5">
 						<div class="flex flex-col space-y-1">
-							<Label for="title" class="text-sm font-medium text-gray-700">Proposal Title</Label>
+							<Label for="title" class="text-sm font-medium text-gray-700 dark:text-gray-300">Proposal Title</Label>
 							<input
 								type="text"
 								id="title"
 								name="title"
-								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 sm:text-sm"
+								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 sm:text-sm"
 								placeholder="Enter proposal title"
 								bind:value={proposalTitle}
 								required
@@ -170,14 +170,14 @@
 							{/if}
 						</div>
 						<div class="flex flex-col space-y-1">
-							<Label for="description" class="text-sm font-medium text-gray-700"
+							<Label for="description" class="text-sm font-medium text-gray-700 dark:text-gray-300"
 								>Proposal Description</Label
 							>
 							<textarea
 								id="description"
 								name="description"
 								rows={10}
-								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 sm:text-sm"
+								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 sm:text-sm"
 								placeholder="Enter proposal description"
 								bind:value={proposalDescription}
 							></textarea>
@@ -189,10 +189,10 @@
 						</div>
 
 						<div
-							class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-purple-200 bg-purple-50 px-2 py-3 text-purple-600"
+							class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-purple-200 bg-purple-50 px-2 py-3 text-purple-600 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-400"
 						>
 							<div class="flex-col space-y-2 p-2">
-								<p class="text-sm font-medium text-purple-800">Proposal Requirements (Demo Config)</p>
+								<p class="text-sm font-medium text-purple-800 dark:text-purple-300">Proposal Requirements (Demo Config)</p>
 								<div class="space-y-5 p-3 text-xs">
 									<li>Voting delay: <strong>30 seconds</strong> after proposal creation</li>
 									<li>Voting period: <strong>1 minute</strong> — cast your vote before it ends</li>
@@ -209,7 +209,7 @@
 									type="button"
 									onclick={() => (popupModal = true)}
 									class={[
-										'h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 transition duration-500 ease-in-out hover:border-red-300 hover:bg-pink-50',
+										'h-12 w-full rounded-md border border-gray-300 bg-white text-gray-600 transition duration-500 ease-in-out hover:border-red-300 hover:bg-pink-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
 										submitButtonUnable() !== true ? 'cursor-not-allowed opacity-30 ' : ''
 									]}
 								>

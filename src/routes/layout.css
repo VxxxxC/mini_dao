@@ -26,3 +26,10 @@ html {
   @apply bg-web3-bg dark:bg-web3-bg-dark;
   font-family: -apple-system, Helvetica Neue, sans-serif;
 }
+
+/* Dark mode overrides for custom semantic colour tokens */
+.dark {
+  --color-secondary: oklch(72% 0.025 264.364);
+  --color-subtle: oklch(78% 0.025 256.802);
+  --color-web3-navbar-active-bg: #2d1f45;
+}

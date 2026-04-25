@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class="fixed top-0 z-10 w-full border-b-2 border-b-stone-300 bg-web3-bg px-5 py-1 dark:bg-web3-bg-dark"
+	class="fixed top-0 z-10 w-full border-b-2 border-b-stone-300 bg-web3-bg px-5 py-1 dark:border-b-gray-700 dark:bg-web3-bg-dark"
 >
 	<Navbar />
 </div>

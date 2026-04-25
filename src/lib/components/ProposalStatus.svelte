@@ -8,21 +8,21 @@
 	function getStatusColor(status: ProposalStatusEnum): string | null {
 		switch (status) {
 			case ProposalStatusEnum.Pending:
-				return 'text-yellow-500 bg-yellow-100';
+				return 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300';
 			case ProposalStatusEnum.Active:
-				return 'text-indigo-500 bg-indigo-100';
+				return 'text-indigo-500 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300';
 			case ProposalStatusEnum.Canceled:
-				return 'text-gray-500 bg-gray-100';
+				return 'text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-300';
 			case ProposalStatusEnum.Defeated:
-				return 'text-red-500 bg-red-100';
+				return 'text-red-500 bg-red-100 dark:bg-red-900 dark:text-red-300';
 			case ProposalStatusEnum.Succeeded:
-				return 'text-green-500 bg-green-100';
+				return 'text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300';
 			case ProposalStatusEnum.Queued:
-				return 'text-blue-500 bg-blue-100';
+				return 'text-blue-500 bg-blue-100 dark:bg-blue-900 dark:text-blue-300';
 			case ProposalStatusEnum.Expired:
-				return 'text-orange-500 bg-orange-100';
+				return 'text-orange-500 bg-orange-100 dark:bg-orange-900 dark:text-orange-300';
 			case ProposalStatusEnum.Executed:
-				return 'text-emerald-500 bg-emerald-100';
+				return 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300';
 			default:
 				return null;
 		}

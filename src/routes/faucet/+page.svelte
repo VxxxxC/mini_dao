@@ -106,28 +106,28 @@
 	<!-- NOTE: DEMO BANNER -->
 	<DemoBanner />
 
-	<div class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-		<h2 class="mb-2 text-xl font-bold">💰 Mini DAO Faucet</h2>
-		<p class="mb-6 text-gray-500">Each person can claim 100 MDAO for governance voting</p>
+	<div class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+		<h2 class="mb-2 text-xl font-bold dark:text-white">💰 Mini DAO Faucet</h2>
+		<p class="mb-6 text-gray-500 dark:text-gray-400">Each person can claim 100 MDAO for governance voting</p>
 
 	{#if status !== 'connected'}
 		<button
 			disabled
-			class="w-full cursor-not-allowed rounded-xl bg-gray-200 px-4 py-3 font-bold text-gray-500"
+			class="w-full cursor-not-allowed rounded-xl bg-gray-200 px-4 py-3 font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400"
 		>
 			Please connect your wallet first
 		</button>
 	{:else if isLoadingStatus}
 		<button
 			disabled
-			class="w-full animate-pulse rounded-xl bg-blue-100 px-4 py-3 font-bold text-blue-500"
+			class="w-full animate-pulse rounded-xl bg-blue-100 px-4 py-3 font-bold text-blue-500 dark:bg-blue-900 dark:text-blue-300"
 		>
 			Checking eligibility...
 		</button>
 	{:else if hasClaimed}
 		<button
 			disabled
-			class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-100 px-4 py-3 font-bold text-green-700"
+			class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-100 px-4 py-3 font-bold text-green-700 dark:bg-green-900 dark:text-green-300"
 		>
 			<span>✅</span> Already claimed
 		</button>

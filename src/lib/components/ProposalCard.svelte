@@ -314,7 +314,7 @@
 	>
 		<div class="flex w-full flex-col items-center">
 			<div class="flex w-full flex-row items-center justify-between">
-				<div class="text-lg font-bold">{proposalData.title}</div>
+				<div class="text-lg font-bold dark:text-white">{proposalData.title}</div>
 				<div class="flex flex-row items-center space-x-2">
 					{#if countdownDisplay}
 						{#if proposalState === ProposalStatusEnum.Pending}
@@ -362,33 +362,33 @@
 			</div>
 		</div>
 		{#if connectStatus !== 'connected'}
-			<p class="flex w-full flex-row justify-center text-sm font-normal text-secondary">
+			<p class="flex w-full flex-row justify-center text-sm font-normal text-secondary dark:text-gray-400">
 				Please connect your wallet to vote
 			</p>
 		{:else}
 			<div class="flex w-full flex-row items-center justify-between space-x-2">
 				{#if isCheckingVote}
-					<p class="animate-pulse text-gray-500">Checking vote record...</p>
+					<p class="animate-pulse text-gray-500 dark:text-gray-400">Checking vote record...</p>
 				{:else if userHasVoted}
 					{#if proposalState === ProposalStatusEnum.Active}
-						<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-							<p class="text-lg font-bold text-green-700">
+						<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950">
+							<p class="text-lg font-bold text-green-700 dark:text-green-300">
 								✅ You have already voted on this proposal!
 							</p>
-							<p class="mt-1 text-sm text-green-600">
+							<p class="mt-1 text-sm text-green-600 dark:text-green-400">
 								Thank you for participating in DAO governance.
 							</p>
 						</div>
 					{:else if proposalState === ProposalStatusEnum.Succeeded}
 						<button
 							onclick={() => handleQueue()}
-							class="min-h-12 w-full rounded-md border border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100"
+							class="min-h-12 w-full rounded-md border border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-300 dark:hover:bg-purple-900"
 							>To Queue</button
 						>
 					{:else if proposalState === ProposalStatusEnum.Queued}
 						<button
 							onclick={() => handleExecute()}
-							class="min-h-12 w-full rounded-md border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100"
+							class="min-h-12 w-full rounded-md border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-300 dark:hover:bg-orange-900"
 							>To Execute</button
 						>
 					{/if}
@@ -399,7 +399,7 @@
 								onclick={() => handleVote(proposalData.proposalId, 1)}
 								disabled={voteButtonDisable()}
 								class={[
-									'col-span-3 min-h-12 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100',
+									'col-span-3 min-h-12 rounded-md border border-green-300 bg-green-50 text-green-600 hover:bg-green-100 dark:border-green-700 dark:bg-green-950 dark:text-green-300 dark:hover:bg-green-900',
 									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 								]}>For</button
 							>
@@ -407,7 +407,7 @@
 								onclick={() => handleVote(proposalData.proposalId, 2)}
 								disabled={voteButtonDisable()}
 								class={[
-									'col-span-1 min-h-12 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100',
+									'col-span-1 min-h-12 rounded-md border border-gray-300 bg-gray-50 text-subtle hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700',
 									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 								]}>Abstain</button
 							>
@@ -415,14 +415,14 @@
 								onclick={() => handleVote(proposalData.proposalId, 0)}
 								disabled={voteButtonDisable()}
 								class={[
-									'col-span-3 min-h-12 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100',
+									'col-span-3 min-h-12 rounded-md border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-700 dark:bg-red-950 dark:text-red-300 dark:hover:bg-red-900',
 									voteButtonDisable() ? 'cursor-not-allowed opacity-30' : ''
 								]}>Against</button
 							>
 						{:else}
 							<button
 								disabled
-								class="col-span-full min-h-12 animate-pulse rounded-md bg-gray-200 disabled:cursor-wait disabled:opacity-50"
+								class="col-span-full min-h-12 animate-pulse rounded-md bg-gray-200 disabled:cursor-wait disabled:opacity-50 dark:bg-gray-700"
 								>Voting...</button
 							>
 						{/if}

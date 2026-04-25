@@ -41,8 +41,8 @@
 	<DemoBanner />
 
 	<div class="flex flex-col items-start space-y-5">
-		<p class="text-3xl font-bold text-gray-900">Proposals</p>
-		<p class="text-sm font-normal text-gray-500">
+		<p class="text-3xl font-bold text-gray-900 dark:text-white">Proposals</p>
+		<p class="text-sm font-normal text-gray-500 dark:text-gray-400">
 			View all proposals and participate in voting decisions
 		</p>
 	</div>

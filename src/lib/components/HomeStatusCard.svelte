@@ -22,7 +22,7 @@
 			<div class="flex flex-col items-start justify-between py-2">
 				<div class="text-sm font-normal text-subtle">{prop.cardInfo.title}</div>
 
-				<div class="text-lg font-bold text-gray-900">{prop.cardInfo.des}</div>
+				<div class="text-lg font-bold text-gray-900 dark:text-white">{prop.cardInfo.des}</div>
 			</div>
 		</Card>
 	{/each}

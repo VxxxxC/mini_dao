@@ -37,8 +37,8 @@
 
 	<!-- NOTE: UPPER SECTION -->
 	<div class="flex flex-col items-center gap-y-5">
-		<p class="text-3xl font-black">Community Governance Platform</p>
-		<p class="text-sm font-normal text-gray-500">
+		<p class="text-3xl font-black dark:text-white">Community Governance Platform</p>
+		<p class="text-sm font-normal text-gray-500 dark:text-gray-400">
 			Participate in DAO decisions and shape the decentralized future
 		</p>
 
@@ -52,8 +52,10 @@
 		<Card size="xl" shadow="xs" horizontal={false} class="min-w-full items-center gap-y-5 p-8">
 			<div class="flex w-full flex-row justify-between">
 				<div>
-					<p class="text-xl font-bold">Active Proposals</p>
-					<p class="text-sm font-normal text-gray-600">View and participate in voting</p>
+					<p class="text-xl font-bold dark:text-white">Active Proposals</p>
+					<p class="text-sm font-normal text-gray-600 dark:text-gray-400">
+						View and participate in voting
+					</p>
 				</div>
 				<div class="flex flex-col items-center">
 					<a
@@ -72,5 +74,5 @@
 	</div>
 
 	<!-- NOTE: LOWER SECTION -->
-	<div class="font-black">lower column</div>
+	<!-- <div class="font-black">lower column</div> -->
 </div>

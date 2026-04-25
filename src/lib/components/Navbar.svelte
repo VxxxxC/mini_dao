@@ -39,7 +39,7 @@
 	<!-- NOTE: LEFT -->
 	<div class="flex flex-col items-start justify-center">
 		<!-- <div class="min-h-5"><appkit-network-button></appkit-network-button></div> -->
-		<DarkMode size="sm" class="rounded-xl bg-stone-300" />
+		<DarkMode size="sm" class="rounded-xl bg-stone-300 dark:bg-gray-700" />
 	</div>
 
 	<!-- NOTE: CENTER -->
@@ -51,7 +51,7 @@
 						<NavLi
 							class="text-md mx-1 w-32 rounded-lg text-center font-medium"
 							activeClass="bg-web3-navbar-active-bg text-web3-navbar-active-text"
-							nonActiveClass="hover:bg-gray-50 text-gray-600"
+							nonActiveClass="hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
 							{href}
 						>
 							{name}
@@ -70,7 +70,7 @@
 					<p>Loading balance...</p>
 				{:then}
 					<div
-						class="flex h-8 flex-row items-center justify-center gap-x-5 rounded-xl bg-stone-300 p-2 font-mono text-sm"
+						class="flex h-8 flex-row items-center justify-center gap-x-5 rounded-xl bg-stone-300 p-2 font-mono text-sm dark:bg-gray-700 dark:text-gray-200"
 					>
 						<p>Balance:</p>
 						<p>{balance}</p>
@@ -90,7 +90,7 @@
 <!-- PERFORMANCE: Mobile -->
 <div class="relative z-0 my-2 flex justify-between lg:hidden">
 	<!-- BUG: There are issue of wallet modal open, but dropdown menu is still overlay -->
-	<DarkMode size="sm" class="rounded-xl bg-stone-300" />
+	<DarkMode size="sm" class="rounded-xl bg-stone-300 dark:bg-gray-700" />
 	<Button size="sm" color="alternative">
 		<BarsOutline />
 		<Dropdown {activeUrl} placement="bottom" class="flex min-h-1/4 w-full flex-col justify-between">
@@ -112,7 +112,7 @@
 							<p>Loading balance...</p>
 						{:then}
 							<div
-								class="flex h-8 flex-row items-center justify-center gap-x-5 rounded-xl bg-stone-300 p-2 font-mono text-sm"
+								class="flex h-8 flex-row items-center justify-center gap-x-5 rounded-xl bg-stone-300 p-2 font-mono text-sm dark:bg-gray-700 dark:text-gray-200"
 							>
 								<p>Balance:</p>
 								<p>{balance}</p>
