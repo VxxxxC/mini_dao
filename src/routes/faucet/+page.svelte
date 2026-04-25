@@ -6,6 +6,7 @@
 	import MiniDaoFaucet from '$lib/contracts_abi/MiniDaoFaucet.json';
 	import MiniDaoToken from '$lib/contracts_abi/MiniDaoToken.json';
 	import { Address, ChainId } from '$lib/config/contractAddress';
+	import DemoBanner from '$lib/components/DemoBanner.svelte';
 
 	let activeUrl = $derived(page.url.pathname);
 	let address: string = $derived(walletStatus.address);
@@ -101,9 +102,13 @@
 	}
 </script>
 
-<div class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-	<h2 class="mb-2 text-xl font-bold">💰 Mini DAO Faucet</h2>
-	<p class="mb-6 text-gray-500">Each person can claim 100 MDAO for governance voting</p>
+<div class="space-y-4">
+	<!-- NOTE: DEMO BANNER -->
+	<DemoBanner />
+
+	<div class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
+		<h2 class="mb-2 text-xl font-bold">💰 Mini DAO Faucet</h2>
+		<p class="mb-6 text-gray-500">Each person can claim 100 MDAO for governance voting</p>
 
 	{#if status !== 'connected'}
 		<button
@@ -141,4 +146,5 @@
 			{/if}
 		</button>
 	{/if}
+	</div>
 </div>

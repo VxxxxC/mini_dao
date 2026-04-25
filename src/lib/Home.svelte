@@ -14,6 +14,7 @@
 		totalVotes
 	} from '$lib/stores/StatusCard';
 	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
+	import DemoBanner from '$lib/components/DemoBanner.svelte';
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -31,6 +32,9 @@
 </script>
 
 <div class="grid justify-center gap-y-5">
+	<!-- NOTE: DEMO BANNER -->
+	<DemoBanner />
+
 	<!-- NOTE: UPPER SECTION -->
 	<div class="flex flex-col items-center gap-y-5">
 		<p class="text-3xl font-black">Community Governance Platform</p>

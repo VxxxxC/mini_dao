@@ -10,6 +10,7 @@
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
 	import { Address } from '$lib/config/contractAddress';
+	import DemoBanner from '$lib/components/DemoBanner.svelte';
 
 	let connectStatus: string = $derived(walletStatus.status);
 	let walletAddress: string = $derived(walletStatus.address);
@@ -128,6 +129,9 @@
 	<div
 		class="col-start-1 col-end-6 flex flex-col items-start space-y-5 md:col-start-2 md:col-end-5"
 	>
+		<!-- NOTE: DEMO BANNER -->
+		<DemoBanner />
+
 		<div class="space-y-5">
 			<p class="text-3xl font-bold text-gray-900">Create New Proposal</p>
 			<p class="text-sm font-normal text-gray-500">Submit your ideas and let the community vote</p>
@@ -188,11 +192,12 @@
 							class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-purple-200 bg-purple-50 px-2 py-3 text-purple-600"
 						>
 							<div class="flex-col space-y-2 p-2">
-								<p class="text-sm font-medium text-purple-800">Proposal Requirements</p>
+								<p class="text-sm font-medium text-purple-800">Proposal Requirements (Demo Config)</p>
 								<div class="space-y-5 p-3 text-xs">
-									<li>Requires staking 100 DAO tokens</li>
-									<li>Voting period is 7 days</li>
-									<li>Minimum 10% voter turnout required to pass</li>
+									<li>Voting delay: <strong>30 seconds</strong> after proposal creation</li>
+									<li>Voting period: <strong>1 minute</strong> — cast your vote before it ends</li>
+									<li>Quorum: <strong>300 MDAO</strong> (≈ 3 wallets × 100 MDAO each) must vote For</li>
+									<li>Min voting power: hold <strong>≥ 10 MDAO</strong> and self-delegate</li>
 									<li>Proposals cannot be modified once submitted</li>
 								</div>
 							</div>
