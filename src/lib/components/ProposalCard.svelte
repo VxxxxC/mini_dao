@@ -256,7 +256,7 @@
 	const values = [0];
 	const calldatas = [encodedFunctionCall];
 
-	const descriptionHash = keccak256(toHex(proposalData.ipfsCid));
+	let descriptionHash = $derived(keccak256(toHex(proposalData.ipfsCid)));
 
 	async function handleQueue() {
 		try {
