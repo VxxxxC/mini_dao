@@ -11,7 +11,7 @@ import {MiniDaoGovernance} from "../../src/MiniDaoGovernance.sol";
 contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	function setUp() public {
 		_deployAll();
-		// QUORUM_VOTES = 300e18; faucet gives 100e18 per claim → need 3 voters.
+		// QUORUM_VOTES = 300e18; faucet gives 100e18 per claim -> need 3 voters.
 		// Claim + delegate all three BEFORE any proposal so snapshot captures their power.
 		_claimAndDelegate(USER_A);
 		_claimAndDelegate(USER_B);
@@ -288,7 +288,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 
 		_passVotingPeriod();
 
-		// lateVoter weight = 0 at snapshot → forVotes = 0 < 300e18 quorum → Defeated
+		// lateVoter weight = 0 at snapshot -> forVotes = 0 < 300e18 quorum -> Defeated
 		assertEq(uint256(governance.state(id)), 3, "Defeated - lateVoter had no snapshot power");
 	}
 
@@ -352,7 +352,7 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 	}
 
 	function testProposalPassesWithMoreThanQuorum() public {
-		// USER_A + USER_B + USER_C each vote For → 300e18 total = QUORUM_VOTES (meets quorum)
+		// USER_A + USER_B + USER_C each vote For -> 300e18 total = QUORUM_VOTES (meets quorum)
 		uint256 id = _createProposal("More than quorum");
 		_passVotingDelay();
 		vm.prank(USER_A);
@@ -564,5 +564,64 @@ contract MiniDaoGovernanceTest is MiniDaoTestBase {
 		vm.prank(USER_A);
 		vm.expectRevert();
 		governance.propose(targets, values, calldatas, "Duplicate");
+	}
+
+	// --- getVotes Normalization (public override) ---
+	// NOTE: governance.getVotes() is the PUBLIC view used by off-chain tools and the frontend.
+	// It is NOT called internally during castVote (which uses the internal _getVotes flow).
+	// These tests exercise both branches of the ≥10-token threshold directly.
+
+	function testGetVotesReturns1ForSufficientTokens() public {
+		// USER_A has 100e18 tokens delegated to self from setUp — well above the 10-token threshold.
+		vm.roll(block.number + 1); // advance so delegation block is in the past
+		uint256 votes = governance.getVotes(USER_A, block.number - 1);
+		assertEq(votes, 1, "100 tokens >= 10 threshold -> 1 voting unit");
+	}
+
+	function testGetVotesReturns0ForInsufficientTokens() public {
+		address smallHolder = makeAddr("SMALL_HOLDER");
+		vm.prank(USER_A);
+		token.transfer(smallHolder, 4e18); // 4 tokens < 10-token threshold
+		vm.prank(smallHolder);
+		token.delegate(smallHolder);
+
+		vm.roll(block.number + 1);
+		uint256 votes = governance.getVotes(smallHolder, block.number - 1);
+		assertEq(votes, 0, "4 tokens < 10 threshold -> 0 voting units");
+	}
+
+	function testGetVotesReturns1AtExactThreshold() public {
+		address tenHolder = makeAddr("TEN_HOLDER");
+		vm.prank(USER_A);
+		token.transfer(tenHolder, 10e18); // exactly 10 tokens = boundary
+		vm.prank(tenHolder);
+		token.delegate(tenHolder);
+
+		vm.roll(block.number + 1);
+		uint256 votes = governance.getVotes(tenHolder, block.number - 1);
+		assertEq(votes, 1, "exactly 10 tokens = boundary -> 1 voting unit");
+	}
+
+	function testGetVotesReturns0ForZeroBalance() public {
+		address noTokens = makeAddr("NO_TOKENS");
+		// no transfer — balance stays 0, no delegation needed
+		vm.roll(block.number + 1);
+		uint256 votes = governance.getVotes(noTokens, block.number - 1);
+		assertEq(votes, 0, "0 tokens -> 0 voting units");
+	}
+
+	// --- Countdown Start Voting ---
+
+	function testCountdownStartVotingReturnsPosWhenPending() public {
+		uint256 id = _createProposal("Countdown pending");
+		uint256 countdown = governance.countdownStartVoting(id);
+		assertGt(countdown, 0, "countdown must be positive before voting starts");
+	}
+
+	function testCountdownStartVotingReturnsZeroWhenActive() public {
+		uint256 id = _createProposal("Countdown active");
+		_passVotingDelay(); // advance past the snapshot block
+		uint256 countdown = governance.countdownStartVoting(id);
+		assertEq(countdown, 0, "countdown must be 0 once voting is active");
 	}
 }

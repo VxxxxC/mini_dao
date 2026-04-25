@@ -355,4 +355,30 @@ contract MiniDaoFuzzTest is MiniDaoTestBase {
 
 		assertEq(voteBox.getVote(), callCount, "vote count must equal number of calls");
 	}
+
+	// --- Governance getVotes Fuzz ---
+
+	/// @dev Verify that the public getVotes() normalisation threshold (>=10 tokens -> 1, else -> 0)
+	/// holds for the full uint96 token-amount space.
+	function testFuzz_GetVotesNormalisesToOneOrZero(uint96 rawTokens) public {
+		rawTokens = uint96(bound(uint256(rawTokens), 0, 500e18));
+
+		address holder = makeAddr("FUZZ_GET_VOTES_HOLDER");
+		if (rawTokens > 0) {
+			// timelock holds 70% of total supply — plenty of room for any fuzz input ≤500e18
+			vm.prank(address(timelock));
+			token.transfer(holder, rawTokens);
+		}
+		vm.prank(holder);
+		token.delegate(holder);
+
+		vm.roll(block.number + 1);
+		uint256 votes = governance.getVotes(holder, block.number - 1);
+
+		if (rawTokens >= 10e18) {
+			assertEq(votes, 1, "should have 1 vote unit with >= 10 tokens");
+		} else {
+			assertEq(votes, 0, "should have 0 vote units with < 10 tokens");
+		}
+	}
 }
