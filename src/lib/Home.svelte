@@ -7,22 +7,49 @@
 	import type { StatusCardInfoType } from '$lib/types/StatusCard.t';
 	import type { HomeProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import { ArrowRightOutline } from 'flowbite-svelte-icons';
-	import {
-		communityMemebers,
-		activeProposal,
-		passedProposal,
-		totalVotes
-	} from '$lib/stores/StatusCard';
 	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 	import DemoBanner from '$lib/components/DemoBanner.svelte';
+	import { CheckCircleOutline, ClockOutline } from 'flowbite-svelte-icons';
 
 	let activeUrl = $derived(page.url.pathname);
 
 	const statusCardInfoProps: StatusCardInfoType[] = [
-		communityMemebers,
-		activeProposal,
-		passedProposal,
-		totalVotes
+		{
+			icon: ClockOutline,
+			iconClass:
+				'm-2 p-3 h-12 w-12 rounded-xl text-indigo-500 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300',
+			cardInfo: {
+				title: 'Active',
+				des: '999'
+			}
+		},
+		{
+			icon: CheckCircleOutline,
+			iconClass:
+				'm-2 p-3 h-12 w-12 rounded-xl text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300',
+			cardInfo: {
+				title: 'Succeed / Pass',
+				des: '999'
+			}
+		},
+		{
+			icon: ClockOutline,
+			iconClass:
+				'm-2 p-3 h-12 w-12 rounded-xl text-blue-500 bg-blue-100 dark:bg-blue-900 dark:text-blue-300',
+			cardInfo: {
+				title: 'Queued',
+				des: '999'
+			}
+		},
+		{
+			icon: CheckCircleOutline,
+			iconClass:
+				'm-2 p-3 h-12 w-12 rounded-xl text-emerald-500 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
+			cardInfo: {
+				title: 'Executed',
+				des: '999'
+			}
+		}
 	];
 	let proposals: HomeProposalCardInfoType[] = $state<HomeProposalCardInfoType[]>([]);
 
