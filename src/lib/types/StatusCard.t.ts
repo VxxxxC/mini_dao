@@ -5,6 +5,6 @@ export interface StatusCardInfoType {
 	iconClass: string;
 	cardInfo: {
 		title: string;
-		des: string;
+		voteCount: number;
 	};
 }

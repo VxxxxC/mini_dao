@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/state';
 	import HomeStatusCard from '$lib/components/HomeStatusCard.svelte';
 	import HomeProposalCard from '$lib/components/HomeProposalCard.svelte';
 	import { Card } from 'flowbite-svelte';
@@ -10,52 +9,70 @@
 	import { fetchProposals } from '$lib/components/FetchProposals.svelte';
 	import DemoBanner from '$lib/components/DemoBanner.svelte';
 	import { CheckCircleOutline, ClockOutline } from 'flowbite-svelte-icons';
+	import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 
-	let activeUrl = $derived(page.url.pathname);
-
-	const statusCardInfoProps: StatusCardInfoType[] = [
-		{
-			icon: ClockOutline,
-			iconClass:
-				'm-2 p-3 h-12 w-12 rounded-xl text-indigo-500 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300',
-			cardInfo: {
-				title: 'Active',
-				des: '999'
-			}
-		},
-		{
-			icon: CheckCircleOutline,
-			iconClass:
-				'm-2 p-3 h-12 w-12 rounded-xl text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300',
-			cardInfo: {
-				title: 'Succeed / Pass',
-				des: '999'
-			}
-		},
-		{
-			icon: ClockOutline,
-			iconClass:
-				'm-2 p-3 h-12 w-12 rounded-xl text-blue-500 bg-blue-100 dark:bg-blue-900 dark:text-blue-300',
-			cardInfo: {
-				title: 'Queued',
-				des: '999'
-			}
-		},
-		{
-			icon: CheckCircleOutline,
-			iconClass:
-				'm-2 p-3 h-12 w-12 rounded-xl text-emerald-500 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
-			cardInfo: {
-				title: 'Executed',
-				des: '999'
-			}
-		}
-	];
 	let proposals: HomeProposalCardInfoType[] = $state<HomeProposalCardInfoType[]>([]);
+	let statusCardInfoProps: StatusCardInfoType[] = $derived(votingStatusFilter(proposals));
 
 	onMount(async () => {
 		proposals = await fetchProposals();
 	});
+
+	function votingStatusFilter(proposals: HomeProposalCardInfoType[]) {
+		let active = proposals.filter(
+			(proposal) => proposal.state === ProposalStatusEnum.Active
+		).length;
+		let succeeded = proposals.filter(
+			(proposal) => proposal.state === ProposalStatusEnum.Succeeded
+		).length;
+		let queued = proposals.filter(
+			(proposal) => proposal.state === ProposalStatusEnum.Queued
+		).length;
+		let executed = proposals.filter(
+			(proposal) => proposal.state === ProposalStatusEnum.Executed
+		).length;
+
+		let statusCardInfo = [
+			{
+				icon: ClockOutline,
+				iconClass:
+					'm-2 p-3 h-12 w-12 rounded-xl text-indigo-500 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300',
+				cardInfo: {
+					title: 'Active',
+					voteCount: active
+				}
+			},
+			{
+				icon: CheckCircleOutline,
+				iconClass:
+					'm-2 p-3 h-12 w-12 rounded-xl text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300',
+				cardInfo: {
+					title: 'Succeeded',
+					voteCount: succeeded
+				}
+			},
+			{
+				icon: ClockOutline,
+				iconClass:
+					'm-2 p-3 h-12 w-12 rounded-xl text-blue-500 bg-blue-100 dark:bg-blue-900 dark:text-blue-300',
+				cardInfo: {
+					title: 'Queued',
+					voteCount: queued
+				}
+			},
+			{
+				icon: CheckCircleOutline,
+				iconClass:
+					'm-2 p-3 h-12 w-12 rounded-xl text-emerald-500 bg-emerald-100 dark:bg-emerald-900 dark:text-emerald-300',
+				cardInfo: {
+					title: 'Executed',
+					voteCount: executed
+				}
+			}
+		];
+
+		return statusCardInfo;
+	}
 </script>
 
 <div class="grid justify-center gap-y-5">
