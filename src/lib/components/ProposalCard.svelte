@@ -175,7 +175,7 @@
 				countdown = diff;
 
 				const interval = setInterval(() => {
-					const next = Math.max(0, diff - 1);
+					const next = Math.max(0, countdown - 1);
 					countdown = next;
 					if (next === 0) {
 						refetchData = true; // re-fetch from chain to confirm real state
