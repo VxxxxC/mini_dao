@@ -4,7 +4,7 @@
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
-	import { keccak256, toHex, encodeFunctionData, formatUnits } from 'viem';
+	import { keccak256, toHex, encodeFunctionData } from 'viem';
 	import {
 		getBlock,
 		writeContract,
@@ -15,7 +15,6 @@
 	import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 	import MiniDaoVoteBox from '$lib/contracts_abi/MiniDaoVoteBox.json';
 	import MiniDaoGovernance from '$lib/contracts_abi/MiniDaoGovernance.json';
-	import MiniDaoTimeLock from '$lib/contracts_abi/MiniDaoTimeLock.json';
 
 	import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
 	import type { voteType } from '$lib/types/ProposalCard.t';
@@ -95,7 +94,8 @@
 			});
 	}
 
-	async function votingPeriod() {
+	/*
+   async function votingPeriod() {
 		let result = await publicClient.readContract({
 			address: Address.GOVERNANCE,
 			abi: MiniDaoGovernance.abi,
@@ -104,6 +104,7 @@
 
 		return Number(result);
 	}
+  **/
 
 	async function queueEta() {
 		let result = await publicClient.readContract({
@@ -391,11 +392,16 @@
 							>To Queue</button
 						>
 					{:else if proposalState === ProposalStatusEnum.Queued}
-						<button
-							onclick={() => handleExecute()}
-							class="min-h-12 w-full rounded-md border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-300 dark:hover:bg-orange-900"
-							>To Execute</button
-						>
+						<div class="w-full space-y-2">
+							<button
+								onclick={() => handleExecute()}
+								class="min-h-12 w-full rounded-md border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-300 dark:hover:bg-orange-900"
+								>To Execute</button
+							>
+							<p class="text-center text-xs text-gray-400 dark:text-gray-500">
+								ℹ️ Demo only — completing this step has no real-world effect.
+							</p>
+						</div>
 					{/if}
 				{:else}
 					<div class="grid w-full grid-cols-7 gap-x-2">

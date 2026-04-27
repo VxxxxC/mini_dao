@@ -200,6 +200,11 @@
 									<li>Min voting power: hold <strong>≥ 10 MDAO</strong> and self-delegate</li>
 									<li>Proposals cannot be modified once submitted</li>
 								</div>
+								<div class="rounded border border-purple-200 bg-purple-100 px-3 py-2 text-xs text-purple-700 dark:border-purple-800 dark:bg-purple-900 dark:text-purple-300">
+									🔔 <strong>Demonstration only:</strong> If your proposal passes and is executed,
+									it will complete the full governance workflow on Sepolia testnet.
+									<strong>No funds are moved and no real-world changes occur.</strong>
+								</div>
 							</div>
 						</div>
 						<div class="flex flex-row items-center space-x-5">

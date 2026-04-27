@@ -13,22 +13,40 @@
 		role="alert"
 	>
 		<div class="flex flex-row items-start gap-x-3">
-			<div class="space-y-1">
+			<div class="space-y-2">
 				<p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
-					⚠️ Demo / Local Configuration — Not for Production
+					🚨 Demonstration Only — Not a Real Governance Protocol
 				</p>
+
+				<!-- Workflow purpose -->
 				<p class="text-xs text-amber-700 dark:text-amber-400">
-					This deployment uses intentionally shortened governance parameters for demonstration
-					purposes only. <strong>Do not deploy these settings to any public network.</strong>
+					This app demonstrates the full DAO governance lifecycle: <strong>Claim tokens → Delegate
+					→ Create proposal → Vote → Queue → Execute.</strong> It is deployed on the
+					<strong>Sepolia testnet</strong> for demonstration purposes and is
+					<strong>not connected to any real protocol or production system.</strong>
 				</p>
+
+				<!-- Execute disclaimer — kept red for emphasis -->
 				<div
-					class="tablet:grid-cols-4 mt-1.5 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs text-amber-700 dark:text-amber-400"
+					class="rounded border border-red-300 bg-red-100 px-3 py-2 text-xs text-red-800 dark:border-red-700 dark:bg-red-900 dark:text-red-300"
+				>
+					⛔ <strong>Completing the full voting workflow has no real-world effect.</strong> No funds
+					are moved, no external systems are affected, and no governance decisions carry any
+					real-world consequence. This is purely a workflow demonstration.
+				</div>
+
+				<!-- Governance params grid -->
+				<div
+					class="tablet:grid-cols-4 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs text-amber-700 dark:text-amber-400"
 				>
 					<span>⏱ Voting delay: <strong>30 seconds</strong></span>
 					<span>🗳 Voting period: <strong>1 minute</strong></span>
 					<span>📊 Quorum: <strong>300 MDAO (≈ 3 wallets)</strong></span>
 					<span>🔑 Min voting power: <strong>≥ 10 MDAO</strong></span>
 				</div>
+				<p class="text-xs text-amber-600 dark:text-amber-500">
+					Governance parameters are intentionally shortened for demonstration purposes only.
+				</p>
 			</div>
 		</div>
 
