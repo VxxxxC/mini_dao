@@ -117,6 +117,7 @@
 
 	/************************************ NOTE: Checking the ETA for start voting ********************************************/
 	let countdown = $state<number>(0);
+	const ANVIL_BLOCK_TIME_SECONDS = 2;
 
 	// Seed countdown from on-chain value and start a 1-second interval
 	onMount(() => {
@@ -125,7 +126,7 @@
 			const blockTime = Number(block.timestamp) * 1000;
 
 			if (proposalState === ProposalStatusEnum.Pending) {
-				countdown = proposalData.startToVote;
+				countdown = proposalData.startToVote * ANVIL_BLOCK_TIME_SECONDS; // TEST: because the local anvil --block-time is 2, every block created by 2 seconds
 				if (proposalData.startToVote <= 0) return;
 
 				const interval = setInterval(() => {
@@ -362,7 +363,9 @@
 			</div>
 		</div>
 		{#if connectStatus !== 'connected'}
-			<p class="flex w-full flex-row justify-center text-sm font-normal text-secondary dark:text-gray-400">
+			<p
+				class="flex w-full flex-row justify-center text-sm font-normal text-secondary dark:text-gray-400"
+			>
 				Please connect your wallet to vote
 			</p>
 		{:else}
@@ -371,7 +374,9 @@
 					<p class="animate-pulse text-gray-500 dark:text-gray-400">Checking vote record...</p>
 				{:else if userHasVoted}
 					{#if proposalState === ProposalStatusEnum.Active}
-						<div class="rounded-xl border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950">
+						<div
+							class="rounded-xl border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950"
+						>
 							<p class="text-lg font-bold text-green-700 dark:text-green-300">
 								✅ You have already voted on this proposal!
 							</p>

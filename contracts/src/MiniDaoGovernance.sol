@@ -32,6 +32,8 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
         return QUORUM_VOTES;
     }
 
+    // WARN: It is tricky point, it actually representing the block , not the second
+    // (If running `anvil --block-time 2` = [block time 2 seconds] * 30 = 60 seconds)
     function votingDelay() public pure override returns (uint256) {
         return 30 seconds; // TEST: for test only, normally 1 day
     }
