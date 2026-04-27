@@ -19,20 +19,20 @@
 	});
 
 	function votingStatusFilter(proposals: HomeProposalCardInfoType[]) {
-		let active = proposals.filter(
+		const active = proposals.filter(
 			(proposal) => proposal.state === ProposalStatusEnum.Active
 		).length;
-		let succeeded = proposals.filter(
+		const succeeded = proposals.filter(
 			(proposal) => proposal.state === ProposalStatusEnum.Succeeded
 		).length;
-		let queued = proposals.filter(
+		const queued = proposals.filter(
 			(proposal) => proposal.state === ProposalStatusEnum.Queued
 		).length;
-		let executed = proposals.filter(
+		const executed = proposals.filter(
 			(proposal) => proposal.state === ProposalStatusEnum.Executed
 		).length;
 
-		let statusCardInfo = [
+		const statusCardInfo = [
 			{
 				icon: ClockOutline,
 				iconClass:
