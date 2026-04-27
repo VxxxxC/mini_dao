@@ -9,7 +9,7 @@ let appKit: ReturnType<typeof createAppKit> | undefined = undefined;
 
 // NOTE: wagmi config initialized here with reown Appkit
 const wagmiAdapter = new WagmiAdapter({
-	networks: [anvil, sepolia], // WARN: switch back to mainnet or sepolia for production
+	networks: [sepolia], // WARN: switch back to mainnet or sepolia for production
 	projectId: env.PUBLIC_APPKIT_PROJECT_ID as string
 });
 
@@ -17,7 +17,7 @@ if (browser) {
 	// Initialize AppKit only in browser environment
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
-		networks: [anvil, sepolia], // WARN: switch back to mainnet or sepolia for production
+		networks: [sepolia], // WARN: switch back to mainnet or sepolia for production
 		projectId: env.PUBLIC_APPKIT_PROJECT_ID as string,
 
 		themeVariables: {
