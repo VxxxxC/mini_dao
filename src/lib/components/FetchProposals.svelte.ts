@@ -22,7 +22,7 @@ async function fetchIpfsData(cid: string) {
 			title: data.proposalTitle || 'Untitled',
 			description: data.proposalDescription || 'No content',
 			proposer: data.proposerAddress || 'Unknown',
-			expire: new Date(data.timestamp).getTime() + 60 * 1000 // TEST: 1 minute expired
+			expire: new Date(data.timestamp).getTime() + (30 + 60) * 1000 // TEST: 1 minute expired (delay + duration)
 		};
 	} catch (error) {
 		console.error(`Load IPFS data failed (CID: ${cid}):`, error);
@@ -112,4 +112,3 @@ export async function fetchProposals() {
 		return [];
 	}
 }
-

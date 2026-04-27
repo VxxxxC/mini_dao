@@ -1,13 +1,14 @@
 export type AddressType = `0x${string}`;
 
-export const Address : { [key: string]: AddressType } = {
-    TIMELOCK: '0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35',
-    TOKEN: '0xA15BB66138824a1c7167f5E85b957d04Dd34E468',
-    VOTEBOX : '0x82Dc47734901ee7d4f4232f398752cB9Dd5dACcC',
-    GOVERNANCE : '0xe1Aa25618fA0c7A1CFDab5d6B456af611873b629',
-    FAUCET : '0xb19b36b1456E65E3A6D514D3F715f204BD59f431'
-}
+export const Address: { [key: string]: AddressType } = {
+	TIMELOCK: '0x659dB75b6a9f0115fc38082160000bf2D6adB496',
+	TOKEN: '0x22252e1ffde67C761a5050e00E55BB526115D447',
+	VOTEBOX: '0xab15736DFe4575c302C81133Ba83291Ab1cBc76d',
+	GOVERNANCE: '0x6EF6453CB5ca1053a2361C6DFfc095A1965eDB95',
+	FAUCET: '0xD796D9acCD8269b0D6714A4F17e55ab1a9e2c924'
+};
 
-export const ChainId : { [key: string]: number } = {
-    ANVIL : 31337
-}
+export const ChainId: { [key: string]: number } = {
+	ANVIL: 31337
+};
+

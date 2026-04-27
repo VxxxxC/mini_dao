@@ -118,7 +118,6 @@
 
 	/************************************ NOTE: Checking the ETA for start voting ********************************************/
 	let countdown = $state<number>(0);
-	const ANVIL_BLOCK_TIME_SECONDS = 2;
 
 	// Seed countdown from on-chain value and start a 1-second interval
 	onMount(() => {
@@ -127,7 +126,7 @@
 			const blockTime = Number(block.timestamp) * 1000;
 
 			if (proposalState === ProposalStatusEnum.Pending) {
-				countdown = proposalData.startToVote * ANVIL_BLOCK_TIME_SECONDS; // TEST: because the local anvil --block-time is 2, every block created by 2 seconds
+				countdown = proposalData.startToVote;
 				if (proposalData.startToVote <= 0) return;
 
 				const interval = setInterval(() => {
