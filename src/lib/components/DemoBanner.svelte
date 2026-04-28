@@ -15,14 +15,14 @@
 		<div class="flex flex-row items-start gap-x-3">
 			<div class="space-y-2">
 				<p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
-					🚨 Demonstration Only — Not a Real Governance Protocol
+					🚨 Demonstration Only — Deployed on Sepolia Testnet
 				</p>
 
 				<!-- Workflow purpose -->
 				<p class="text-xs text-amber-700 dark:text-amber-400">
 					This app demonstrates the full DAO governance lifecycle: <strong>Claim tokens → Delegate
-					→ Create proposal → Vote → Queue → Execute.</strong> It is deployed on the
-					<strong>Sepolia testnet</strong> for demonstration purposes and is
+					→ Create proposal → Vote → Queue → Execute.</strong> It runs on
+					<strong>Ethereum Sepolia testnet</strong> and is
 					<strong>not connected to any real protocol or production system.</strong>
 				</p>
 
@@ -33,6 +33,57 @@
 					⛔ <strong>Completing the full voting workflow has no real-world effect.</strong> No funds
 					are moved, no external systems are affected, and no governance decisions carry any
 					real-world consequence. This is purely a workflow demonstration.
+				</div>
+
+				<!-- Sepolia ETH requirement -->
+				<div
+					class="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300"
+				>
+					<p class="mb-1.5 font-semibold">
+						⛽ You need Sepolia ETH to pay for gas. Get some for free from these faucets:
+					</p>
+					<div class="flex flex-wrap gap-x-3 gap-y-1">
+						<a
+							href="https://sepolia-faucet.pk910.de/"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-200"
+						>
+							⛏ pk910 PoW Faucet
+						</a>
+						<a
+							href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-200"
+						>
+							☁️ Google Cloud Faucet
+						</a>
+						<a
+							href="https://www.alchemy.com/faucets/ethereum-sepolia"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-200"
+						>
+							🧪 Alchemy Faucet
+						</a>
+						<a
+							href="https://www.infura.io/faucet/sepolia"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-200"
+						>
+							🌐 Infura Faucet
+						</a>
+						<a
+							href="https://faucet.quicknode.com/ethereum/sepolia"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-200"
+						>
+							⚡ QuickNode Faucet
+						</a>
+					</div>
 				</div>
 
 				<!-- Governance params grid -->
@@ -70,3 +121,4 @@
 		</button>
 	</div>
 {/if}
+
