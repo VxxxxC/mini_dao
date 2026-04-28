@@ -7,8 +7,3 @@ export const Address: { [key: string]: AddressType } = {
 	GOVERNANCE: '0x6EF6453CB5ca1053a2361C6DFfc095A1965eDB95',
 	FAUCET: '0xD796D9acCD8269b0D6714A4F17e55ab1a9e2c924'
 };
-
-export const ChainId: { [key: string]: number } = {
-	ANVIL: 31337
-};
-

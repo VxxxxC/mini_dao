@@ -5,12 +5,13 @@
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import MiniDaoFaucet from '$lib/contracts_abi/MiniDaoFaucet.json';
 	import MiniDaoToken from '$lib/contracts_abi/MiniDaoToken.json';
-	import { Address, ChainId } from '$lib/config/contractAddress';
+	import { Address } from '$lib/config/contractAddress';
 	import DemoBanner from '$lib/components/DemoBanner.svelte';
 
 	let activeUrl = $derived(page.url.pathname);
 	let address: string = $derived(walletStatus.address);
 	let status: string = $derived(walletStatus.status);
+	let chainId: number = $derived(walletStatus.chainId);
 	let hasClaimed: boolean = $derived(false);
 	let isClaiming: boolean = $derived(false);
 	let isDelegating: boolean = $derived(false);
@@ -63,7 +64,7 @@
 				address: Address.FAUCET,
 				abi: MiniDaoFaucet.abi,
 				functionName: 'claim',
-				chainId: ChainId.ANVIL
+				chainId: chainId
 			});
 
 			const claimReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: claimTx });
@@ -81,7 +82,7 @@
 				abi: MiniDaoToken.abi,
 				functionName: 'delegate',
 				args: [address],
-				chainId: ChainId.ANVIL
+				chainId: chainId
 			});
 
 			isDelegating = true;
@@ -106,45 +107,49 @@
 	<!-- NOTE: DEMO BANNER -->
 	<DemoBanner />
 
-	<div class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+	<div
+		class="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800"
+	>
 		<h2 class="mb-2 text-xl font-bold dark:text-white">💰 Mini DAO Faucet</h2>
-		<p class="mb-6 text-gray-500 dark:text-gray-400">Each person can claim 100 MDAO for governance voting</p>
+		<p class="mb-6 text-gray-500 dark:text-gray-400">
+			Each person can claim 100 MDAO for governance voting
+		</p>
 
-	{#if status !== 'connected'}
-		<button
-			disabled
-			class="w-full cursor-not-allowed rounded-xl bg-gray-200 px-4 py-3 font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400"
-		>
-			Please connect your wallet first
-		</button>
-	{:else if isLoadingStatus}
-		<button
-			disabled
-			class="w-full animate-pulse rounded-xl bg-blue-100 px-4 py-3 font-bold text-blue-500 dark:bg-blue-900 dark:text-blue-300"
-		>
-			Checking eligibility...
-		</button>
-	{:else if hasClaimed}
-		<button
-			disabled
-			class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-100 px-4 py-3 font-bold text-green-700 dark:bg-green-900 dark:text-green-300"
-		>
-			<span>✅</span> Already claimed
-		</button>
-	{:else}
-		<button
-			onclick={handleClaim}
-			disabled={isProcessing}
-			class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
-		>
-			{#if isClaiming}
-				Claiming the token from the faucet...
-			{:else if isDelegating}
-				Delegating your voting power...
-			{:else}
-				Claim 100 MDAO
-			{/if}
-		</button>
-	{/if}
+		{#if status !== 'connected'}
+			<button
+				disabled
+				class="w-full cursor-not-allowed rounded-xl bg-gray-200 px-4 py-3 font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+			>
+				Please connect your wallet first
+			</button>
+		{:else if isLoadingStatus}
+			<button
+				disabled
+				class="w-full animate-pulse rounded-xl bg-blue-100 px-4 py-3 font-bold text-blue-500 dark:bg-blue-900 dark:text-blue-300"
+			>
+				Checking eligibility...
+			</button>
+		{:else if hasClaimed}
+			<button
+				disabled
+				class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-100 px-4 py-3 font-bold text-green-700 dark:bg-green-900 dark:text-green-300"
+			>
+				<span>✅</span> Already claimed
+			</button>
+		{:else}
+			<button
+				onclick={handleClaim}
+				disabled={isProcessing}
+				class="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
+			>
+				{#if isClaiming}
+					Claiming the token from the faucet...
+				{:else if isDelegating}
+					Delegating your voting power...
+				{:else}
+					Claim 100 MDAO
+				{/if}
+			</button>
+		{/if}
 	</div>
 </div>
