@@ -95,7 +95,7 @@
 	}
 
 	/*
-   async function votingPeriod() {
+	async function votingPeriod() {
 		let result = await publicClient.readContract({
 			address: Address.GOVERNANCE,
 			abi: MiniDaoGovernance.abi,
@@ -138,36 +138,33 @@
 					}
 				}, 1000 * 12); // INFO: eth 1 block per 12 seconds
 				return () => clearInterval(interval);
-			}
 
-			/** FIX: need to investigate how to handle active proposal countdown */
-			// else if (proposalState === ProposalStatusEnum.Active) {
-			// 	try{
-			// 		(async () => {
-			// 			const period = await votingPeriod()
-			// 			console.log("voting period (s):", period);
+				/*
+        } else if (proposalState === ProposalStatusEnum.Active) {
+				try {
+					(async () => {
+						const period = (await votingPeriod()) * 1000;
 
-			// 			const target = blockTime + period;
+						const target = blockTime + period;
 
-			// 				const next = (target - blockTime);
-			// 				console.log({next})
-			// 				countdown = next;
-			// 				if (next <= 0) return;
+						const diff = target - blockTime;
+						if (diff <= 0) return;
+						countdown = diff;
 
-			// 				const interval = setInterval(() => {
-			// 					const next = Math.max(0, countdown - 1);
-			// 					countdown = next;
-			// 					if (next === 0) {
-			// 						refetchData = true; // re-fetch from chain to confirm real state
-			// 					}
-			// 				}, 1500);
-			// 				return () => clearInterval(interval);
-			// 		})()
-			// 	}catch(e){
-			// 		console.error('Failed to fetch block timestamp or voting period:', e);
-			// 	}
-			// }
-			else if (proposalState === ProposalStatusEnum.Queued) {
+						const interval = setInterval(() => {
+							const next = Math.max(0, countdown - 1);
+							countdown = next;
+							if (next === 0) {
+								refetchData = true; // re-fetch from chain to confirm real state
+							}
+						}, 1000 * 12); // NOTE: eth 1 block per 12 seconds
+						return () => clearInterval(interval);
+					})();
+				} catch (e) {
+					console.error('Failed to fetch block timestamp or voting period:', e);
+				}
+        **/
+			} else if (proposalState === ProposalStatusEnum.Queued) {
 				const eta = await queueEta();
 
 				const diff = (eta - blockTime) / 1000; // convert ms to seconds
@@ -181,27 +178,13 @@
 						refetchData = true; // re-fetch from chain to confirm real state
 						clearInterval(interval);
 					}
-				}, 1000 * 12); // NOTE: eth 1 block per 12 seconds
+				}, 1000); // NOTE: eta is catching the seconds, so we don't need to counting per block
 				return () => clearInterval(interval);
 			}
 		})();
 	});
 
-	function formatCountdown(secs: number): string {
-		const days = Math.floor(secs / 86400);
-		const hours = Math.floor((secs % 86400) / 3600);
-		const minutes = Math.floor((secs % 3600) / 60);
-		const seconds = secs % 60;
-
-		const parts: string[] = [];
-		if (days > 0) parts.push(`${days}d`);
-		if (hours > 0) parts.push(`${hours}h`);
-		if (minutes > 0) parts.push(`${minutes}m`);
-		parts.push(`${String(seconds).padStart(2, '0')}s`);
-		return parts.join(' ');
-	}
-
-	let countdownDisplay = $derived(countdown > 0 ? formatCountdown(countdown) : '');
+	let countdownDisplay = $derived(countdown);
 
 	/********************************************** NOTE: Queue and Execute function call ********************************************************/
 	async function handleVote(proposalId: bigint, support: number) {
@@ -322,7 +305,7 @@
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
-								⏳ Starts in {countdownDisplay}
+								⏳ Starts in {countdownDisplay} blocks
 							</span>
 							<!--  FIX: need to handle active proposal countdown display, currently we only display countdown for pending proposal -->
 							<!-- {:else if proposalState === ProposalStatusEnum.Active}
@@ -335,7 +318,7 @@
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
-								Execute in : {countdownDisplay}
+								Execute in : {countdownDisplay} seconds
 							</span>
 						{/if}
 					{/if}
