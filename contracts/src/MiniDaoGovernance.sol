@@ -33,11 +33,14 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
     }
 
     // WARN: It is tricky point, it actually representing the block , not the second
-    // (If running `anvil --block-time 2` = [block time 2 seconds] * 30 = 60 seconds)
+    // INFO: If running `anvil --block-time 2` = [1 block per 2 seconds] * 30 = 60 seconds
+    // If running on eth mainnet or testnet , it should be [1 block per 12 seconds] * 30 = 360 seconds
     function votingDelay() public pure override returns (uint256) {
         return 30 seconds; // TEST: for test only, normally 1 day
     }
 
+    // INFO: If running `anvil --block-time 2` = [1 block per 2 seconds] * 60(1min) = 120 seconds
+    // If running on eth mainnet or testnet , it should be [1 block per 12 seconds] * 60(1min) = 720 seconds
     function votingPeriod() public pure override returns (uint256) {
         return 1 minutes; // TEST: for test only, normally 1 week
     }
