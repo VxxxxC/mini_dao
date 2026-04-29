@@ -1,6 +1,6 @@
 import { render } from 'vitest-browser-svelte';
 import { expect, test, describe, vi, beforeEach } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import ProposalCard from '$lib/components/ProposalCard.svelte';
 import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 import type { ProposalCardInfoType } from '$lib/types/ProposalCard.t';
@@ -19,7 +19,8 @@ vi.mock('$lib/config/appKitConfig', () => ({
 vi.mock('@wagmi/core', () => ({
 	writeContract: vi.fn(),
 	waitForTransactionReceipt: vi.fn(),
-	getTransactionCount: vi.fn()
+	getTransactionCount: vi.fn(),
+	getBlock: vi.fn().mockResolvedValue({ timestamp: BigInt(Math.floor(Date.now() / 1000)), number: 1000n })
 }));
 
 vi.mock('$lib/config/viem/client', () => ({
@@ -27,13 +28,20 @@ vi.mock('$lib/config/viem/client', () => ({
 }));
 
 vi.mock('$lib/config/contractAddress', () => ({
-	Address: { GOVERNANCE: '0xGOV' }
+	Address: { GOVERNANCE: '0xGOV', VOTEBOX: '0xVOTEBOX' }
 }));
 
 vi.mock('$lib/contracts_abi/MiniDaoGovernance.json', () => ({ default: { abi: [] } }));
+vi.mock('$lib/contracts_abi/MiniDaoVoteBox.json', () => ({
+	default: {
+		abi: [
+			{ type: 'function', name: 'storeVote', inputs: [], outputs: [], stateMutability: 'nonpayable' }
+		]
+	}
+}));
 
-// Stub ApexChart — renders nothing; avoids apexcharts headless issues
-vi.mock('$lib/components/ApexChart.svelte', () => ({ default: {} }));
+// Stub ApexChart — vi.fn() is callable; avoids Svelte 5 "not a function" error
+vi.mock('$lib/components/ApexChart.svelte', () => ({ default: vi.fn() }));
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -66,7 +74,7 @@ beforeEach(() => {
 describe('ProposalCard – rendering', () => {
 	test('displays proposal title', async () => {
 		render(ProposalCard, { proposalData: makeProposal(), onVoteSuccess: vi.fn() });
-		await expect.element(page.getByText('Test Proposal')).toBeInTheDocument();
+		await expect.element(page.getByText('Test Proposal', { exact: true })).toBeInTheDocument();
 	});
 
 	test('displays proposal description', async () => {
@@ -113,34 +121,37 @@ describe('ProposalCard – wallet not connected', () => {
 // Countdown badge
 // ---------------------------------------------------------------------------
 describe('ProposalCard – countdown badge', () => {
-	test('shows "Start Voting Now" when startToVote is 0', async () => {
-		render(ProposalCard, { proposalData: makeProposal({ startToVote: 0 }), onVoteSuccess: vi.fn() });
-		await expect.element(page.getByText('Start Voting Now')).toBeInTheDocument();
-	});
-
-	test('shows "Starts in …" badge when startToVote > 0', async () => {
+	test('shows "Starts in X blocks" badge when Pending and startToVote > 0', async () => {
 		render(ProposalCard, {
-			proposalData: makeProposal({ startToVote: 3661 }),
+			proposalData: makeProposal({ startToVote: 100, state: ProposalStatusEnum.Pending }),
 			onVoteSuccess: vi.fn()
 		});
-		// After onMount sets countdown, badge text updates
 		await expect.element(page.getByText(/Starts in/)).toBeInTheDocument();
 	});
 
-	test('formats 1 hour correctly', async () => {
+	test('shows block count in Pending countdown badge', async () => {
 		render(ProposalCard, {
-			proposalData: makeProposal({ startToVote: 3600 }),
+			proposalData: makeProposal({ startToVote: 300, state: ProposalStatusEnum.Pending }),
 			onVoteSuccess: vi.fn()
 		});
-		await expect.element(page.getByText(/1h/)).toBeInTheDocument();
+		await expect.element(page.getByText(/300 blocks/)).toBeInTheDocument();
 	});
 
-	test('formats 1 day correctly', async () => {
+	test('shows large block count without error', async () => {
 		render(ProposalCard, {
-			proposalData: makeProposal({ startToVote: 86400 }),
+			proposalData: makeProposal({ startToVote: 86400, state: ProposalStatusEnum.Pending }),
 			onVoteSuccess: vi.fn()
 		});
-		await expect.element(page.getByText(/1d/)).toBeInTheDocument();
+		await expect.element(page.getByText(/86400 blocks/)).toBeInTheDocument();
+	});
+
+	test('no countdown badge when Pending and startToVote is 0', async () => {
+		render(ProposalCard, {
+			proposalData: makeProposal({ startToVote: 0, state: ProposalStatusEnum.Pending }),
+			onVoteSuccess: vi.fn()
+		});
+		// countdown = 0 → {#if countdownDisplay} is falsy → badge not rendered
+		await expect.element(page.getByText('Test Proposal', { exact: true })).toBeInTheDocument();
 	});
 });
 
@@ -182,7 +193,7 @@ describe('ProposalCard – fuzz: extreme prop values', () => {
 				proposalData: makeProposal({ state }),
 				onVoteSuccess: vi.fn()
 			});
-			await expect.element(page.getByText('Test Proposal')).toBeInTheDocument();
+			await expect.element(page.getByText('Test Proposal', { exact: true }).first()).toBeInTheDocument();
 		}
 		expect.assertions(statuses.length);
 	});

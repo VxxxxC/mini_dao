@@ -1,6 +1,6 @@
 import { render } from 'vitest-browser-svelte';
 import { expect, test, describe } from 'vitest';
-import { page } from '@vitest/browser/context';
+import { page } from 'vitest/browser';
 import ProposalStatus from '$lib/components/ProposalStatus.svelte';
 import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 

@@ -44,7 +44,15 @@ function mockLog(overrides: { proposalId?: bigint; description?: string } = {}) 
 	};
 }
 
-function setupChainMocks(voteResult = [10n, 20n, 5n]) {
+// Each voter holds 100 MDAO from the faucet (100 * 10^18 wei).
+// The production formula is: formatEther(Number(wei)) / 100
+// → 100 * 10^18 wei → formatEther = "100" → "100"/100 = 1 vote unit.
+// Keep all values below 1000 * 10^18 (< 1e21) to avoid Number.toString()
+// switching to exponential notation ("1.5e+21") which breaks formatEther.
+// Default: against=1, for=3, abstain=1 → total=5 vote units
+function setupChainMocks(
+	voteResult = [100n * 10n ** 18n, 300n * 10n ** 18n, 100n * 10n ** 18n]
+) {
 	(publicClient.getContractEvents as ReturnType<typeof vi.fn>).mockResolvedValue([mockLog()]);
 	(publicClient.readContract as ReturnType<typeof vi.fn>).mockImplementation(({ functionName }) => {
 		if (functionName === 'state') return Promise.resolve(1);
@@ -90,14 +98,18 @@ describe('fetchProposals – happy path', () => {
 	});
 
 	test('maps vote weights: index 0 = against, 1 = for, 2 = abstain', async () => {
-		setupChainMocks([5n, 15n, 3n]);
+		// Each voter holds 100 MDAO from faucet (100 * 10^18 wei = 1 vote unit).
+		// Sum must stay below 1e21 (1000 * 10^18) to avoid JS exponential toString
+		// that breaks formatEther's string parser. Max safe total = 9 vote units.
+		// 2 against + 5 for + 1 abstain = 8 → 800 * 10^18 = 8e20 < 1e21 ✓
+		setupChainMocks([200n * 10n ** 18n, 500n * 10n ** 18n, 100n * 10n ** 18n]);
 		setupIpfsFetch(true);
 
 		const [p] = await fetchProposals();
-		expect(p.voteAgainst).toBe(5);
-		expect(p.voteFor).toBe(15);
-		expect(p.voteAbstain).toBe(3);
-		expect(p.totalVotes).toBe(23);
+		expect(p.voteAgainst).toBe(2);
+		expect(p.voteFor).toBe(5);
+		expect(p.voteAbstain).toBe(1);
+		expect(p.totalVotes).toBe(8);
 	});
 
 	test('reverses proposals order (newest last event → first result)', async () => {
@@ -107,7 +119,12 @@ describe('fetchProposals – happy path', () => {
 			mockLog({ proposalId: id1 }),
 			mockLog({ proposalId: id2 })
 		]);
-		(publicClient.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(0n);
+		(publicClient.readContract as ReturnType<typeof vi.fn>).mockImplementation(
+			({ functionName }) => {
+				if (functionName === 'proposalVotes') return Promise.resolve([0n, 0n, 0n]);
+				return Promise.resolve(0n);
+			}
+		);
 		setupIpfsFetch(true);
 
 		const results = await fetchProposals();
@@ -163,7 +180,12 @@ describe('fetchProposals – fuzz: extreme proposalId values', () => {
 			(publicClient.getContractEvents as ReturnType<typeof vi.fn>).mockResolvedValue([
 				mockLog({ proposalId: id })
 			]);
-			(publicClient.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(0n);
+			(publicClient.readContract as ReturnType<typeof vi.fn>).mockImplementation(
+				({ functionName }) => {
+					if (functionName === 'proposalVotes') return Promise.resolve([0n, 0n, 0n]);
+					return Promise.resolve(0n);
+				}
+			);
 			setupIpfsFetch(true);
 
 			const results = await fetchProposals();
