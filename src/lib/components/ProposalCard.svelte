@@ -136,7 +136,7 @@
 						refetchData = true; // re-fetch from chain to confirm real state
 						clearInterval(interval);
 					}
-				}, 1500);
+				}, 1000 * 12); // INFO: eth 1 block per 12 seconds
 				return () => clearInterval(interval);
 			}
 
@@ -181,7 +181,7 @@
 						refetchData = true; // re-fetch from chain to confirm real state
 						clearInterval(interval);
 					}
-				}, 1500);
+				}, 1000 * 12); // NOTE: eth 1 block per 12 seconds
 				return () => clearInterval(interval);
 			}
 		})();
