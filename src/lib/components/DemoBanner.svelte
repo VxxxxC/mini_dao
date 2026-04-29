@@ -90,8 +90,8 @@
 				<div
 					class="tablet:grid-cols-4 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs text-amber-700 dark:text-amber-400"
 				>
-					<span>⏱ Voting delay: <strong>30 seconds</strong></span>
-					<span>🗳 Voting period: <strong>1 minute</strong></span>
+					<span>⏱ Voting delay: <strong>~6 min</strong> <span class="opacity-70">(30 blocks × 12s)</span></span>
+					<span>🗳 Voting period: <strong>~12 min</strong> <span class="opacity-70">(60 blocks × 12s)</span></span>
 					<span>📊 Quorum: <strong>300 MDAO (≈ 3 wallets)</strong></span>
 					<span>🔑 Min voting power: <strong>≥ 10 MDAO</strong></span>
 				</div>
