@@ -16,9 +16,9 @@ const metadata = {
 };
 // NOTE: wagmi config initialized here with reown Appkit
 const wagmiAdapter = new WagmiAdapter({
-	networks: [sepolia], // WARN: switch back to mainnet or sepolia for production
+	networks: [sepolia],
 	transports: {
-		[sepolia.id]: http('https://eth-sepolia.g.alchemy.com/v2/TDJjzSrphPPV2SRIg215Q')
+		[sepolia.id]: http('https://ethereum-sepolia-rpc.publicnode.com') // IMPORTANT: most stable and wide limitation free RPC so far
 	},
 	projectId: publicEnv.PUBLIC_APPKIT_PROJECT_ID as string,
 	connectors: [injected()],
@@ -32,7 +32,7 @@ if (browser) {
 	// Initialize AppKit only in browser environment
 	appKit = createAppKit({
 		adapters: [wagmiAdapter],
-		networks: [sepolia], // WARN: switch back to mainnet or sepolia for production
+		networks: [sepolia],
 		projectId: publicEnv.PUBLIC_APPKIT_PROJECT_ID as string,
 		metadata: metadata,
 		allWallets: 'SHOW',
