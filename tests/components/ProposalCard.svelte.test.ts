@@ -126,7 +126,7 @@ describe('ProposalCard – countdown badge', () => {
 			proposalData: makeProposal({ startToVote: 100, state: ProposalStatusEnum.Pending }),
 			onVoteSuccess: vi.fn()
 		});
-		await expect.element(page.getByText(/Starts in/)).toBeInTheDocument();
+		await expect.element(page.getByText(/Starting in/)).toBeInTheDocument();
 	});
 
 	test('shows block count in Pending countdown badge', async () => {

@@ -57,6 +57,16 @@ contract MiniDaoGovernance is Governor, GovernorCountingSimple, GovernorVotes, G
         }
     }
 
+    function countdownEndVoting(uint256 proposalId) public view returns (uint256) {
+        uint256 currentTime = clock();
+        uint256 proposalEndTime = proposalDeadline(proposalId);
+        if (currentTime >= proposalEndTime) {
+            return 0;
+        } else {
+            return proposalEndTime - currentTime;
+        }
+    }
+
     // COL: public override functions
 
     function propose(address target) public returns (uint256 proposalId) {

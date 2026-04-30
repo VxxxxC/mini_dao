@@ -138,18 +138,11 @@
 					}
 				}, 1000 * 12); // INFO: eth 1 block per 12 seconds
 				return () => clearInterval(interval);
-
-				/*
-        } else if (proposalState === ProposalStatusEnum.Active) {
+			} else if (proposalState === ProposalStatusEnum.Active) {
 				try {
 					(async () => {
-						const period = (await votingPeriod()) * 1000;
-
-						const target = blockTime + period;
-
-						const diff = target - blockTime;
-						if (diff <= 0) return;
-						countdown = diff;
+						countdown = proposalData.endToVote;
+						if (proposalData.endToVote <= 0) return;
 
 						const interval = setInterval(() => {
 							const next = Math.max(0, countdown - 1);
@@ -163,7 +156,6 @@
 				} catch (e) {
 					console.error('Failed to fetch block timestamp or voting period:', e);
 				}
-        **/
 			} else if (proposalState === ProposalStatusEnum.Queued) {
 				const eta = await queueEta();
 
@@ -305,15 +297,14 @@
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
-								⏳ Starts in {countdownDisplay} blocks
+								⏳ Starting in {countdownDisplay} blocks
 							</span>
-							<!--  FIX: need to handle active proposal countdown display, currently we only display countdown for pending proposal -->
-							<!-- {:else if proposalState === ProposalStatusEnum.Active}
+						{:else if proposalState === ProposalStatusEnum.Active}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
 							>
-								Start Voting Now - Ends in {countdownDisplay}
-							</span> -->
+								Start Voting Now - Ends in {countdownDisplay} blocks
+							</span>
 						{:else if proposalState === ProposalStatusEnum.Queued}
 							<span
 								class="flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-xs text-amber-600 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-400"
