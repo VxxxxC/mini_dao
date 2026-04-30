@@ -1,6 +1,7 @@
 # Mini DAO
 
 [![CI](https://github.com/VxxxxC/mini_dao/actions/workflows/test.yml/badge.svg)](https://github.com/VxxxxC/mini_dao/actions/workflows/test.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/1a59a67b-ae8c-4aa2-9438-d930f701ae99/deploy-status)](https://app.netlify.com/projects/mini-dao/deploys)
 
 A full-stack Web3 governance platform built on **Ethereum Sepolia testnet**. It demonstrates the complete DAO governance lifecycle — from claiming tokens to executing an on-chain proposal through a time-locked controller.
 
