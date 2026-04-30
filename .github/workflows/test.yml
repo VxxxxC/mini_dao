@@ -41,6 +41,6 @@ jobs:
       - name: Install dependencies
         run: bun install
       - name: Run tests
-        run: bun run test --run
+        run: bun run test
       - name: Build (type-check + bundle)
         run: bun run build
