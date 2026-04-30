@@ -56,6 +56,7 @@ export async function fetchProposals() {
 					functionName: 'state',
 					args: [proposalId]
 				});
+
 				// 2. Query real-time voting start time (On-chain)
 				const startVotePromise = publicClient.readContract({
 					address: Address.GOVERNANCE,
@@ -64,7 +65,15 @@ export async function fetchProposals() {
 					args: [proposalId]
 				});
 
-				// 3. Query real-time voting weight (On-chain)
+				// 3. Query real-time voting end time (On-chain)
+				const endVotePromise = publicClient.readContract({
+					address: Address.GOVERNANCE,
+					abi: governorAbi,
+					functionName: 'countdownEndVoting',
+					args: [proposalId]
+				});
+
+				// 4. Query real-time voting weight (On-chain)
 				const votingWeightPromise = publicClient.readContract({
 					address: Address.GOVERNANCE,
 					abi: governorAbi,
@@ -72,16 +81,18 @@ export async function fetchProposals() {
 					args: [proposalId]
 				});
 
-				// 4. Download proposal content (Off-chain IPFS)
+				// 5. Download proposal content (Off-chain IPFS)
 				const ipfsPromise = fetchIpfsData(ipfsCid);
 
 				// Wait for both requests to complete in parallel, significantly improving load speed
-				const [stateResult, ipfsData, startVoteResult, votingWeightResult] = await Promise.all([
-					statePromise,
-					ipfsPromise,
-					startVotePromise,
-					votingWeightPromise
-				]);
+				const [stateResult, ipfsData, startVoteResult, endVoteResult, votingWeightResult] =
+					await Promise.all([
+						statePromise,
+						ipfsPromise,
+						startVotePromise,
+						endVotePromise,
+						votingWeightPromise
+					]);
 
 				return {
 					proposalId: proposalId as bigint,
@@ -92,6 +103,7 @@ export async function fetchProposals() {
 					description: ipfsData.description as string,
 					expire: ipfsData.expire as number,
 					startToVote: Number(startVoteResult),
+					endToVote: Number(endVoteResult),
 					totalVotes:
 						formatEther(
 							Number(votingWeightResult[0]) +
