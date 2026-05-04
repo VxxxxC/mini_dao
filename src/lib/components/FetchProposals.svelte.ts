@@ -39,7 +39,7 @@ export async function fetchProposals() {
 			address: Address.GOVERNANCE,
 			abi: governorAbi,
 			eventName: 'ProposalCreated',
-			fromBlock: 10751328n, // NOTE: checked from sepolia etherscan
+			fromBlock: 10787311n, // NOTE: checked from sepolia etherscan
 			toBlock: 'latest'
 		});
 
