@@ -16,6 +16,13 @@ export default defineConfig({
 			dtsMode: 'append'
 		})
 	],
+	ssr: {
+		// Bundle these packages into the SSR bundle at build time instead of
+		// loading them from node_modules at runtime. This fixes two issues:
+		// 1. EMFILE (too many open files) — bundled = single files, not thousands
+		// 2. @walletconnect/logger named export error — bundler handles CJS→ESM interop
+		noExternal: [/^@walletconnect\//, /^@reown\//, /^@wagmi\//, 'wagmi', 'viem']
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
