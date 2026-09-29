@@ -9,24 +9,24 @@
 
 	let voteSuccess = $state<boolean>(false);
 
-		$effect(() => {
-			let isLoaded = false;
+	$effect(() => {
+		let isLoaded = false;
 
-		function refetchProposals(){
+		function refetchProposals() {
 			async function fetchData() {
 				proposals = await fetchProposals();
 			}
-			fetchData(); 
+			fetchData();
 		}
 
-		if(!isLoaded && voteSuccess){
+		if (!isLoaded && voteSuccess) {
 			isLoaded = true;
 			refetchProposals();
 			voteSuccess = false; // reset after refetch
 		}
 		return () => {
 			isLoaded = false; // reset on cleanup
-		}
+		};
 	});
 
 	// NOTE: afterNavigate fires on EVERY navigation to this page (including tab switches),
@@ -49,10 +49,7 @@
 
 	<div class="flex flex-col space-y-5">
 		{#each proposals as proposal (proposal.proposalId)}
-			<ProposalCard
-				proposalData={proposal}
-				bind:refetchData={voteSuccess}
-			/>
+			<ProposalCard proposalData={proposal} bind:refetchData={voteSuccess} />
 		{/each}
 	</div>
 </div>

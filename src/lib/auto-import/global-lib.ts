@@ -9,7 +9,6 @@ export const customImport = [
 	// NOTE: Package Import
 	{
 		'$lib/components/Breakpoint.svelte': ['breakpoint'],
-		'$lib/config/contractAddress.ts': ['Address', 'ChainId'],
-		
+		'$lib/config/contractAddress.ts': ['Address', 'ChainId']
 	}
 ];

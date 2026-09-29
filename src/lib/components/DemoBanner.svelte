@@ -20,8 +20,10 @@
 
 				<!-- Workflow purpose -->
 				<p class="text-xs text-amber-700 dark:text-amber-400">
-					This app demonstrates the full DAO governance lifecycle: <strong>Claim tokens → Delegate
-					→ Create proposal → Vote → Queue → Execute.</strong> It runs on
+					This app demonstrates the full DAO governance lifecycle: <strong
+						>Claim tokens → Delegate → Create proposal → Vote → Queue → Execute.</strong
+					>
+					It runs on
 					<strong>Ethereum Sepolia testnet</strong> and is
 					<strong>not connected to any real protocol or production system.</strong>
 				</p>
@@ -30,9 +32,9 @@
 				<div
 					class="rounded border border-red-300 bg-red-100 px-3 py-2 text-xs text-red-800 dark:border-red-700 dark:bg-red-900 dark:text-red-300"
 				>
-					⛔ <strong>Completing the full voting workflow has no real-world effect.</strong> No funds
-					are moved, no external systems are affected, and no governance decisions carry any
-					real-world consequence. This is purely a workflow demonstration.
+					⛔ <strong>Completing the full voting workflow has no real-world effect.</strong> No funds are
+					moved, no external systems are affected, and no governance decisions carry any real-world consequence.
+					This is purely a workflow demonstration.
 				</div>
 
 				<!-- Sepolia ETH requirement -->
@@ -90,8 +92,14 @@
 				<div
 					class="tablet:grid-cols-4 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs text-amber-700 dark:text-amber-400"
 				>
-					<span>⏱ Voting delay: <strong>~6 min</strong> <span class="opacity-70">(30 blocks × 12s)</span></span>
-					<span>🗳 Voting period: <strong>~12 min</strong> <span class="opacity-70">(60 blocks × 12s)</span></span>
+					<span
+						>⏱ Voting delay: <strong>~6 min</strong>
+						<span class="opacity-70">(30 blocks × 12s)</span></span
+					>
+					<span
+						>🗳 Voting period: <strong>~12 min</strong>
+						<span class="opacity-70">(60 blocks × 12s)</span></span
+					>
 					<span>📊 Quorum: <strong>300 MDAO (≈ 3 wallets)</strong></span>
 					<span>🔑 Min voting power: <strong>≥ 10 MDAO</strong></span>
 				</div>
@@ -121,4 +129,3 @@
 		</button>
 	</div>
 {/if}
-

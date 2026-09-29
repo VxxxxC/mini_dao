@@ -22,14 +22,14 @@ export type HomeProposalCardInfoType = Omit<
 >;
 
 export enum ProposalStatusEnum {
-	'Pending',
-	'Active',
-	'Canceled',
-	'Defeated',
-	'Succeeded',
-	'Queued',
-	'Expired',
-	'Executed'
+	Pending,
+	Active,
+	Canceled,
+	Defeated,
+	Succeeded,
+	Queued,
+	Expired,
+	Executed
 }
 
 export type voteType = {
@@ -38,4 +38,3 @@ export type voteType = {
 	abstainVotes: number;
 };
 // 0 = Against, 1 = For, 2 = Abstain
-

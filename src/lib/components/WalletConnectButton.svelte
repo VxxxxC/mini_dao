@@ -2,7 +2,7 @@
 	import { Button } from 'flowbite-svelte';
 	import { WalletOutline } from 'flowbite-svelte-icons';
 	import { AppKit } from '$lib/config/appKitConfig';
-	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+	import { walletStatus } from '$lib/components/WalletStore.svelte';
 
 	let address: string = $derived(walletStatus.address);
 	let status: string = $derived(walletStatus.status);

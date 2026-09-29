@@ -47,15 +47,15 @@ mini_dao/
 
 ## 🛠 Tech Stack
 
-| Layer           | Tech                                                                 |
-| --------------- | -------------------------------------------------------------------- |
-| Smart Contracts | Solidity ^0.8.27, Foundry, OpenZeppelin 5.6.1                        |
-| Frontend        | SvelteKit v2 + Svelte 5 (runes), TypeScript, Tailwind CSS v4         |
-| Web3            | Wagmi v3 + Viem v2, Reown AppKit (WalletConnect)                     |
-| Storage         | Filebase S3 → IPFS (off-chain proposal metadata)                     |
+| Layer           | Tech                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Smart Contracts | Solidity ^0.8.27, Foundry, OpenZeppelin 5.6.1                                                                      |
+| Frontend        | SvelteKit v2 + Svelte 5 (runes), TypeScript, Tailwind CSS v4                                                       |
+| Web3            | Wagmi v3 + Viem v2, Reown AppKit (WalletConnect)                                                                   |
+| Storage         | Filebase S3 → IPFS (off-chain proposal metadata)                                                                   |
 | Testing         | Foundry (135 tests: unit / fuzz / integration / invariant / security) · Vitest (browser Playwright Firefox + node) |
-| Deploy / CI     | Netlify (adapter-netlify) · GitHub Actions                           |
-| Static Analysis | Aderyn (config in aderyn.toml)                                       |
+| Deploy / CI     | Netlify (adapter-netlify) · GitHub Actions                                                                         |
+| Static Analysis | Aderyn (config in aderyn.toml)                                                                                     |
 
 ---
 
@@ -104,8 +104,8 @@ sequenceDiagram
 
 ## 🌐 Deployed Contracts (Sepolia)
 
-| Contract   | Address |
-| ---------- | ------- |
+| Contract   | Address                                      |
+| ---------- | -------------------------------------------- |
 | MDAO Token | `0x206Bd79Ce059fF7E2B099D6688B1195143a07DCd` |
 | Faucet     | `0xB3A42fFd66f31815fF5f81aaf25d7824d7A19dee` |
 | Governance | `0x4649bBaD6d87287854Dd8E990d0fE37Bf6941a1b` |
@@ -120,12 +120,12 @@ View on [Sepolia Etherscan](https://sepolia.etherscan.io/address/0x4649bBaD6d872
 
 > The governance parameters are intentionally shortened for demonstration. **Do not use these values on mainnet.**
 
-| Parameter        | Demo (Sepolia)                                                       | Recommended for Production    |
-| ---------------- | -------------------------------------------------------------------- | ----------------------------- |
-| Voting delay     | **30 blocks** (~6 min on Sepolia, ~60s on Anvil w/ 2s block time)    | 1 day minimum                 |
-| Voting period    | **60 blocks** (~12 min on Sepolia, ~2 min on Anvil w/ 2s block time) | 1 week minimum                |
-| Quorum           | **300 MDAO** (≈ 3 wallets × 100 MDAO)                                | `GovernorVotesQuorumFraction` |
-| Timelock minDelay| **1 minute**                                                         | 2 days minimum                |
+| Parameter         | Demo (Sepolia)                                                       | Recommended for Production    |
+| ----------------- | -------------------------------------------------------------------- | ----------------------------- |
+| Voting delay      | **30 blocks** (~6 min on Sepolia, ~60s on Anvil w/ 2s block time)    | 1 day minimum                 |
+| Voting period     | **60 blocks** (~12 min on Sepolia, ~2 min on Anvil w/ 2s block time) | 1 week minimum                |
+| Quorum            | **300 MDAO** (≈ 3 wallets × 100 MDAO)                                | `GovernorVotesQuorumFraction` |
+| Timelock minDelay | **1 minute**                                                         | 2 days minimum                |
 
 > ⚠️ `votingDelay` and `votingPeriod` return **block counts**, not seconds. Effective wall-clock time depends on the network's block time (Sepolia ≈ 12s/block, Anvil default ≈ instant — use `anvil --block-time 2` locally).
 

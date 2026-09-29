@@ -50,9 +50,7 @@ function mockLog(overrides: { proposalId?: bigint; description?: string } = {}) 
 // Keep all values below 1000 * 10^18 (< 1e21) to avoid Number.toString()
 // switching to exponential notation ("1.5e+21") which breaks formatEther.
 // Default: against=1, for=3, abstain=1 → total=5 vote units
-function setupChainMocks(
-	voteResult = [100n * 10n ** 18n, 300n * 10n ** 18n, 100n * 10n ** 18n]
-) {
+function setupChainMocks(voteResult = [100n * 10n ** 18n, 300n * 10n ** 18n, 100n * 10n ** 18n]) {
 	(publicClient.getContractEvents as ReturnType<typeof vi.fn>).mockResolvedValue([mockLog()]);
 	(publicClient.readContract as ReturnType<typeof vi.fn>).mockImplementation(({ functionName }) => {
 		if (functionName === 'state') return Promise.resolve(1);

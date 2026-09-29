@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+	import { walletStatus } from '$lib/components/WalletStore.svelte';
 	import { Button, Card, Label, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	import type { CreateProposalRequest } from '$lib/types/api/create_proposal.t';
@@ -134,7 +134,9 @@
 
 		<div class="space-y-5">
 			<p class="text-3xl font-bold text-gray-900 dark:text-white">Create New Proposal</p>
-			<p class="text-sm font-normal text-gray-500 dark:text-gray-400">Submit your ideas and let the community vote</p>
+			<p class="text-sm font-normal text-gray-500 dark:text-gray-400">
+				Submit your ideas and let the community vote
+			</p>
 		</div>
 		<div class="w-full space-y-5">
 			{#if connectStatus !== 'connected'}
@@ -143,7 +145,9 @@
 				>
 					<ExclamationCircleOutline size="lg" />
 					<div class="flex-col space-y-2">
-						<p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">Wallet Connection Required</p>
+						<p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+							Wallet Connection Required
+						</p>
 						<p class="text-xs">Please connect your wallet to create a proposal.</p>
 					</div>
 				</div>
@@ -153,12 +157,14 @@
 				<Card size="xl" shadow="md" horizontal={false} class="h-full w-full space-y-5 p-8">
 					<form onsubmit={submitProposal} class="flex flex-col space-y-5">
 						<div class="flex flex-col space-y-1">
-							<Label for="title" class="text-sm font-medium text-gray-700 dark:text-gray-300">Proposal Title</Label>
+							<Label for="title" class="text-sm font-medium text-gray-700 dark:text-gray-300"
+								>Proposal Title</Label
+							>
 							<input
 								type="text"
 								id="title"
 								name="title"
-								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 sm:text-sm"
+								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
 								placeholder="Enter proposal title"
 								bind:value={proposalTitle}
 								required
@@ -177,7 +183,7 @@
 								id="description"
 								name="description"
 								rows={10}
-								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 sm:text-sm"
+								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-400 focus:ring-purple-400 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
 								placeholder="Enter proposal description"
 								bind:value={proposalDescription}
 							></textarea>
@@ -192,15 +198,21 @@
 							class="flex w-full flex-row items-start justify-start space-x-5 rounded-lg border border-purple-200 bg-purple-50 px-2 py-3 text-purple-600 dark:border-purple-700 dark:bg-purple-950 dark:text-purple-400"
 						>
 							<div class="flex-col space-y-2 p-2">
-								<p class="text-sm font-medium text-purple-800 dark:text-purple-300">Proposal Requirements (Demo Config)</p>
+								<p class="text-sm font-medium text-purple-800 dark:text-purple-300">
+									Proposal Requirements (Demo Config)
+								</p>
 								<div class="space-y-5 p-3 text-xs">
 									<li>Voting delay: <strong>30 seconds</strong> after proposal creation</li>
 									<li>Voting period: <strong>1 minute</strong> — cast your vote before it ends</li>
-									<li>Quorum: <strong>300 MDAO</strong> (≈ 3 wallets × 100 MDAO each) must vote For</li>
+									<li>
+										Quorum: <strong>300 MDAO</strong> (≈ 3 wallets × 100 MDAO each) must vote For
+									</li>
 									<li>Min voting power: hold <strong>≥ 10 MDAO</strong> and self-delegate</li>
 									<li>Proposals cannot be modified once submitted</li>
 								</div>
-								<div class="rounded border border-purple-200 bg-purple-100 px-3 py-2 text-xs text-purple-700 dark:border-purple-800 dark:bg-purple-900 dark:text-purple-300">
+								<div
+									class="rounded border border-purple-200 bg-purple-100 px-3 py-2 text-xs text-purple-700 dark:border-purple-800 dark:bg-purple-900 dark:text-purple-300"
+								>
 									🔔 <strong>Demonstration only:</strong> If your proposal passes and is executed,
 									it will complete the full governance workflow on Sepolia testnet.
 									<strong>No funds are moved and no real-world changes occur.</strong>

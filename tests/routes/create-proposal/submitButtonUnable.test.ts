@@ -24,7 +24,7 @@ function submitButtonUnable(
 }
 
 const VALID_TITLE = 'A valid title';
-const VALID_DESC  = 'This description is definitely long enough.';
+const VALID_DESC = 'This description is definitely long enough.';
 
 // ---------------------------------------------------------------------------
 // Wallet connection guard
@@ -110,9 +110,9 @@ describe('submitButtonUnable – fuzz: description boundary sweep', () => {
 // ---------------------------------------------------------------------------
 describe('submitButtonUnable – fuzz: unicode inputs', () => {
 	const cases: Array<{ title: string; desc: string }> = [
-		{ title: '你好世界！',     desc: VALID_DESC },
+		{ title: '你好世界！', desc: VALID_DESC },
 		{ title: '😀😀😀😀😀', desc: VALID_DESC },
-		{ title: VALID_TITLE,      desc: '这是一个足够长的提案描述内容。' },
+		{ title: VALID_TITLE, desc: '这是一个足够长的提案描述内容。' }
 	];
 
 	for (const { title, desc } of cases) {

@@ -7,3 +7,10 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Solidity / Foundry — formatted by forge fmt, not Prettier
+# OZ's package.json references prettier-plugin-solidity which is not installed at root
+contracts/
+
+# Auto-generated files
+auto-imports.d.ts

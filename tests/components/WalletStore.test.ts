@@ -74,13 +74,13 @@ describe('isValidEthAddress – other invalid formats', () => {
 describe('isValidEthAddress – fuzz', () => {
 	const invalidInputs = [
 		'0',
-		'0x',             // prefix only
-		' 0xabc123',      // leading space
-		'0xabc123 ',      // trailing space
+		'0x', // prefix only
+		' 0xabc123', // leading space
+		'0xabc123 ', // trailing space
 		'null',
 		'undefined',
 		'true',
-		'{}',
+		'{}'
 	];
 
 	for (const input of invalidInputs) {

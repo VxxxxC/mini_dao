@@ -11,11 +11,12 @@ model: 'claude-opus-4.6'
 ## Persona
 
 You are an **expert Foundry security auditor** with 5+ years in DeFi protocol development and smart contract security. You have deep expertise in:
+
 - OpenZeppelin Governor, TimelockController, ERC20Votes, and ERC20Permit security surface areas
 - Foundry's full testing stack: unit tests, fuzz tests (`testFuzz_`), and stateful invariant tests (`invariant_` + `StdInvariant` Handler pattern)
 - Common attack vectors: re-entrancy, flash-loan governance attacks, front-running, vote manipulation, privilege escalation, and signature replay
-- The **CEI (Checks-Effects-Interactions)** pattern — every security test that touches external calls must verify that CEI is correctly enforced; the re-entrancy attack must revert with the *exact custom error* (e.g. `AlreadyClaimed`) proving state was mutated before the transfer
-- Writing tests that fail loudly and document the *why* behind every assertion
+- The **CEI (Checks-Effects-Interactions)** pattern — every security test that touches external calls must verify that CEI is correctly enforced; the re-entrancy attack must revert with the _exact custom error_ (e.g. `AlreadyClaimed`) proving state was mutated before the transfer
+- Writing tests that fail loudly and document the _why_ behind every assertion
 
 ---
 
@@ -42,13 +43,13 @@ Generate a comprehensive Foundry test suite covering every contract in the Mini 
 
 ### Contract Summary
 
-| Contract | Inherits | Key Role |
-|---|---|---|
-| `MiniDaoToken` | ERC20, ERC20Votes, ERC20Permit | Governance token, 1B supply (30% distributor / 70% treasury) |
-| `MiniDaoFaucet` | — | One-time 100-token claim per address |
-| `MiniDaoTimeLock` | TimelockController | Delays execution; owns VoteBox |
-| `MiniDaoGovernance` | Governor, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl | DAO voting engine |
-| `MiniDaoVoteBox` | Ownable | Counter; only owner (timelock) may increment |
+| Contract            | Inherits                                                                 | Key Role                                                     |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `MiniDaoToken`      | ERC20, ERC20Votes, ERC20Permit                                           | Governance token, 1B supply (30% distributor / 70% treasury) |
+| `MiniDaoFaucet`     | —                                                                        | One-time 100-token claim per address                         |
+| `MiniDaoTimeLock`   | TimelockController                                                       | Delays execution; owns VoteBox                               |
+| `MiniDaoGovernance` | Governor, GovernorCountingSimple, GovernorVotes, GovernorTimelockControl | DAO voting engine                                            |
+| `MiniDaoVoteBox`    | Ownable                                                                  | Counter; only owner (timelock) may increment                 |
 
 ### Key Constants
 
@@ -220,6 +221,7 @@ abstract contract MiniDaoTestBase is Test {
 ### 1. MiniDaoTokenTest
 
 #### Constructor & Supply Distribution
+
 - `testTotalSupplyIsOneBillion` — `token.totalSupply() == 1_000_000_000e18`
 - `testThirtyPercentMintedToDistributor` — `token.balanceOf(distributor) == TOTAL_SUPPLY * 30 / 100`
 - `testSeventyPercentMintedToTreasury` — `token.balanceOf(treasury) == TOTAL_SUPPLY * 70 / 100`
@@ -229,11 +231,13 @@ abstract contract MiniDaoTestBase is Test {
 - `testRevertInvalidAddress_BothZero` — `new MiniDaoToken(address(0), address(0))` reverts `InvalidAddress`
 
 #### ERC20 Transfers & Approvals
+
 - `testTransferTokens` — transfer 50 tokens, check balances
 - `testTransferFromWithApproval` — approve + transferFrom, verify allowance decrements
 - `testTransferFailsInsufficientBalance` — transfer more than balance, expect revert
 
 #### ERC20Votes – Delegation & Voting Power
+
 - `testVotingPowerZeroBeforeDelegation` — `token.getVotes(user) == 0` before delegate
 - `testVotingPowerEqualsBalanceAfterSelfDelegate` — `delegate(self)`, `getVotes == balance`
 - `testDelegatingToAnotherAddress` — delegate A→B, B's votes increase by A's balance
@@ -243,6 +247,7 @@ abstract contract MiniDaoTestBase is Test {
 - `testDelegateVotesChangedEventEmitted` — expect `DelegateVotesChanged` event
 
 #### ERC20Permit
+
 - `testPermitGrantsAllowance` — sign EIP-712 permit, call `token.permit()`, verify allowance
 - `testPermitIncrementsNonce` — nonce before and after permit call
 - `testPermitRevertsOnExpiredDeadline` — deadline in the past, expect revert
@@ -254,6 +259,7 @@ abstract contract MiniDaoTestBase is Test {
 ### 2. MiniDaoFaucetTest
 
 #### Claim – Happy Path
+
 - `testClaimSucceeds` — balance increases by `FAUCET_AMOUNT` after claim
 - `testClaimSetsHasClaimedTrue` — `faucet.hasClaimed(user) == true` after claim
 - `testHasClaimedFalseBeforeClaim` — `faucet.hasClaimed(user) == false` before
@@ -261,12 +267,14 @@ abstract contract MiniDaoTestBase is Test {
 - `testMultipleUsersClaim` — USER_A, USER_B, USER_C each claim; all succeed
 
 #### Claim – Error Paths
+
 - `testRevertAlreadyClaimed` — second claim by same address reverts `AlreadyClaimed`
 - `testRevertFaucetEmpty_ZeroBalance` — faucet has no tokens, expect `FaucetEmpty`
 - `testRevertFaucetEmpty_BelowThreshold` — faucet has `FAUCET_AMOUNT - 1` tokens, expect `FaucetEmpty`
 - `testRevertFaucetEmpty_ExactlyOneClaimLeft` — faucet has exactly `FAUCET_AMOUNT` tokens, first claim succeeds; second reverts
 
 #### Token Transfer Failure
+
 - `testRevertTransferFailed_MockTokenReturnsFalse` — deploy a mock ERC20 whose `transfer()` always returns `false`, deploy faucet with it, fund it, call `claim()`, expect `TransferFailed`
 
 ---
@@ -274,6 +282,7 @@ abstract contract MiniDaoTestBase is Test {
 ### 3. MiniDaoTimeLockTest
 
 #### Constructor & Roles
+
 - `testMinDelayIsSetCorrectly` — `timelock.getMinDelay() == MIN_DELAY`
 - `testAdminHasDefaultAdminRole` — deployer (admin param) has `DEFAULT_ADMIN_ROLE`
 - `testAdminCanGrantProposerRole` — admin calls `grantRole(PROPOSER_ROLE, addr)`, succeeds
@@ -281,15 +290,18 @@ abstract contract MiniDaoTestBase is Test {
 - `testNonAdminCannotGrantRole` — non-admin tries `grantRole`, reverts with `AccessControlUnauthorizedAccount`
 
 #### minDelay Enforcement
+
 - `testCannotExecuteBeforeMinDelay` — schedule an op, warp to `delay - 1`, call `execute`, expect revert
 - `testCanExecuteAfterMinDelay` — schedule an op, warp past delay, call `execute`, succeeds
 - `testCanExecuteAtExactlyMinDelay` — warp to exactly `block.timestamp + minDelay`, expect success
 
 #### Role Revocation & Decentralisation
+
 - `testAdminCanRevokeItsOwnAdminRole` — deployer revokes `DEFAULT_ADMIN_ROLE` from itself; subsequent `grantRole` call reverts
 - `testTimelockSelfAdmin` — timelock granted its own `DEFAULT_ADMIN_ROLE`, so it can govern itself through proposals
 
 #### Schedule & Cancel
+
 - `testScheduleCreatesOperation` — `isOperation` returns true after schedule
 - `testCancelRemovesPendingOperation` — schedule then cancel; `isOperation` returns false
 - `testCancelRevertsOnExecutedOperation` — schedule, wait, execute, then try cancel; expect revert
@@ -299,12 +311,14 @@ abstract contract MiniDaoTestBase is Test {
 ### 4. MiniDaoGovernanceTest
 
 #### Configuration
+
 - `testGovernorName` — `governance.name() == "Mini Governor"`
 - `testQuorumValue` — `governance.quorum(block.number) == 300e18`
 - `testVotingDelay` — `governance.votingDelay() == 30 seconds`
 - `testVotingPeriod` — `governance.votingPeriod() == 1 minutes`
 
 #### Proposal State Machine
+
 - `testProposalIsPendingImmediatelyAfterCreation` — state = `ProposalState.Pending`
 - `testProposalBecomesActiveAfterVotingDelay` — warp past delay; state = `ProposalState.Active`
 - `testProposalSucceededAfterVotingPeriodWithEnoughVotes` — vote For, warp past period; state = `ProposalState.Succeeded`
@@ -314,6 +328,7 @@ abstract contract MiniDaoTestBase is Test {
 - `testProposalExecutedAfterTimelockDelay` — execute after queued + minDelay; state = `ProposalState.Executed`
 
 #### Voting Mechanics
+
 - `testCastVoteFor` — vote = 1 (For); `hasVoted` returns true, For count increments
 - `testCastVoteAgainst` — vote = 0 (Against); Against count increments
 - `testCastVoteAbstain` — vote = 2 (Abstain); Abstain count increments, For unchanged
@@ -325,25 +340,30 @@ abstract contract MiniDaoTestBase is Test {
 - `testVotingPowerSnapshotAtProposalBlock` — delegate tokens AFTER proposal creation; additional power should NOT count
 
 #### Quorum Boundary Conditions
+
 - `testProposalFailsWithZeroVotes` — no one votes; Defeated
 - `testProposalFailsWithOneTokenBelowQuorum` — vote with `QUORUM_VOTES - 1e18`; Defeated
 - `testProposalPassesWithExactQuorum` — vote with exactly `QUORUM_VOTES`; Succeeded
 - `testProposalPassesWithMoreThanQuorum` — vote with `QUORUM_VOTES * 2`; Succeeded
 
 #### Queue & Execute Guards
+
 - `testCannotQueueBeforeSucceeded` — queue an Active proposal; expect revert
 - `testCannotExecuteBeforeTimelockDelay` — queue then immediately execute; expect revert
 - `testCannotExecuteSameProposalTwice` — execute, then call execute again; expect revert
 
 #### Proposal Cancellation
+
 - `testProposerCanCancelPendingProposal` — proposer calls cancel in Pending state; state = Cancelled
 - `testProposerCanCancelActiveProposal` — proposer calls cancel in Active state; state = Cancelled
 - `testCancelledProposalCannotBeExecuted` — cancel then try execute; expect revert
 
 #### Convenience Wrapper (Fixed — Regression Test)
+
 - `testProposalHelperExecutesSuccessfully` — call `governance.propose(address(voteBox))`, advance through full lifecycle, call `execute()`, assert `voteBox.getVote() == 1` (confirms the selector mismatch bug is fixed)
 
 #### Multiple Proposals
+
 - `testTwoSimultaneousProposalsAreIndependent` — create proposalA and proposalB with different descriptions; each has its own state
 - `testDuplicateProposalReverts` — identical params + description on same block; expect revert
 
@@ -352,20 +372,24 @@ abstract contract MiniDaoTestBase is Test {
 ### 5. MiniDaoVoteBoxTest
 
 #### Initial State
+
 - `testInitialVoteCountIsZero` — `voteBox.getVote() == 0`
 - `testInitialOwnerIsDeployer` — `voteBox.owner() == deployer`
 
 #### Access Control
+
 - `testStoreVoteRevertsForNonOwner` — `ATTACKER` calls `storeVote()`; expect `OwnableUnauthorizedAccount`
 - `testStoreVoteSucceedsForOwner` — owner calls `storeVote()`; succeeds
 
 #### State Changes & Events
+
 - `testStoreVoteIncrementsCount` — call once, `getVote() == 1`
 - `testStoreVoteIncrementsMultipleTimes` — call 5 times, `getVote() == 5`
 - `testStoreVoteEmitsVoteCastedEvent` — `vm.expectEmit`, verify `VoteCasted(1)` on first call
 - `testStoreVoteEmitsCorrectCountInEvent` — third call emits `VoteCasted(3)`
 
 #### Ownership Transfer
+
 - `testTransferOwnershipToTimelock` — `voteBox.transferOwnership(address(timelock))`; `owner() == address(timelock)`
 - `testOldOwnerCannotCallStoreVoteAfterTransfer` — after transfer, old owner calls `storeVote()`; expect revert
 
@@ -374,6 +398,7 @@ abstract contract MiniDaoTestBase is Test {
 ### 6. MiniDaoIntegrationTest
 
 #### Full Governance Happy Path
+
 - `testFullGovernanceLifecycle_StoreVote` — complete flow:
   1. Deploy all contracts
   2. USER_A claims faucet (100 tokens)
@@ -390,19 +415,23 @@ abstract contract MiniDaoTestBase is Test {
 - `testFullGovernanceLifecycle_MultipleVoters` — USER_A, USER_B both claim, delegate, vote For on same proposal; quorum met; executes successfully
 
 #### Failed Governance Scenarios
+
 - `testProposalDefeated_QuorumNotMet` — USER_A claims only 100 tokens but only 4e18 are delegated (manipulate delegation); proposal Defeated
 - `testProposalDefeated_MajorityAgainst` — USER_A (For, 50 tokens) vs USER_B (Against, 60 tokens); Defeated
 - `testProposalFails_ExecuteBeforeTimelockDelay` — succeed proposal, queue, immediately execute; expect revert
 
 #### Parallel Proposals
+
 - `testTwoProposalsExecutedSequentially` — propose X and Y; execute X then Y; `voteBox.getVote() == 2`
 
 #### Decentralisation Assertions
+
 - `testDeployerHasNoAdminRoleAfterSetup` — `timelock.hasRole(DEFAULT_ADMIN_ROLE, deployer) == false`
 - `testGovernanceHasProposerRole` — `timelock.hasRole(PROPOSER_ROLE, address(governance)) == true`
 - `testOnlyTimelockCanCallVoteBox` — any direct call to `voteBox.storeVote()` from non-timelock reverts
 
 #### Faucet Depletion Scenario
+
 - `testFaucetDepletedAfterAllClaims` — enough users claim tokens until faucet is empty; next claim reverts `FaucetEmpty`
 
 ---
@@ -413,6 +442,7 @@ Fuzz tests use random inputs to discover unexpected edge cases. Use `vm.assume()
 invalid inputs and bound helpers to keep values in range.
 
 #### Token Fuzz
+
 - `testFuzz_TransferNeverChangesTotalSupply(address to, uint256 amount)` — after any valid
   transfer, `token.totalSupply()` stays exactly `TOTAL_SUPPLY`; use `vm.assume(to != address(0))`
   and `bound(amount, 1, token.balanceOf(USER_A))`
@@ -423,32 +453,36 @@ invalid inputs and bound helpers to keep values in range.
 - `testFuzz_PermitNonceIncrementsMonotonically(uint256 amount, uint256 deadline)` — for a
   bounded `deadline` in the future, a valid permit always increments the nonce by exactly 1
 - `testFuzz_VotingPowerNotCountedBeforeSnapshotBlock(uint256 extraTokens)` — tokens delegated
-  *after* a proposal is created don't contribute to the snapshot vote weight
+  _after_ a proposal is created don't contribute to the snapshot vote weight
 
 #### Faucet Fuzz
+
 - `testFuzz_ClaimAmountIsAlwaysFaucetAmount(address user)` — for any fresh `user`, if claim
   succeeds, `token.balanceOf(user)` increases by exactly `FAUCET_AMOUNT`
 - `testFuzz_CannotClaimTwice(address user)` — for any `user`, a second `claim()` always
   reverts with `AlreadyClaimed` regardless of any intervening state
 - `testFuzz_FaucetEmptyWhenBalanceBelowThreshold(uint256 balance)` — `bound(balance, 0,
-  FAUCET_AMOUNT - 1)`; fund faucet with `balance`, call `claim()`, expect `FaucetEmpty`
+FAUCET_AMOUNT - 1)`; fund faucet with `balance`, call `claim()`, expect `FaucetEmpty`
 
 #### TimeLock Fuzz
+
 - `testFuzz_TimelockRevertsBeforeDelay(uint256 warpSeconds)` — `bound(warpSeconds, 0,
-  MIN_DELAY - 1)`; schedule op, warp `warpSeconds`, execute → revert; proves *any* early
+MIN_DELAY - 1)`; schedule op, warp `warpSeconds`, execute → revert; proves _any_ early
   execution is blocked
 - `testFuzz_TimelockSucceedsAfterDelay(uint256 extraSeconds)` — `bound(extraSeconds, 0,
-  365 days)`; schedule op, warp `MIN_DELAY + extraSeconds`, execute → succeeds
+365 days)`; schedule op, warp `MIN_DELAY + extraSeconds`, execute → succeeds
 
 #### Governance Fuzz
+
 - `testFuzz_ProposalIdDeterministic(string memory descA, string memory descB)` — two proposals
   with different descriptions always produce different `proposalId`s
 - `testFuzz_VoteWeightBoundedByDelegation(uint256 delegateAmount)` — votes cast by `USER_A`
   never exceed `token.getPastVotes(USER_A, snapshotBlock)` regardless of later transfers
 - `testFuzz_QuorumBoundaryAroundFiveTokens(uint256 voteWeight)` — `bound(voteWeight, 0,
-  QUORUM_VOTES * 3)`; below quorum → Defeated; at or above → Succeeded (all votes For)
+QUORUM_VOTES * 3)`; below quorum → Defeated; at or above → Succeeded (all votes For)
 
 #### VoteBox Fuzz
+
 - `testFuzz_OnlyOwnerCanCallStoreVote(address caller)` — `vm.assume(caller != voteBox.owner())`;
   direct call always reverts with `OwnableUnauthorizedAccount`
 - `testFuzz_VoteCountNeverOverflows(uint256 callCount)` — `bound(callCount, 0, 1000)`;
@@ -458,7 +492,7 @@ invalid inputs and bound helpers to keep values in range.
 
 ### 8. MiniDaoInvariantTest (StdInvariant + Handler Pattern)
 
-Invariant tests run many randomised call sequences and verify properties that must *always* hold.
+Invariant tests run many randomised call sequences and verify properties that must _always_ hold.
 
 #### Handler Contract
 
@@ -533,7 +567,7 @@ contract MiniDaoHandler is CommonBase, StdCheats, StdUtils {
 - `invariant_TimelockMinDelayUnchangeable` — `timelock.getMinDelay() == MIN_DELAY` after
   any sequence of calls; the delay cannot be reduced through governance or role tricks
 - `invariant_VoteBoxOwnerIsTimelock` — after initial setup, `voteBox.owner() ==
-  address(timelock)` always; no sequence of calls should change this
+address(timelock)` always; no sequence of calls should change this
 - `invariant_DeployerHasNoAdminRole` — `timelock.hasRole(DEFAULT_ADMIN_ROLE, DEPLOYER) == false`
   after setup; once revoked, admin role cannot be re-granted to the deployer
 
@@ -542,7 +576,7 @@ contract MiniDaoHandler is CommonBase, StdCheats, StdUtils {
 ### 9. MiniDaoSecurityTest
 
 Each test simulates a specific attack. Tests are expected to **pass** (meaning the attack is
-correctly *blocked* by the contracts). Add a `// SECURITY:` comment to each explaining the
+correctly _blocked_ by the contracts). Add a `// SECURITY:` comment to each explaining the
 attack vector.
 
 #### Re-entrancy Attacks
@@ -568,7 +602,7 @@ attack vector.
 
 - `testSecurity_Reentrancy_CEI_EffectBeforeInteraction` — positive test that directly validates
   CEI ordering in `MiniDaoFaucet`: call `claim()` once, then in the same tx (via a helper)
-  verify `faucet.hasClaimed(msg.sender) == true` *and* the token balance increased. This confirms
+  verify `faucet.hasClaimed(msg.sender) == true` _and_ the token balance increased. This confirms
   Effect was applied even though re-entry was attempted.
 
 - `testSecurity_Reentrancy_TimelockCannotBeReenteredDuringExecute` — craft a malicious
@@ -581,11 +615,11 @@ attack vector.
   2. Attacker borrows large token amount (mock transfer) at block N+1
   3. Attacker tries to `castVote` with borrowed balance
   4. `getPastVotes(attacker, snapshotBlock)` returns 0 → vote has zero weight → quorum not met
-  Assert that `governance.state(proposalId)` is `Defeated` after voting period
+     Assert that `governance.state(proposalId)` is `Defeated` after voting period
 
 - `testSecurity_FlashLoan_DelegateThenUndelegateInOneBlock` — attacker delegates 1000 tokens
   to themselves, immediately creates a proposal, then undelegates; since the snapshot is taken
-  at the block *before* the proposal, the manipulation window is closed
+  at the block _before_ the proposal, the manipulation window is closed
 
 - `testSecurity_VoteManipulation_TokensTransferredAfterSnapshotDontCount` — USER_A holds
   tokens and delegates; proposal snapshot taken; USER_A transfers all tokens to USER_B;
@@ -778,6 +812,7 @@ token.permit(signer, spender, amount, deadline, v, r, s);
 Before finishing the test file:
 
 **Unit Tests**
+
 - [ ] Every test function name starts with `test` (for Forge to pick it up)
 - [ ] Each test has clearly labelled `assert*` calls with descriptive failure messages
 - [ ] `vm.expectRevert` is called **before** the reverting call, never after
@@ -787,25 +822,29 @@ Before finishing the test file:
 - [ ] No state leaks between test contracts (each has its own `setUp`)
 
 **Fuzz Tests**
+
 - [ ] All fuzz test function names start with `testFuzz_`
 - [ ] `vm.assume()` used to discard zero/invalid addresses, not to narrow ranges (use `bound()` for ranges)
 - [ ] Each fuzz test asserts a single, clear property
 - [ ] Bounded amounts never exceed realistic token quantities
 
 **Invariant Tests**
+
 - [ ] `MiniDaoHandler` is registered via `targetContract(address(handler))` in `setUp()`
 - [ ] Ghost variables in handler are updated atomically with the state they track
 - [ ] All invariant function names start with `invariant_`
 - [ ] `fail_on_revert = false` in `foundry.toml` so expected reverts don't abort campaigns
 
 **Security Tests**
+
 - [ ] Every security test has a `// SECURITY:` comment explaining the attack vector
-- [ ] Re-entrancy tests verify the *specific* error that prevents the attack (e.g., `AlreadyClaimed`)
+- [ ] Re-entrancy tests verify the _specific_ error that prevents the attack (e.g., `AlreadyClaimed`)
 - [ ] Re-entrancy tests include a `// CEI:` comment confirming the Effect (state write) precedes the Interaction (external call) in the contract under test
-- [ ] Flash loan tests check voting power at the *snapshot block*, not the current block
+- [ ] Flash loan tests check voting power at the _snapshot block_, not the current block
 - [ ] The `proposal()` selector mismatch bug has comment: `// BUG: encodes storeVote(uint256) but VoteBox.storeVote() takes no args`
 
 **General**
+
 - [ ] Mock contracts are self-contained and minimal
 - [ ] Every function that calls an external contract or transfers tokens follows **CEI order** (Checks first, Effects second, Interactions last); add a `// CEI:` comment to confirm ordering in any non-trivial function
 - [ ] Run `forge test -vv` — all unit/fuzz/security tests green; invariants hold

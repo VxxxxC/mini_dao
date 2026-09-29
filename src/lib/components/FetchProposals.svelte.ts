@@ -45,7 +45,8 @@ export async function fetchProposals() {
 
 		const formattedProposals: ProposalCardInfoType[] = await Promise.all(
 			logs.map(async (log) => {
-				const args = log.args;
+				// viem infers args only when ABI is `as const`; cast here since JSON imports are not const
+				const args = (log as unknown as { args: { proposalId: bigint; description: string } }).args;
 				const proposalId = args.proposalId;
 				const ipfsCid = args.description;
 
@@ -94,6 +95,13 @@ export async function fetchProposals() {
 						votingWeightPromise
 					]);
 
+				// proposalVotes returns (againstVotes, forVotes, abstainVotes) as bigint tuple
+				const [againstVotes, forVotes, abstainVotes] = votingWeightResult as [
+					bigint,
+					bigint,
+					bigint
+				];
+
 				return {
 					proposalId: proposalId as bigint,
 					proposer: ipfsData.proposer as `0x${string}`,
@@ -104,17 +112,12 @@ export async function fetchProposals() {
 					expire: ipfsData.expire as number,
 					startToVote: Number(startVoteResult),
 					endToVote: Number(endVoteResult),
-					totalVotes:
-						formatEther(
-							Number(votingWeightResult[0]) +
-								Number(votingWeightResult[1]) +
-								Number(votingWeightResult[2])
-						) / 100,
-					voteFor: formatEther(Number(votingWeightResult[1])) / 100,
-					voteAgainst: formatEther(Number(votingWeightResult[0])) / 100,
-					voteAbstain: formatEther(Number(votingWeightResult[2])) / 100
+					// NOTE: formatEther converts bigint (wei) → string (ether); divide by 100 → 1 token = 1 voting weight
+					totalVotes: Number(formatEther(againstVotes + forVotes + abstainVotes)) / 100,
+					voteFor: Number(formatEther(forVotes)) / 100,
+					voteAgainst: Number(formatEther(againstVotes)) / 100,
+					voteAbstain: Number(formatEther(abstainVotes)) / 100
 				};
-				// NOTE: use formatEther convert bigint to number, and divided by 100 for representing 1 voting weight
 			})
 		);
 

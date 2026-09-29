@@ -8,14 +8,14 @@ import { ProposalStatusEnum } from '$lib/types/ProposalCard.t';
 // All 8 valid enum values with their expected labels and color classes
 // ---------------------------------------------------------------------------
 const STATUS_CASES = [
-	{ status: ProposalStatusEnum.Pending,   label: 'Pending',   colorClass: 'text-yellow-500'  },
-	{ status: ProposalStatusEnum.Active,    label: 'Active',    colorClass: 'text-indigo-500'  },
-	{ status: ProposalStatusEnum.Canceled,  label: 'Canceled',  colorClass: 'text-gray-500'    },
-	{ status: ProposalStatusEnum.Defeated,  label: 'Defeated',  colorClass: 'text-red-500'     },
-	{ status: ProposalStatusEnum.Succeeded, label: 'Succeeded', colorClass: 'text-green-500'   },
-	{ status: ProposalStatusEnum.Queued,    label: 'Queued',    colorClass: 'text-blue-500'    },
-	{ status: ProposalStatusEnum.Expired,   label: 'Expired',   colorClass: 'text-orange-500'  },
-	{ status: ProposalStatusEnum.Executed,  label: 'Executed',  colorClass: 'text-emerald-500' },
+	{ status: ProposalStatusEnum.Pending, label: 'Pending', colorClass: 'text-yellow-500' },
+	{ status: ProposalStatusEnum.Active, label: 'Active', colorClass: 'text-indigo-500' },
+	{ status: ProposalStatusEnum.Canceled, label: 'Canceled', colorClass: 'text-gray-500' },
+	{ status: ProposalStatusEnum.Defeated, label: 'Defeated', colorClass: 'text-red-500' },
+	{ status: ProposalStatusEnum.Succeeded, label: 'Succeeded', colorClass: 'text-green-500' },
+	{ status: ProposalStatusEnum.Queued, label: 'Queued', colorClass: 'text-blue-500' },
+	{ status: ProposalStatusEnum.Expired, label: 'Expired', colorClass: 'text-orange-500' },
+	{ status: ProposalStatusEnum.Executed, label: 'Executed', colorClass: 'text-emerald-500' }
 ] as const;
 
 // ---------------------------------------------------------------------------

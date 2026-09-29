@@ -74,10 +74,15 @@ export async function uploadToIPFS(data: CreateProposalRequest) {
 			(next) => async (args) => {
 				// Check if request is incoming as middleware works both ways
 				const response = await next(args);
-				if (!response.response.statusCode) return response;
+				// AWS SDK types `response.response` as unknown; cast to access HTTP fields
+				const httpResponse = response.response as {
+					statusCode?: number;
+					headers?: Record<string, string>;
+				};
+				if (!httpResponse?.statusCode) return response;
 
 				// Get cid from headers
-				const cid = response.response.headers['x-amz-meta-cid'];
+				const cid = httpResponse.headers?.['x-amz-meta-cid'];
 				if (cid) {
 					ipfsCid[0] = cid;
 				}

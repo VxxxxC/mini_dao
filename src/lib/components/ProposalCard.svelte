@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card } from 'flowbite-svelte';
-	import { walletStatus } from '$lib/components/WalletStore.svelte.ts';
+	import { walletStatus } from '$lib/components/WalletStore.svelte';
 	import { wagmiConfig } from '$lib/config/appKitConfig';
 	import { Address } from '$lib/config/contractAddress';
 	import { publicClient } from '$lib/config/viem/client';
