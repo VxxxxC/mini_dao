@@ -5,7 +5,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import AutoImport from 'unplugin-auto-import/vite';
 import { customImport } from './src/lib/auto-import/global-lib.ts';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
@@ -21,7 +21,12 @@ export default defineConfig({
 		// loading them from node_modules at runtime. This fixes two issues:
 		// 1. EMFILE (too many open files) — bundled = single files, not thousands
 		// 2. @walletconnect/logger named export error — bundler handles CJS→ESM interop
-		noExternal: [/^@walletconnect\//, /^@reown\//, /^@wagmi\//, 'wagmi', 'viem']
+		// Build only: in dev, Vite's SSR module runner can't evaluate the CJS files
+		// inside these packages (e.g. @walletconnect/time) → "exports is not defined"
+		noExternal:
+			command === 'build'
+				? [/^@walletconnect\//, /^@reown\//, /^@wagmi\//, 'wagmi', 'viem']
+				: undefined
 	},
 	test: {
 		expect: { requireAssertions: true },
@@ -51,4 +56,4 @@ export default defineConfig({
 			}
 		]
 	}
-});
+}));

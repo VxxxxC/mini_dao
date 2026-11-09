@@ -30,7 +30,8 @@
 		{ name: 'Home', href: '/' },
 		{ name: 'Proposals', href: '/proposals' },
 		{ name: 'Create', href: '/create-proposal' },
-		{ name: 'Faucet', href: '/faucet' }
+		{ name: 'Faucet', href: '/faucet' },
+		{ name: 'Treasury', href: '/treasury' }
 	];
 </script>
 
